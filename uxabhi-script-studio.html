@@ -1,0 +1,1129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>@uxabhi_ Script Studio</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap');
+
+:root {
+  --bg: #0a0a0f;
+  --surface: #13131a;
+  --card: #1a1a24;
+  --border: #2a2a38;
+  --accent: #7c6fff;
+  --accent2: #ff6b9d;
+  --accent3: #00e5b4;
+  --gold: #ffc850;
+  --text: #f0eeff;
+  --muted: #8888a8;
+  --glow: rgba(124,111,255,0.15);
+}
+
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:15px;line-height:1.6;min-height:100vh;}
+
+/* LAYOUT */
+.shell{display:grid;grid-template-columns:260px 1fr;min-height:100vh;}
+.right{display:flex;flex-direction:column;min-height:100vh;overflow:hidden;}
+.main{flex:1;padding:28px 32px;overflow-y:auto;}
+
+/* API BAR */
+.api-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:8px 28px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.api-bar label{color:var(--muted);font-size:11px;white-space:nowrap;}
+.api-key-input{background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px;padding:5px 12px;outline:none;width:280px;}
+.api-key-input:focus{border-color:var(--accent);}
+.model-sel{background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px;padding:5px 10px;cursor:pointer;outline:none;}
+.api-status{font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;}
+.api-status.ok{background:rgba(0,229,180,0.12);color:var(--accent3);}
+.api-status.empty{background:rgba(136,136,168,0.1);color:var(--muted);}
+
+/* SIDEBAR */
+.sidebar{background:var(--surface);border-right:1px solid var(--border);padding:24px 18px;display:flex;flex-direction:column;gap:4px;}
+.logo{font-family:'Syne',sans-serif;font-weight:800;font-size:16px;padding:0 8px 18px;border-bottom:1px solid var(--border);margin-bottom:10px;letter-spacing:-0.3px;}
+.logo span{color:var(--accent);}
+.logo sub{font-size:10px;color:var(--muted);font-weight:400;display:block;margin-top:2px;letter-spacing:0;}
+.nav-lbl{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);padding:10px 8px 4px;}
+.nav-btn{display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:9px;background:none;border:none;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;text-align:left;transition:all 0.2s;width:100%;}
+.nav-btn:hover{background:var(--card);color:var(--text);}
+.nav-btn.active{background:var(--glow);color:var(--accent);border:1px solid rgba(124,111,255,0.25);}
+.nav-btn .ic{font-size:14px;width:18px;text-align:center;}
+
+.profile-pill{margin-top:auto;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:13px;position:relative;}
+.profile-pill .handle{font-weight:700;font-size:13px;color:var(--accent);}
+.profile-pill .name{font-size:12px;color:var(--text);}
+.profile-pill .stat{font-size:11px;color:var(--muted);margin-top:4px;}
+.goal-badge{position:absolute;top:-8px;right:8px;background:var(--accent2);color:#fff;font-size:9px;font-weight:800;padding:3px 8px;border-radius:20px;letter-spacing:0.5px;}
+
+/* PAGES */
+.page{display:none;}
+.page.active{display:block;}
+.pg-head{margin-bottom:24px;}
+.pg-head h1{font-family:'Syne',sans-serif;font-weight:800;font-size:23px;letter-spacing:-0.5px;}
+.pg-head p{color:var(--muted);font-size:13px;margin-top:3px;}
+
+/* CARDS */
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:18px;}
+.card h3{font-family:'Syne',sans-serif;font-weight:700;font-size:14px;margin-bottom:12px;display:flex;align-items:center;gap:7px;}
+
+/* GRID */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+
+/* CHIPS */
+.chip-row{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:10px;}
+.chip{padding:5px 11px;border-radius:18px;font-size:12px;font-weight:500;border:1px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer;transition:all 0.2s;}
+.chip:hover,.chip.on{border-color:var(--accent);color:var(--accent);background:var(--glow);}
+
+/* TEXTAREA */
+textarea{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:11px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;line-height:1.7;padding:14px;resize:vertical;min-height:200px;outline:none;transition:border-color 0.2s;}
+textarea:focus{border-color:var(--accent);}
+textarea::placeholder{color:var(--muted);}
+
+/* BUTTONS */
+.btn{padding:10px 20px;border-radius:9px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;border:none;transition:all 0.2s;}
+.btn-p{background:var(--accent);color:#fff;}
+.btn-p:hover{background:#9585ff;transform:translateY(-1px);}
+.btn-s{background:var(--surface);border:1px solid var(--border);color:var(--text);}
+.btn-s:hover{border-color:var(--accent);color:var(--accent);}
+.btn-row{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;}
+
+/* OUTPUT */
+.output-box{background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:18px;min-height:200px;font-size:13px;line-height:1.9;white-space:pre-wrap;position:relative;}
+.out-placeholder{color:var(--muted);font-style:italic;font-size:13px;}
+.sec-tag{display:inline-block;font-size:9px;font-weight:800;letter-spacing:1px;text-transform:uppercase;margin:8px 0 2px;}
+.hook-line{color:var(--accent2);font-weight:600;}
+.copy-btn{position:absolute;top:10px;right:10px;padding:4px 11px;font-size:11px;border-radius:7px;background:var(--card);border:1px solid var(--border);color:var(--muted);cursor:pointer;transition:all 0.2s;}
+.copy-btn:hover{color:var(--accent3);border-color:var(--accent3);}
+
+/* PERFORMANCE TABLE */
+.perf-table{width:100%;border-collapse:collapse;font-size:12px;}
+.perf-table th{text-align:left;padding:8px 10px;color:var(--muted);font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid var(--border);}
+.perf-table td{padding:9px 10px;border-bottom:1px solid rgba(42,42,56,0.5);}
+.perf-table tr:hover td{background:rgba(124,111,255,0.04);}
+.tier1{color:var(--accent3);font-weight:700;}
+.tier2{color:var(--gold);font-weight:600;}
+.tier3{color:var(--muted);}
+
+/* IDEA CARDS */
+.idea-card{background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:14px;cursor:pointer;transition:all 0.2s;position:relative;overflow:hidden;}
+.idea-card::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%;background:var(--accent);opacity:0;transition:opacity 0.2s;}
+.idea-card:hover::before{opacity:1;}
+.idea-card:hover{border-color:var(--accent);background:var(--card);}
+.itag{font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:2px 7px;border-radius:4px;margin-bottom:7px;display:inline-block;}
+.t-tool{background:rgba(124,111,255,0.15);color:var(--accent);}
+.t-take{background:rgba(255,107,157,0.12);color:var(--accent2);}
+.t-build{background:rgba(0,229,180,0.12);color:var(--accent3);}
+.t-edu{background:rgba(255,200,80,0.12);color:var(--gold);}
+.t-life{background:rgba(160,120,255,0.12);color:#c0a0ff;}
+.idea-title{font-weight:600;font-size:13px;margin-bottom:3px;}
+.idea-hook{font-size:11px;color:var(--muted);line-height:1.5;}
+.use-idea{font-size:11px;color:var(--accent);font-weight:600;margin-top:8px;cursor:pointer;}
+
+/* HOOK ITEMS */
+.hook-item{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:0 9px 9px 0;padding:11px 14px;font-size:12px;cursor:pointer;transition:all 0.2s;position:relative;}
+.hook-item:hover{background:var(--card);border-left-color:var(--accent2);}
+.hook-type{font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:700;margin-bottom:3px;}
+.hook-text{color:var(--text);line-height:1.5;}
+.h-use{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:10px;color:var(--accent3);font-weight:700;opacity:0;transition:opacity 0.2s;}
+.hook-item:hover .h-use{opacity:1;}
+
+/* TRIGGER TABLE */
+.trigger-table{width:100%;border-collapse:collapse;font-size:12px;}
+.trigger-table th{padding:7px 10px;color:var(--muted);font-size:9px;text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid var(--border);text-align:left;}
+.trigger-table td{padding:9px 10px;border-bottom:1px solid rgba(42,42,56,0.4);}
+.trigger-word{font-family:monospace;background:var(--glow);color:var(--accent);padding:2px 8px;border-radius:5px;font-weight:700;font-size:11px;}
+
+/* CALENDAR */
+.cal-row{display:flex;gap:12px;padding:11px;background:var(--surface);border-radius:9px;border:1px solid var(--border);margin-bottom:8px;align-items:flex-start;}
+.cal-day{width:70px;flex-shrink:0;text-align:right;}
+.cal-day .dname{font-weight:700;font-size:12px;}
+.cal-day .dtype{font-size:10px;margin-top:2px;}
+.cal-body .cpillar{font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px;}
+.cal-body .ctitle{font-size:12px;color:var(--text);line-height:1.4;}
+.cal-body .ctag{font-size:10px;color:var(--accent3);margin-top:4px;font-weight:600;}
+
+/* BAR */
+.bar-row{display:flex;align-items:center;gap:10px;margin-bottom:7px;}
+.bar-lbl{width:130px;font-size:12px;color:var(--text);flex-shrink:0;}
+.bar-track{flex:1;background:var(--surface);border-radius:4px;height:7px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:4px;transition:width 0.8s ease;}
+.bar-val{font-size:11px;font-weight:700;width:32px;text-align:right;}
+
+/* BADGE */
+.badge{display:inline-block;padding:2px 8px;border-radius:5px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;}
+.badge-p{background:rgba(124,111,255,0.2);color:var(--accent);}
+.badge-g{background:rgba(0,229,180,0.15);color:var(--accent3);}
+.badge-r{background:rgba(255,107,157,0.15);color:var(--accent2);}
+.badge-y{background:rgba(255,200,80,0.15);color:var(--gold);}
+
+/* HINT */
+.hint{font-size:11px;color:var(--muted);margin-top:5px;}
+.sec-lbl{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;}
+.divider{border:none;border-top:1px solid var(--border);margin:16px 0;}
+
+/* COMPETITOR CARD */
+.comp-card{background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:14px;}
+.comp-handle{font-weight:700;font-size:13px;color:var(--accent);}
+.comp-followers{font-size:11px;color:var(--accent3);font-weight:600;}
+.comp-why{font-size:11px;color:var(--muted);margin-top:4px;line-height:1.5;}
+.steal-btn{font-size:11px;color:var(--accent2);font-weight:600;margin-top:8px;cursor:pointer;}
+
+/* LOADING */
+@keyframes pulse{0%,100%{opacity:.4;}50%{opacity:1;}}
+.dots span{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--accent);margin:0 2px;animation:pulse 1.2s ease-in-out infinite;}
+.dots span:nth-child(2){animation-delay:.2s;}
+.dots span:nth-child(3){animation-delay:.4s;}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--accent3);color:#0a0a0f;padding:9px 18px;border-radius:9px;font-weight:700;font-size:12px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:999;}
+.toast.show{opacity:1;}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:5px;}
+::-webkit-scrollbar-track{background:var(--surface);}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+
+/* PRIORITY ITEM */
+.pri-item{display:flex;gap:12px;padding:11px 14px;background:var(--surface);border-radius:9px;border:1px solid var(--border);margin-bottom:8px;align-items:flex-start;}
+.pri-day{font-size:10px;font-weight:800;color:var(--accent);text-transform:uppercase;width:42px;flex-shrink:0;margin-top:2px;}
+.pri-text{font-size:12px;color:var(--text);line-height:1.5;}
+.pri-impact{font-size:10px;color:var(--accent3);margin-top:4px;font-weight:600;}
+
+/* ALERT BOX */
+.alert{padding:12px 16px;border-radius:10px;font-size:12px;line-height:1.6;margin-bottom:16px;}
+.alert-warn{background:rgba(255,200,80,0.08);border:1px solid rgba(255,200,80,0.25);color:var(--gold);}
+.alert-tip{background:rgba(0,229,180,0.06);border:1px solid rgba(0,229,180,0.2);color:var(--accent3);}
+.alert-hot{background:rgba(255,107,157,0.06);border:1px solid rgba(255,107,157,0.2);color:var(--accent2);}
+</style>
+</head>
+<body>
+
+<div class="shell">
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="logo">
+    @uxabhi_<span> Studio</span>
+    <sub>Script Engine · May 2026</sub>
+  </div>
+
+  <span class="nav-lbl">Create</span>
+  <button class="nav-btn active" onclick="nav('studio',this)"><span class="ic">✍️</span> Script Studio</button>
+  <button class="nav-btn" onclick="nav('ideas',this)"><span class="ic">💡</span> Ideas Bank</button>
+  <button class="nav-btn" onclick="nav('hooks',this)"><span class="ic">🪝</span> Hooks Library</button>
+  <button class="nav-btn" onclick="nav('triggers',this)"><span class="ic">💬</span> Trigger Words</button>
+
+  <span class="nav-lbl">Strategy</span>
+  <button class="nav-btn" onclick="nav('audit',this)"><span class="ic">📊</span> Account Audit</button>
+  <button class="nav-btn" onclick="nav('pillars',this)"><span class="ic">🏛️</span> Content Pillars</button>
+  <button class="nav-btn" onclick="nav('calendar',this)"><span class="ic">📅</span> 30-Day Calendar</button>
+  <button class="nav-btn" onclick="nav('competitors',this)"><span class="ic">🕵️</span> Competitor Intel</button>
+  <button class="nav-btn" onclick="nav('actions',this)"><span class="ic">🚀</span> Priority Actions</button>
+
+  <div class="profile-pill">
+    <div class="goal-badge">GOAL: 10K IN 30 DAYS</div>
+    <div class="handle">@uxabhi_</div>
+    <div class="name">Abhishek Jha</div>
+    <div class="stat">1,242 followers · 4.2% eng. rate · May 2026</div>
+    <div class="stat" style="margin-top:4px;color:var(--accent3)">✦ UX × HCI × Germany × AI × Framer</div>
+  </div>
+</aside>
+
+<!-- RIGHT COLUMN -->
+<div class="right">
+
+  <!-- API BAR -->
+  <div class="api-bar">
+    <label>⚡ Groq Key</label>
+    <input class="api-key-input" id="groqKey" type="password" placeholder="gsk_..." oninput="updateApiStatus()" />
+    <select class="model-sel" id="groqModel">
+      <option value="llama-3.3-70b-versatile">llama-3.3-70b (best)</option>
+      <option value="llama3-70b-8192">llama3-70b-8k</option>
+      <option value="mixtral-8x7b-32768">mixtral-8x7b</option>
+    </select>
+    <span class="api-status empty" id="apiStatus">No key</span>
+    <span style="color:var(--muted);font-size:11px;">· browser-only, never stored</span>
+  </div>
+
+  <main class="main">
+
+  <!-- ═══ SCRIPT STUDIO ═══ -->
+  <div id="page-studio" class="page active">
+    <div class="pg-head">
+      <h1>✍️ Script Studio</h1>
+      <p>Drop your raw idea or messy draft — I'll rewrite it as a proper @uxabhi_ script with a hook that stops the scroll.</p>
+    </div>
+
+    <div class="alert alert-tip">⚡ Your AI knows your profile: UX + HCI master's Germany + AI tools + Framer + Indian designer POV. Every script is written in your voice.</div>
+
+    <div class="card">
+      <h3>⚙️ Format & Tone</h3>
+      <div class="chip-row" id="fmtRow">
+        <button class="chip on" onclick="setFmt(this,'Reel 30–45s')">Reel 30–45s</button>
+        <button class="chip" onclick="setFmt(this,'Reel 60–75s')">Reel 60–75s</button>
+        <button class="chip" onclick="setFmt(this,'Carousel Caption')">Carousel Caption</button>
+        <button class="chip" onclick="setFmt(this,'Talking Head')">Talking Head</button>
+        <button class="chip" onclick="setFmt(this,'Screen Recording VO')">Screen Rec VO</button>
+        <button class="chip" onclick="setFmt(this,'Hindi/Hinglish Rant')">Hindi/Hinglish Rant</button>
+      </div>
+      <div class="chip-row" id="toneRow">
+        <button class="chip on" onclick="setTone(this,'casual and relatable')">Casual</button>
+        <button class="chip" onclick="setTone(this,'educational and practical')">Educational</button>
+        <button class="chip" onclick="setTone(this,'story-driven and personal')">Story</button>
+        <button class="chip" onclick="setTone(this,'opinionated hot take')">Hot Take</button>
+        <button class="chip" onclick="setTone(this,'Hinglish — mix Hindi and English naturally')">Hinglish</button>
+      </div>
+    </div>
+
+    <div class="g2">
+      <div>
+        <div class="sec-lbl">📥 Your Raw Idea / Draft</div>
+        <textarea id="inputScript" placeholder="Drop anything here — rough idea, bullet points, messy notes...
+
+Examples from your actual content:
+• 'I want to talk about AI tools for UX designers'
+• 'Chrome extension I built at 2am to learn German'
+• 'Indian vs European job interviews — honest comparison'
+• 'Framer + Claude workflow for clients'
+• 'Why UX portfolios with Figma listed don't get callbacks'"></textarea>
+        <div class="hint">The messier your input, the more the AI earns its keep.</div>
+        <div class="btn-row">
+          <button class="btn btn-p" onclick="rewriteScript()">✨ Rewrite & Hook It</button>
+          <button class="btn btn-s" onclick="generateHooks()">🪝 3 Hooks Only</button>
+          <button class="btn btn-s" onclick="generateCaption()">📝 Write Caption</button>
+          <button class="btn btn-s" onclick="clearAll()">✕</button>
+        </div>
+      </div>
+      <div>
+        <div class="sec-lbl">📤 Script Output</div>
+        <div class="output-box" id="outputBox">
+          <span class="out-placeholder">Your script appears here — hook labeled, body structured, CTA included. Ready to record.</span>
+          <button class="copy-btn" onclick="copyOutput()">Copy</button>
+        </div>
+        <div class="hint" id="outMeta" style="margin-top:7px;"></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:18px;">
+      <h3>🔥 Quick Inject — Your Best Hooks</h3>
+      <div class="chip-row" style="flex-wrap:wrap;">
+        <span class="chip" onclick="injectH(this)">I don't know how this plugin is still free...</span>
+        <span class="chip" onclick="injectH(this)">It's 2am and I'm building something I shouldn't be</span>
+        <span class="chip" onclick="injectH(this)">My entire feed is AI replacing designers. I have thoughts.</span>
+        <span class="chip" onclick="injectH(this)">If your portfolio says 'Tools: Figma, Notion, Miro' — that's why you're not getting callbacks</span>
+        <span class="chip" onclick="injectH(this)">I compared Indian vs German UX interviews. The difference was embarrassing.</span>
+        <span class="chip" onclick="injectH(this)">A client needed a landing page. I had 4 hours. Framer + Claude did the rest.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ IDEAS BANK ═══ -->
+  <div id="page-ideas" class="page">
+    <div class="pg-head">
+      <h1>💡 Ideas Bank</h1>
+      <p>Your personalised content ideas — based on your actual account audit, competitor intel, and whitespace analysis.</p>
+    </div>
+
+    <div class="alert alert-hot">🔥 Algorithm signal right now: AI vs Human creativity, "2026 design stack", comment triggers, Framer content — post these THIS WEEK before saturation.</div>
+
+    <div class="card">
+      <h3>Filter</h3>
+      <div class="chip-row" id="ideaFilter">
+        <button class="chip on" onclick="filterIdeas('all',this)">All</button>
+        <button class="chip" onclick="filterIdeas('tool',this)">🛠 Toolbox</button>
+        <button class="chip" onclick="filterIdeas('take',this)">🎤 Honest Take</button>
+        <button class="chip" onclick="filterIdeas('build',this)">🔧 Builder's Log</button>
+        <button class="chip" onclick="filterIdeas('edu',this)">📚 Design Decoded</button>
+        <button class="chip" onclick="filterIdeas('life',this)">🌍 India × Germany</button>
+      </div>
+    </div>
+
+    <div class="g2" id="ideasGrid"></div>
+  </div>
+
+  <!-- ═══ HOOKS LIBRARY ═══ -->
+  <div id="page-hooks" class="page">
+    <div class="pg-head">
+      <h1>🪝 Hooks Library</h1>
+      <p>Written specifically for @uxabhi_ — based on your top-performing content patterns and competitor steal report.</p>
+    </div>
+    <div class="alert alert-tip">Your best hook style: <strong>Result-first (show the output before the title)</strong> + open loop. Your Hindi rant got 7.2% engagement — double the niche average. Use more of these.</div>
+    <div class="g2">
+      <div class="card"><h3><span style="color:var(--accent)">●</span> Curiosity</h3><div id="hA" style="display:flex;flex-direction:column;gap:8px;"></div></div>
+      <div class="card"><h3><span style="color:var(--accent2)">●</span> Story / Personal</h3><div id="hB" style="display:flex;flex-direction:column;gap:8px;"></div></div>
+      <div class="card"><h3><span style="color:var(--accent3)">●</span> Hot Take / Rant</h3><div id="hC" style="display:flex;flex-direction:column;gap:8px;"></div></div>
+      <div class="card"><h3><span style="color:var(--gold)">●</span> Hindi / Hinglish</h3><div id="hD" style="display:flex;flex-direction:column;gap:8px;"></div></div>
+    </div>
+  </div>
+
+  <!-- ═══ TRIGGER WORDS ═══ -->
+  <div id="page-triggers" class="page">
+    <div class="pg-head">
+      <h1>💬 Trigger Words</h1>
+      <p>Your comment triggers — based on what's proven to drive 200–2000+ comments in your exact niche.</p>
+    </div>
+    <div class="alert alert-hot">🔥 Instagram 2026 algorithm weights <strong>comments-per-reach above likes-per-reach</strong>. Your comment trigger in 2024 generated 1,900 comments. Every post this month needs a trigger.</div>
+
+    <div class="card">
+      <h3>🎯 Your 6 Trigger Words — Start With These</h3>
+      <table class="trigger-table">
+        <thead><tr><th>Trigger</th><th>What You DM</th><th>Why It Works</th></tr></thead>
+        <tbody id="triggerTable"></tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3>📊 Competitor Trigger Swipe File</h3>
+      <table class="trigger-table">
+        <thead><tr><th>Account</th><th>Trigger</th><th>Offer</th><th>Result</th></tr></thead>
+        <tbody id="compTriggers"></tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3>✍️ Caption Formula Using Triggers</h3>
+      <div style="font-size:13px;line-height:2;color:var(--text);">
+        <span style="color:var(--accent2);font-weight:600;">Line 1:</span> Hook (1 sentence — stops the scroll)<br>
+        <span style="color:var(--accent);font-weight:600;">Line 2–3:</span> The story/context (2 sentences — why it matters)<br>
+        <span style="color:var(--accent3);font-weight:600;">Line 4:</span> The trigger → <code style="background:var(--glow);padding:2px 6px;border-radius:4px;">Comment "TOOLS" and I'll DM you the full list</code><br>
+        <span style="color:var(--gold);font-weight:600;">Line 5:</span> SAVE reminder → "Save this before you scroll"<br>
+        <span style="color:var(--muted);font-weight:600;">Line 6:</span> Hashtag cluster (7–10 mid-tier, rotate weekly)
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ ACCOUNT AUDIT ═══ -->
+  <div id="page-audit" class="page">
+    <div class="pg-head">
+      <h1>📊 Account Audit — @uxabhi_</h1>
+      <p>Full performance analysis of your 15 reels. Based on live data, May 2026.</p>
+    </div>
+
+    <div class="g2">
+      <div class="card">
+        <h3>📈 Account Health</h3>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div class="bar-row"><span class="bar-lbl">Engagement Rate</span><div class="bar-track"><div class="bar-fill" style="width:84%;background:var(--accent3);"></div></div><span class="bar-val" style="color:var(--accent3)">4.2%</span></div>
+          <div class="bar-row"><span class="bar-lbl">Posting Consistency</span><div class="bar-track"><div class="bar-fill" style="width:22%;background:var(--accent2);"></div></div><span class="bar-val" style="color:var(--accent2)">Low</span></div>
+          <div class="bar-row"><span class="bar-lbl">Hook Strength</span><div class="bar-track"><div class="bar-fill" style="width:55%;background:var(--gold);"></div></div><span class="bar-val" style="color:var(--gold)">Mid</span></div>
+          <div class="bar-row"><span class="bar-lbl">Visual Identity</span><div class="bar-track"><div class="bar-fill" style="width:30%;background:var(--accent2);"></div></div><span class="bar-val" style="color:var(--accent2)">Weak</span></div>
+          <div class="bar-row"><span class="bar-lbl">Bio Clarity</span><div class="bar-track"><div class="bar-fill" style="width:40%;background:var(--gold);"></div></div><span class="bar-val" style="color:var(--gold)">Fix</span></div>
+        </div>
+        <hr class="divider">
+        <div class="sec-lbl">Key Insight</div>
+        <div style="font-size:12px;color:var(--text);line-height:1.6;">Engagement rate 4.2% is <strong style="color:var(--accent3)">above niche average</strong> — your audience likes you. The ceiling is <strong>reach</strong>, not resonance. Consistency is the #1 growth blocker.</div>
+      </div>
+
+      <div class="card">
+        <h3>🚨 Bio Fix — Do This Today</h3>
+        <div style="margin-bottom:10px;">
+          <div class="sec-lbl" style="color:var(--accent2)">Current (Broken)</div>
+          <div style="font-size:12px;color:var(--muted);background:var(--surface);padding:10px;border-radius:8px;line-height:1.8;">
+            Abhishek Jha | UX & Web Designer | 🧑‍💻<br>
+            #UX Designer sharing my #life frames<br>
+            M.Sc HCI<br>
+            Figuring out.. a new life 🇩🇪 🇮🇳
+          </div>
+        </div>
+        <div>
+          <div class="sec-lbl" style="color:var(--accent3)">Recommended (Use This)</div>
+          <div style="font-size:12px;color:var(--text);background:rgba(0,229,180,0.06);border:1px solid rgba(0,229,180,0.2);padding:10px;border-radius:8px;line-height:1.9;">
+            UX & Web Designer 🧑‍💻 | M.Sc HCI, Germany<br>
+            Figma → Framer → AI — tools that actually save time<br>
+            For designers, students & founders 🇩🇪 🇮🇳<br>
+            👇 Free resources + portfolio
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>🎬 All 15 Reels — Performance Tiers</h3>
+      <table class="perf-table">
+        <thead><tr><th>#</th><th>Date</th><th>Topic</th><th>Likes</th><th>Comments</th><th>Tier</th></tr></thead>
+        <tbody id="reelTable"></tbody>
+      </table>
+    </div>
+
+    <div class="g2">
+      <div class="card">
+        <h3>🏆 The Pattern That Made You Go Viral</h3>
+        <div style="font-size:12px;color:var(--text);line-height:1.8;">Your 2 viral posts (2.1K likes, 1.9K comments) both followed the same formula:<br>
+        <span style="color:var(--accent3);">✦ Practical tool shortcut</span> + <span style="color:var(--accent);">Screen recording</span> + <span style="color:var(--accent2);">Comment trigger</span><br><br>
+        You abandoned this formula for 18 months. Every post this month should go back to it.</div>
+      </div>
+      <div class="card">
+        <h3>📌 Hashtag Strategy Fix</h3>
+        <div style="font-size:12px;color:var(--text);line-height:1.7;">
+          <span style="color:var(--accent2);">❌ Stop:</span> #fyp (billions of posts), typos (#vibecodig), 30-tag dumps<br><br>
+          <span style="color:var(--accent3);">✅ Use 7–10 mid-tier (50K–500K posts):</span><br>
+          <div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:5px;">
+            <span style="background:var(--glow);color:var(--accent);padding:2px 8px;border-radius:4px;font-size:11px;">#figmatips</span>
+            <span style="background:var(--glow);color:var(--accent);padding:2px 8px;border-radius:4px;font-size:11px;">#framerwebsite</span>
+            <span style="background:var(--glow);color:var(--accent);padding:2px 8px;border-radius:4px;font-size:11px;">#uxstudent</span>
+            <span style="background:var(--glow);color:var(--accent);padding:2px 8px;border-radius:4px;font-size:11px;">#designtools</span>
+            <span style="background:var(--glow);color:var(--accent);padding:2px 8px;border-radius:4px;font-size:11px;">#indiandesigner</span>
+            <span style="background:var(--glow);color:var(--accent);padding:2px 8px;border-radius:4px;font-size:11px;">#uxportfolio</span>
+            <span style="background:var(--glow);color:var(--accent);padding:2px 8px;border-radius:4px;font-size:11px;">#hcidesign</span>
+            <span style="background:var(--glow);color:var(--accent);padding:2px 8px;border-radius:4px;font-size:11px;">#designerwhobuilds</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ PILLARS ═══ -->
+  <div id="page-pillars" class="page">
+    <div class="pg-head">
+      <h1>🏛️ Your 5 Content Pillars</h1>
+      <p>Redesigned for 10K growth — each pillar has a reason for existing and a format that converts.</p>
+    </div>
+    <div id="pillarsGrid" class="g2"></div>
+
+    <div class="card">
+      <h3>🦄 Your 5 Unfair Advantages — What No 50K+ Creator Has</h3>
+      <div style="display:flex;flex-direction:column;gap:10px;" id="advantagesGrid"></div>
+    </div>
+
+    <div class="card">
+      <h3>⚖️ Content Do's & Don'ts</h3>
+      <div class="g2">
+        <div>
+          <div class="sec-lbl" style="color:var(--accent3)">✓ Do This</div>
+          <div style="display:flex;flex-direction:column;gap:7px;font-size:12px;" id="dosList"></div>
+        </div>
+        <div>
+          <div class="sec-lbl" style="color:var(--accent2)">✗ Avoid This</div>
+          <div style="display:flex;flex-direction:column;gap:7px;font-size:12px;" id="dontsList"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ 30-DAY CALENDAR ═══ -->
+  <div id="page-calendar" class="page">
+    <div class="pg-head">
+      <h1>📅 30-Day Posting Calendar</h1>
+      <p>Your exact content plan for 10K. 5–6 posts/week minimum — non-negotiable.</p>
+    </div>
+    <div class="alert alert-warn">⚠️ The cadence is your #1 growth blocker. 2–3 posts/month cannot reach 10K. You must post 5–6x this week.</div>
+
+    <div class="card">
+      <h3>📌 Week 1 — Foundation Week (Reactivation + Comment Triggers)</h3>
+      <div id="week1"></div>
+    </div>
+    <div class="card">
+      <h3>📌 Week 2 — Momentum Week (Community + Collabs)</h3>
+      <div id="week2"></div>
+    </div>
+    <div class="card">
+      <h3>📌 Week 3 — Authority Week (Expertise + Client Signal)</h3>
+      <div id="week3"></div>
+    </div>
+    <div class="card">
+      <h3>📌 Week 4 — Virality Week (Push Shareables + Triggers)</h3>
+      <div id="week4"></div>
+    </div>
+
+    <div class="card">
+      <h3>🕐 Daily Stories Cadence</h3>
+      <div style="display:flex;flex-direction:column;gap:8px;font-size:12px;">
+        <div style="display:flex;gap:12px;padding:8px;background:var(--surface);border-radius:8px;"><span style="color:var(--accent);font-weight:700;width:65px;">9:00 AM</span><span>Poll or question sticker related to today's reel topic</span></div>
+        <div style="display:flex;gap:12px;padding:8px;background:var(--surface);border-radius:8px;"><span style="color:var(--accent);font-weight:700;width:65px;">1:00 PM</span><span>Work-in-progress frame (Figma screenshot, desk, thesis note)</span></div>
+        <div style="display:flex;gap:12px;padding:8px;background:var(--surface);border-radius:8px;"><span style="color:var(--accent);font-weight:700;width:65px;">7:00 PM</span><span>Re-share a comment or DM reaction + follow CTA</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ COMPETITORS ═══ -->
+  <div id="page-competitors" class="page">
+    <div class="pg-head">
+      <h1>🕵️ Competitor Intel — The Steal Report</h1>
+      <p>Who's winning in your space, what's driving their growth, and what you can take.</p>
+    </div>
+
+    <div class="card">
+      <h3>🎯 Your Target Competitors</h3>
+      <div class="g2" id="compGrid"></div>
+    </div>
+
+    <div class="card">
+      <h3>🏆 Top 10 Hooks to Steal (Adapted for @uxabhi_)</h3>
+      <div id="stealHooks" style="display:flex;flex-direction:column;gap:8px;"></div>
+    </div>
+
+    <div class="card">
+      <h3>🌐 Whitespace — What No One Is Doing (Your Opportunity)</h3>
+      <div style="display:flex;flex-direction:column;gap:10px;" id="whitespaceGrid"></div>
+    </div>
+
+    <div class="card">
+      <h3>📡 Algorithm Patterns Right Now (May 2026)</h3>
+      <div id="algoGrid" style="display:flex;flex-direction:column;gap:10px;"></div>
+    </div>
+  </div>
+
+  <!-- ═══ PRIORITY ACTIONS ═══ -->
+  <div id="page-actions" class="page">
+    <div class="pg-head">
+      <h1>🚀 Priority Action List</h1>
+      <p>Everything compressed into what you do first. Ranked by expected impact on reaching 10K.</p>
+    </div>
+    <div class="alert alert-hot">🔥 Do Day 1 tasks before anything else. Bio + first video with comment trigger is the highest-ROI move this week.</div>
+
+    <div class="card">
+      <h3>This Week — Days 1–7</h3>
+      <div id="actionList"></div>
+    </div>
+
+    <div class="card">
+      <h3>📋 This Month — Non-Negotiables</h3>
+      <div style="display:flex;flex-direction:column;gap:8px;font-size:12px;" id="monthlyNonNeg"></div>
+    </div>
+
+    <div class="card">
+      <h3>🤝 Collab Targets</h3>
+      <table class="trigger-table">
+        <thead><tr><th>Creator</th><th>Followers</th><th>Pitch Concept</th></tr></thead>
+        <tbody id="collabTable"></tbody>
+      </table>
+    </div>
+  </div>
+
+  </main>
+</div><!-- /right -->
+</div><!-- /shell -->
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── STATE ───
+let FMT = 'Reel 30–45s';
+let TONE = 'casual and relatable';
+
+// ─── NAV ───
+function nav(id, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  el.classList.add('active');
+}
+function setFmt(el, v) { document.querySelectorAll('#fmtRow .chip').forEach(c=>c.classList.remove('on')); el.classList.add('on'); FMT=v; }
+function setTone(el, v) { document.querySelectorAll('#toneRow .chip').forEach(c=>c.classList.remove('on')); el.classList.add('on'); TONE=v; }
+
+// ─── SYSTEM PROMPT ───
+const SYSTEM = `You are an expert Instagram scriptwriter for @uxabhi_ — Abhishek Jha.
+
+PROFILE CONTEXT:
+- Handle: @uxabhi_ | 1,242 followers | Goal: 10K in 30 days
+- Identity: UX & Web Designer, M.Sc HCI student in Germany, originally from India
+- Skills: Figma, Framer, Claude AI, Google AI Studio, vibe coding, Chrome extensions
+- Niche: UX design + AI tools for designers + HCI research + freelancing + Indian designer in Europe
+- Tone: casual, direct, like talking to a friend — not corporate, not performative
+- Unique angle: Indian designer studying/working in Germany — bilingual (Hindi + English), academic+builder energy
+- Top performers: Practical tool tutorials + screen recording + comment trigger (2.1K likes, 1.9K comments in 2024)
+- Hindi rant got 7.2% engagement — double niche average
+
+SCRIPT RULES:
+1. Open with a SCROLL-STOPPING HOOK — first 2 seconds decide everything
+2. No "Hey guys" or slow intros — start on the action
+3. Sound like Abhishek talking to a design friend, not presenting
+4. Include a COMMENT TRIGGER (e.g. "Comment 'TOOLS'") or SAVE CTA
+5. Label all sections: [HOOK] [BODY] [CTA]
+6. For screen recording: write as tight VO narration
+7. For Hinglish: mix naturally — don't force it
+8. Keep punchy — every sentence earns its place`;
+
+// ─── API CALL ───
+async function callGroq(messages, maxTokens) {
+  const key = document.getElementById('groqKey').value.trim();
+  if (!key) { showToast('Add your Groq API key first!'); return null; }
+  const model = document.getElementById('groqModel').value;
+  const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
+    body: JSON.stringify({ model, max_tokens: maxTokens, messages })
+  });
+  const data = await res.json();
+  if (data.error) throw new Error(data.error.message);
+  return data.choices?.[0]?.message?.content;
+}
+
+// ─── REWRITE SCRIPT ───
+async function rewriteScript() {
+  const raw = document.getElementById('inputScript').value.trim();
+  if (!raw) { showToast('Add your idea first!'); return; }
+  const box = document.getElementById('outputBox');
+  box.innerHTML = '<div class="dots"><span></span><span></span><span></span></div> <span style="color:var(--muted);font-size:12px;">Writing your script...</span>';
+  try {
+    const prompt = `FORMAT: ${FMT}\nTONE: ${TONE}\n\nHere is my raw idea/draft:\n${raw}\n\nRewrite this as a complete @uxabhi_ Instagram script. Label [HOOK], [BODY], [CTA]. Script only, no explanation.`;
+    const text = await callGroq([{ role: 'system', content: SYSTEM }, { role: 'user', content: prompt }], 900);
+    if (text) renderOutput(text);
+    document.getElementById('outMeta').textContent = `✦ ${FMT} · ${TONE}`;
+  } catch(e) {
+    box.innerHTML = `<span style="color:var(--accent2)">Error: ${e.message}</span><button class="copy-btn" onclick="copyOutput()">Copy</button>`;
+  }
+}
+
+async function generateHooks() {
+  const raw = document.getElementById('inputScript').value.trim();
+  if (!raw) { showToast('Describe your topic first!'); return; }
+  const box = document.getElementById('outputBox');
+  box.innerHTML = '<div class="dots"><span></span><span></span><span></span></div>';
+  try {
+    const prompt = `Topic: "${raw}"\n\nWrite 3 Instagram hooks for @uxabhi_ (UX designer, HCI master's, Germany, builds AI tools).\n\nHOOK 1 (Curiosity): [text]\nHOOK 2 (Relatable): [text]\nHOOK 3 (Hot Take / Hinglish): [text]\n\nEach hook = 1–2 sentences max. Natural, spoken. No "Hey guys." Hooks only.`;
+    const text = await callGroq([{ role: 'user', content: prompt }], 400);
+    if (text) renderOutput(text);
+  } catch(e) {
+    box.innerHTML = `<span style="color:var(--accent2)">Error: ${e.message}</span>`;
+  }
+}
+
+async function generateCaption() {
+  const raw = document.getElementById('inputScript').value.trim();
+  if (!raw) { showToast('Add your idea first!'); return; }
+  const box = document.getElementById('outputBox');
+  box.innerHTML = '<div class="dots"><span></span><span></span><span></span></div>';
+  try {
+    const prompt = `Write an Instagram caption for @uxabhi_ about: "${raw}"\n\nRules: hook line → 2-3 lines story → comment trigger ("Comment 'X' for...") → "Save this" → 8 relevant hashtags from clusters: #figmatips #framerwebsite #uxstudent #designtools #indiandesigner #uxportfolio #hcidesign #designerwhobuilds #uxdesigner #uiuxdesign\n\nCaption only. No labels. Natural voice.`;
+    const text = await callGroq([{ role: 'system', content: SYSTEM }, { role: 'user', content: prompt }], 500);
+    if (text) renderOutput(text);
+  } catch(e) {
+    box.innerHTML = `<span style="color:var(--accent2)">Error: ${e.message}</span>`;
+  }
+}
+
+function renderOutput(text) {
+  const box = document.getElementById('outputBox');
+  let html = '<button class="copy-btn" onclick="copyOutput()">Copy</button>';
+  text.split('\n').forEach(line => {
+    if (/^\[HOOK\]/i.test(line)) {
+      html += `<span class="sec-tag" style="color:var(--accent2)">🪝 HOOK</span>\n`;
+      const c = line.replace(/^\[HOOK\]\s*/i,'');
+      if(c) html += `<span class="hook-line">${esc(c)}</span>\n`;
+    } else if (/^\[BODY\]/i.test(line)) {
+      html += `<span class="sec-tag" style="color:var(--accent)">📝 BODY</span>\n`;
+    } else if (/^\[CTA\]/i.test(line)) {
+      html += `<span class="sec-tag" style="color:var(--accent3)">💬 CTA</span>\n`;
+    } else {
+      html += esc(line) + '\n';
+    }
+  });
+  box.innerHTML = html;
+}
+
+function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function clearAll(){ document.getElementById('inputScript').value=''; document.getElementById('outputBox').innerHTML='<span class="out-placeholder">Your script appears here.</span><button class="copy-btn" onclick="copyOutput()">Copy</button>'; document.getElementById('outMeta').textContent=''; }
+function copyOutput(){ const t=document.getElementById('outputBox').innerText.replace('Copy','').trim(); navigator.clipboard.writeText(t).then(()=>showToast('Copied!')); }
+function injectH(el){ const h=el.innerText; const ta=document.getElementById('inputScript'); ta.value=h+'\n\n'+ta.value; showToast('Hook injected →'); }
+
+// ─── IDEAS DATA (from real audit + strategy) ───
+const IDEAS = [
+  {tag:'tool',title:'This Figma plugin builds a design system in 30 seconds',hook:'"I don\'t know how this plugin is still free" — Comment \'SYSTEM\' for the link. Replicates your 2.1K viral format.',trigger:'SYSTEM'},
+  {tag:'tool',title:'I asked Claude to audit my Figma file — here\'s what it found',hook:'Screen recording + VO. Show the actual critique. High save intent from students and juniors.',trigger:'AUDIT'},
+  {tag:'tool',title:'Framer + Claude landing page in 4 hours — full workflow',hook:'"A client needed a landing page. I had 4 hours." Comment \'WORKFLOW\' — your highest-save post prediction.',trigger:'WORKFLOW'},
+  {tag:'tool',title:'This plugin copies any site\'s styles to Framer in 30 seconds',hook:'You already posted this (57 likes). Repost with better hook: show the result FIRST, then reveal the plugin.',trigger:'FRAMER'},
+  {tag:'tool',title:'5 AI prompts I actually use for UX research',hook:'Not a generic list — show your actual Notion/Claude conversation. "I\'ve been using these for 3 months."',trigger:'TOOLS'},
+  {tag:'tool',title:'My 2026 UX + AI toolkit — the honest list',hook:'"Not the ones everyone is promoting." Algorithm is pushing this format NOW — post before saturation.',trigger:'STACK'},
+  {tag:'take',title:'If your portfolio says Tools: Figma, Notion, Miro — read this',hook:'"That\'s probably why you\'re not getting callbacks." High share + comment intent. Based on real recruiter feedback in Berlin.',trigger:'PORTFOLIO'},
+  {tag:'take',title:'My entire feed is AI replacing designers. I have thoughts.',hook:'Sequel to your Hindi rant (90 likes, 7.2% eng rate). Stronger hook + Hinglish = your highest recent engagement format.',trigger:null},
+  {tag:'take',title:'Every Indian designer posting \'use AI for design\' right now',hook:'Hinglish. Direct camera. "Kya soch rahe ho?" Your rant format is your differentiator — no one else owns this.',trigger:null},
+  {tag:'take',title:'I compared Indian vs German UX interviews — embarrassing difference',hook:'Will be shared in every Indian designer WhatsApp group. Expected: 50K–200K impressions. Only you can make this.',trigger:'EUROPE'},
+  {tag:'build',title:'I built a Chrome extension at 2am to understand German TV',hook:'You already posted this (81 likes, 34 comments — your best recent post). Repost with tighter edit + comment trigger.',trigger:'EXTENSION'},
+  {tag:'build',title:'It\'s 11pm. I have a design problem. So I\'m building the tool.',hook:'"The Midnight Build" series. Algorithm is starved for this format. @serenainux got 5.4K likes with 4K followers doing this.',trigger:'BUILD'},
+  {tag:'build',title:'I vibe-coded a landing page with Claude — client offered to pay',hook:'Show the result FIRST (2 seconds), then "here\'s how." Result-first format = your highest-perform hook type.',trigger:null},
+  {tag:'edu',title:'This app\'s onboarding makes me want to delete it — here\'s why',hook:'UI teardown. Screen recording + critique. No one in Indian design space is doing structured good/bad portfolio teardowns.',trigger:null},
+  {tag:'edu',title:'I redesigned a startup\'s homepage in 20 minutes — before/after',hook:'Show AFTER first. "Before and after" = universally highest-save format. Startup founders will DM you for work.',trigger:null},
+  {tag:'edu',title:'What a UX designer actually does vs what everyone thinks',hook:'Carousel. High saves. Bridges academic HCI knowledge → real-world decisions. Your unique academic+practice edge.',trigger:null},
+  {tag:'life',title:'Indian designer in Germany — the honest reality no one tells you',hook:'Your most ownable content lane. Zero competition. Indian diaspora design community = highly engaged, shares heavily.',trigger:'EUROPE'},
+  {tag:'life',title:'My first freelance client in Germany — what they actually paid',hook:'"Honest: here\'s what my first freelance client in Germany actually paid me." High curiosity + share intent.',trigger:null},
+  {tag:'life',title:'My HCI thesis is about [X] — changing how I think about products',hook:'Academic credibility + real research. No creator in this space has a current HCI thesis. Completely unowned territory.',trigger:'HCI'},
+  {tag:'life',title:'European design agencies mein Indian designers ko kya problem aati hai',hook:'Pure Hinglish, direct camera, honest take. "Jo koi aur nahi karta." This format is your highest-engagement type.',trigger:null},
+];
+
+function renderIdeas(f) {
+  const grid = document.getElementById('ideasGrid');
+  const tc = {tool:'t-tool',take:'t-take',build:'t-build',edu:'t-edu',life:'t-life'};
+  const tl = {tool:'🛠 Toolbox',take:'🎤 Honest Take',build:'🔧 Builder\'s Log',edu:'📚 Design Decoded',life:'🌍 India × Germany'};
+  const filt = f==='all' ? IDEAS : IDEAS.filter(i=>i.tag===f);
+  grid.innerHTML = filt.map(i=>`
+    <div class="idea-card">
+      <span class="itag ${tc[i.tag]}">${tl[i.tag]}</span>
+      <div class="idea-title">${i.title}</div>
+      <div class="idea-hook">${i.hook}</div>
+      ${i.trigger ? `<div style="font-size:10px;color:var(--accent3);margin-top:5px;font-weight:700;">Trigger: "${i.trigger}"</div>` : ''}
+      <div class="use-idea" onclick="loadIdea('${i.title.replace(/'/g,"\\'")}','${i.hook.replace(/'/g,"\\'")}')">→ Open in Studio</div>
+    </div>`).join('');
+}
+
+function filterIdeas(f, el) {
+  document.querySelectorAll('#ideaFilter .chip').forEach(c=>c.classList.remove('on'));
+  el.classList.add('on');
+  renderIdeas(f);
+}
+
+function loadIdea(title, hook) {
+  document.getElementById('inputScript').value = title + '\n\n' + hook.replace(/\\'/g,"'");
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-studio').classList.add('active');
+  document.querySelectorAll('.nav-btn')[0].classList.add('active');
+  showToast('Loaded → Studio ✓');
+}
+
+// ─── HOOKS DATA (from steal report) ───
+const HOOKS = {
+  A: [
+    {type:'Curiosity',text:'"I don\'t know how this Figma plugin is still free" [immediately showing design system auto-building on screen]'},
+    {type:'Curiosity',text:'"The reason most UX portfolios don\'t get callbacks isn\'t what they think it is."'},
+    {type:'Curiosity',text:'"I spent 3 hours building design systems manually before someone showed me this existed."'},
+    {type:'Curiosity',text:'"My HCI thesis uncovered something about how people use apps that completely changed how I design."'},
+    {type:'Curiosity',text:'"There\'s a Framer workflow that\'s been sitting in my client process for 6 months and I haven\'t shown it to anyone."'},
+  ],
+  B: [
+    {type:'Story',text:'"Last night around 2am I was watching a Korean series in German audio... and I couldn\'t understand it. So I built something."'},
+    {type:'Story',text:'"Six months ago I had zero freelance clients in Germany. Three uncomfortable conversations changed that."'},
+    {type:'Story',text:'"My first design review in Germany was in a room where I was the only non-European. Here\'s what I noticed."'},
+    {type:'Story',text:'"A hiring manager in Berlin told me something last month that I haven\'t stopped thinking about."'},
+    {type:'Story',text:'"I almost submitted a portfolio that would have immediately disqualified me. Here\'s what I changed 48 hours before the deadline."'},
+  ],
+  C: [
+    {type:'Hot Take',text:'"Unpopular: Figma skills don\'t make you a better UX designer. Not even close."'},
+    {type:'Hot Take',text:'"Stop putting \'Tools: Figma, Notion, Miro\' in your portfolio. It\'s telling me nothing about your thinking."'},
+    {type:'Hot Take',text:'"AI will replace lazy designers. It will make good designers untouchable. The gap is widening right now."'},
+    {type:'Hot Take',text:'"Every week someone tells Indian designers that AI took all the design jobs. I\'m going to need receipts."'},
+    {type:'Hot Take',text:'"Your UX portfolio isn\'t bad. Your case studies are written for other designers, not the hiring manager who has 40 seconds."'},
+  ],
+  D: [
+    {type:'Hinglish',text:'"My entire Instagram feed has been taken over by people telling me Claude can replace my job. Kuch toh baat karo."'},
+    {type:'Hinglish',text:'"European design agencies mein Indian designers ko kya problem aati hai — aur main honestly baat karta hun jo koi nahi karta."'},
+    {type:'Hinglish',text:'"India mein junior UX designers ke liye Europe better hai than US right now — aur main wajah batata hun."'},
+    {type:'Hinglish',text:'"Sab AI se bana rahe hain. Lekin koi yeh nahi bata raha ki actually kya kaam aata hai aur kya nahi."'},
+    {type:'Hinglish',text:'"Germany mein design job dhoondne ka process itna different hai — ek Indian designer ke perspective se honest breakdown."'},
+  ],
+};
+
+function renderHooks() {
+  ['A','B','C','D'].forEach(k => {
+    const el = document.getElementById('h'+k);
+    el.innerHTML = HOOKS[k].map(h=>`
+      <div class="hook-item" onclick="sendHook('${h.text.replace(/'/g,"\\'")}')">
+        <div class="hook-type">${h.type}</div>
+        <div class="hook-text">${h.text}</div>
+        <span class="h-use">Use →</span>
+      </div>`).join('');
+  });
+}
+
+function sendHook(text) {
+  document.getElementById('inputScript').value = text.replace(/\\'/g,"'") + '\n\n';
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-studio').classList.add('active');
+  document.querySelectorAll('.nav-btn')[0].classList.add('active');
+  showToast('Hook loaded → Studio ✓');
+}
+
+// ─── TRIGGERS ───
+const TRIGGERS = [
+  {word:'SYSTEM',offer:'DM: Figma plugin link that auto-builds design systems in 30 seconds',why:'Replicates your 1.9K comment viral post from 2024'},
+  {word:'TOOLS',offer:'DM: Your current AI + design tool stack as a living Google Sheet',why:'High-intent — designers always want someone else\'s toolkit'},
+  {word:'FRAMER',offer:'DM: Your favourite Framer components used in real client work',why:'Framer content is getting outsized algorithmic reach right now'},
+  {word:'PORTFOLIO',offer:'DM: Your UX portfolio checklist — what you actually look for',why:'Every UX student will comment. Huge audience size for this trigger.'},
+  {word:'EUROPE',offer:'DM: Step-by-step guide to getting UX clients in Europe as an Indian designer',why:'Only you can write this. Completely ownable content lane.'},
+  {word:'HCI',offer:'DM: Your semester\'s UX research notes as a Notion doc — simplified',why:'Academic credibility trigger. No creator in this space has this.'},
+];
+const COMP_TRIGGERS = [
+  {account:'@ayzz.thedesigner',word:'COLOR',offer:'4-step color system resource',result:'High engagement'},
+  {account:'@uthinhpham',word:'ANIMATION',offer:'All Framer components used in portfolio',result:'4.7K+ comments'},
+  {account:'@uthinhpham',word:'FRIDAY',offer:'Google Doc of free fonts (weekly)',result:'Recurring series'},
+  {account:'@vaibhavshukla.design',word:'DESIGN',offer:'AI design hiring system',result:'2.4K+ comments'},
+  {account:'@ux.aneta',word:'PORTFOLIO',offer:'UX portfolio course + Framer template',result:'High saves'},
+  {account:'@ayzz.thedesigner',word:'MAGIC',offer:'Animated component library link',result:'1.9K comments (YOUR BEST EVER)'},
+];
+function renderTriggers() {
+  document.getElementById('triggerTable').innerHTML = TRIGGERS.map(t=>`
+    <tr><td><span class="trigger-word">${t.word}</span></td><td style="font-size:12px">${t.offer}</td><td style="font-size:11px;color:var(--muted)">${t.why}</td></tr>`).join('');
+  document.getElementById('compTriggers').innerHTML = COMP_TRIGGERS.map(t=>`
+    <tr><td style="color:var(--accent);font-size:12px">${t.account}</td><td><span class="trigger-word">${t.word}</span></td><td style="font-size:11px">${t.offer}</td><td style="font-size:11px;color:var(--accent3)">${t.result}</td></tr>`).join('');
+}
+
+// ─── REEL TABLE ───
+const REELS = [
+  {date:'Jun 2024',topic:'Figma plugin: Figr Identity — auto design systems',likes:2100,comments:15,tier:1},
+  {date:'Jun 2024',topic:'Comment MAGIC — animated component library',likes:1300,comments:1900,tier:1},
+  {date:'Dec 2025',topic:'Life update — HCI Masters, moving to Germany',likes:52,comments:26,tier:3},
+  {date:'Jan 2026',topic:'UX Series 05: Collaboration',likes:53,comments:3,tier:3},
+  {date:'Jan 2026',topic:'Penguin motivation reel',likes:41,comments:11,tier:3},
+  {date:'Feb 2026',topic:'Vibe coding with Google AI Studio',likes:22,comments:0,tier:3},
+  {date:'Feb 2026',topic:'Design meme — searching for a bug for 8 hours',likes:35,comments:2,tier:3},
+  {date:'Feb 2026',topic:'Using Google AI Studio for 3 months',likes:44,comments:2,tier:3},
+  {date:'Feb 2026',topic:'Copy any website styles to Framer using plugin',likes:57,comments:2,tier:2},
+  {date:'Mar 2026',topic:'2026 Portfolio live — AI twist, built with Framer',likes:43,comments:8,tier:3},
+  {date:'Apr 2026',topic:'Productivity hacks to avoid procrastination',likes:39,comments:0,tier:3},
+  {date:'Apr 2026',topic:'Hindi rant: AI invading the designer\'s Instagram feed',likes:90,comments:19,tier:2},
+  {date:'Apr 2026',topic:'Built a Chrome extension to learn German — at 2am',likes:81,comments:34,tier:2},
+];
+
+function renderReelTable() {
+  document.getElementById('reelTable').innerHTML = REELS.map((r,i)=>`
+    <tr>
+      <td style="color:var(--muted)">${i+1}</td>
+      <td style="color:var(--muted);font-size:11px">${r.date}</td>
+      <td style="font-size:12px">${r.topic}</td>
+      <td class="${r.tier===1?'tier1':r.tier===2?'tier2':'tier3'}">${r.likes.toLocaleString()}</td>
+      <td class="${r.tier===1?'tier1':r.tier===2?'tier2':'tier3'}">${r.comments}</td>
+      <td><span class="badge ${r.tier===1?'badge-g':r.tier===2?'badge-y':''}">T${r.tier}</span></td>
+    </tr>`).join('');
+}
+
+// ─── PILLARS ───
+const PILLARS = [
+  {emoji:'🛠',title:"Designer's Toolbox",sub:'AI & design tool shortcuts',pct:30,col:'var(--accent)',ids:[
+    '"I asked Claude to audit my Figma file — here\'s what it found"',
+    '"This Framer plugin copies any site\'s style in 30 seconds"',
+    '"5 AI prompts that actually helped my UX research"'
+  ]},
+  {emoji:'📚',title:'Design Decoded',sub:'UI/UX education & critique',pct:25,col:'var(--accent3)',ids:[
+    '"This app\'s onboarding makes me want to delete it — here\'s why"',
+    '"I redesigned a startup\'s landing page in 20 minutes — before/after"',
+    '"Why your portfolio lacks case studies" — what recruiters actually mean'
+  ]},
+  {emoji:'🎤',title:'The Honest Take',sub:'Opinions + India × Europe POV',pct:20,col:'var(--accent2)',ids:[
+    '"Stop putting Figma under Technical Skills" (Hinglish or English)',
+    '"Every Indian designer posting \'use AI\' right now — let\'s talk"',
+    '"I compared Indian vs German UX interviews — here\'s the gap"'
+  ]},
+  {emoji:'🔧',title:"Builder's Log",sub:'Vibe coding + midnight builds',pct:15,col:'var(--gold)',ids:[
+    '"I built a Chrome extension at 2am to understand German TV — Part 2"',
+    '"It\'s 11pm. I have a design problem. So I\'m building the tool."',
+    '"I vibe-coded a landing page with Claude — client offered to pay"'
+  ]},
+  {emoji:'🎓',title:'HCI × Student Life',sub:'Academic meets real-world',pct:10,col:'#c0a0ff',ids:[
+    '"My HCI thesis is about [X] — changing how I think about products"',
+    '"What a Human-Computer Interaction master\'s actually teaches you"',
+    '"Germany student life as an Indian designer — the honest version"'
+  ]},
+];
+
+function renderPillars() {
+  document.getElementById('pillarsGrid').innerHTML = PILLARS.map(p=>`
+    <div class="card" style="border-left:3px solid ${p.col};">
+      <h3>${p.emoji} ${p.title} <span class="badge" style="background:rgba(255,255,255,0.07)">${p.pct}%</span></h3>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px">${p.sub}</div>
+      <div class="bar-row" style="margin-bottom:12px;"><div class="bar-track" style="flex:1;"><div class="bar-fill" style="width:${p.pct*3.3}%;background:${p.col};"></div></div></div>
+      <div style="font-size:12px;line-height:1.8;">
+        ${p.ids.map(v=>`<div style="padding:4px 0;border-bottom:1px solid rgba(42,42,56,0.5)">✦ ${v}</div>`).join('')}
+      </div>
+    </div>`).join('');
+
+  const ADVANTAGES = [
+    {title:'Indian Designer in Germany',col:'var(--accent)','desc':'The dual cultural lens of Indian design education + European professional standards. Every Indian designer wants to know how to get from India to Europe. You\'ve done it.','reel':'"I compared Indian vs German UX job interviews — the questions, the process, the salary." Expected: 50K–200K impressions. Shared in every Indian designer WhatsApp group.'},
+    {title:'HCI Master\'s Student with Real Research',col:'var(--accent3)',desc:'Actual academic credibility in HCI. No creator in this space has a current HCI research project.',reel:'"My HCI thesis studies [X]. I\'m running user research this week. Here\'s the protocol." Completely unownable by practitioners.'},
+    {title:'Builds Real Products with AI at 2am',col:'var(--accent2)',desc:'Real builder energy with designer aesthetics. Most design creators talk about AI tools. You ship things with them.',reel:'"The Midnight Build" — one design problem solved per week, filmed in real time. No one in the design niche is doing this consistently.'},
+    {title:'Framer + Claude for Real Client Work',col:'var(--gold)',desc:'The specific workflow of AI-assisted Framer development for client projects. @uthinhpham uses Framer but doesn\'t use Claude.',reel:'"A client needed a landing page. I had 4 hours. Framer + Claude, component by component." — Comment \'WORKFLOW\''},
+    {title:'Speaks Hindi/Hinglish to a Global Design Audience',col:'#c0a0ff',desc:'Authentic bilingual voice. Your Hindi rant got 7.2% engagement — double the niche average. No one owns this content lane.',reel:'"European agencies mein Indian designers ko kya problem" — 60s Hinglish, direct camera. The Indian diaspora design community is underserved and highly engaged.'},
+  ];
+  document.getElementById('advantagesGrid').innerHTML = ADVANTAGES.map(a=>`
+    <div style="background:var(--surface);border-radius:10px;padding:13px;border-left:3px solid ${a.col};">
+      <div style="font-weight:700;font-size:13px;margin-bottom:4px">${a.title}</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:6px;line-height:1.5">${a.desc}</div>
+      <div style="font-size:11px;color:${a.col};line-height:1.5">→ ${a.reel}</div>
+    </div>`).join('');
+
+  const DOS = ['Open every reel with the best 2 seconds of the result — show the output FIRST','Screen recordings + VO for tool content — your #1 performing format','Use comment triggers on EVERY post (TOOLS, FRAMER, SYSTEM, etc.)','Reply to every comment within 60 minutes of posting','Post Stories 3× daily — poll at 9am, WIP at 1pm, re-share at 7pm','Hindi/Hinglish for opinion content — your highest engagement rate type'];
+  const DONTS = ['Generic intros — no "Hey guys", no slow builds','Motivation reels (penguin, quotes) — your lowest performing format','Posting without a comment trigger OR save CTA','Posting only 2–3× per month (your #1 growth blocker)','30 broad hashtags — use 7–10 mid-tier specific ones','UX Series episodes without a strong hook or trigger'];
+  document.getElementById('dosList').innerHTML = DOS.map(d=>`<div style="padding:5px 0;border-bottom:1px solid rgba(42,42,56,0.4)">✅ ${d}</div>`).join('');
+  document.getElementById('dontsList').innerHTML = DONTS.map(d=>`<div style="padding:5px 0;border-bottom:1px solid rgba(42,42,56,0.4)">❌ ${d}</div>`).join('');
+}
+
+// ─── CALENDAR ───
+const CAL = {
+  week1:[
+    {day:'Day 1',type:'Reel',badge:'badge-r',pillar:'Toolbox',title:'Figma plugin: auto design system in 30s — "Comment SYSTEM"',tag:'Highest ROI · Replicates your viral format'},
+    {day:'Day 2',type:'Stories',badge:'badge-g',pillar:'Engagement',title:'Poll: "What design tool do you wish existed?" + reply to all Day 1 comments',tag:'Comment loop'},
+    {day:'Day 3',type:'Reel',badge:'badge-p',pillar:'Honest Take',title:'"Stop putting Figma under Technical Skills" — Berlin recruiter story',tag:'High share intent'},
+    {day:'Day 4',type:'Carousel',badge:'badge-y',pillar:'Edu',title:'"7 UX portfolio mistakes I see every week" — save-bait checklist',tag:'Save-optimised'},
+    {day:'Day 5',type:'Reel',badge:'badge-r',pillar:'Honest Take',title:'Hindi rant: AI replacing designers sequel — "Comment TOOLS"',tag:'Hinglish · Highest engagement rate'},
+    {day:'Day 6',type:'Stories',badge:'badge-g',pillar:'Outreach',title:'DM @jitu.ux with collab concept + post behind-the-scenes story',tag:'Collab signal'},
+    {day:'Day 7',type:'Reel',badge:'badge-p',pillar:"Builder's Log",title:'Chrome extension rebuild — better hook + "Comment EXTENSION"',tag:'Your best recent post — re-cut it'},
+  ],
+  week2:[
+    {day:'Day 8',type:'Reel',badge:'badge-y',pillar:'Design Decoded',title:'UI teardown: I redesigned [startup] onboarding in 20 mins',tag:'Saves + Reach'},
+    {day:'Day 9',type:'Stories',badge:'badge-g',pillar:'Community',title:'Poll: "Should I do more design critiques?" + share top Week 1 comment',tag:'Community'},
+    {day:'Day 10',type:'Reel',badge:'badge-r',pillar:"Builder's Log",title:'Vibe-coded a landing page with Claude — client offered to pay',tag:'Reach'},
+    {day:'Day 11',type:'Carousel',badge:'badge-y',pillar:'Toolbox',title:'"AI tools I actually use as a UX designer in 2026 — not the promoted ones"',tag:'Saves'},
+    {day:'Day 12',type:'Reel',badge:'badge-p',pillar:'Collab',title:'Collab with @jitu.ux: "We both reviewed the same portfolio"',tag:'Reach + New Audience'},
+    {day:'Day 13',type:'Stories',badge:'badge-g',pillar:'DMs',title:'Q&A: "Ask me anything about breaking into UX in Europe"',tag:'DMs / Leads'},
+    {day:'Day 14',type:'Reel',badge:'badge-r',pillar:'Honest Take',title:'"Honest: my first freelance client in Germany — what they paid"',tag:'Shares · High curiosity'},
+  ],
+  week3:[
+    {day:'Day 15',type:'Reel',badge:'badge-r',pillar:'Design Decoded',title:'"Your startup\'s landing page is losing customers in 5 seconds"',tag:'Reach · Startup audience'},
+    {day:'Day 16',type:'Stories',badge:'badge-g',pillar:'Leads',title:'"DM me AUDIT for a free 10-min portfolio review"',tag:'Lead generation'},
+    {day:'Day 17',type:'Reel',badge:'badge-y',pillar:'Design Decoded',title:'Redesigned a startup homepage for free — before/after',tag:'Saves + Shares'},
+    {day:'Day 18',type:'Carousel',badge:'badge-y',pillar:'Edu',title:'"What a UX designer actually does vs what everyone thinks"',tag:'Saves'},
+    {day:'Day 19',type:'Reel',badge:'badge-p',pillar:'Toolbox',title:'"This AI workflow cut my UX research time in half — exact process"',tag:'Saves'},
+    {day:'Day 20',type:'Stories',badge:'badge-g',pillar:'HCI Life',title:'Behind the scenes: thesis / HCI research in progress',tag:'Authenticity'},
+    {day:'Day 21',type:'Reel',badge:'badge-p',pillar:'HCI',title:'"My HCI thesis is about [X] — changing how I design every product"',tag:'Reach · Academic × design crossover'},
+  ],
+  week4:[
+    {day:'Day 22',type:'Reel',badge:'badge-r',pillar:'Trigger',title:'"Comment TOOLS — I\'ll DM you the 10 free AI tools I use in Europe"',tag:'Comments · Trigger post'},
+    {day:'Day 23',type:'Stories',badge:'badge-g',pillar:'Research',title:'Poll: "Would you pay €50 for a 1-hour portfolio review with me?"',tag:'Market research · lead signal'},
+    {day:'Day 24',type:'Reel',badge:'badge-r',pillar:'India × Europe',title:'"Every Indian designer wants to work in Europe — honest truth"',tag:'Shares · Opinion'},
+    {day:'Day 25',type:'Carousel',badge:'badge-y',pillar:"Builder's Log",title:'"5 Framer websites I\'ve built — what worked, what clients wanted"',tag:'Saves + Profile visits'},
+    {day:'Day 26',type:'Reel',badge:'badge-p',pillar:'Honest Take',title:'"I\'ve reviewed 40 UX portfolios this year — 3 things that stand out"',tag:'Saves + Shares'},
+    {day:'Day 27',type:'Stories',badge:'badge-g',pillar:'Community',title:'Re-share top Week 4 comments + "What should I cover next?"',tag:'Community'},
+    {day:'Day 28',type:'Reel',badge:'badge-r',pillar:'Meta',title:'"30 days of posting every day as a designer — what happened"',tag:'Reach · Meta-content · Highly shareable'},
+  ]
+};
+
+function renderCalendar() {
+  ['week1','week2','week3','week4'].forEach(wk => {
+    document.getElementById(wk).innerHTML = CAL[wk].map(d=>`
+      <div class="cal-row">
+        <div class="cal-day"><div class="dname">${d.day}</div><span class="badge ${d.badge}">${d.type}</span></div>
+        <div class="cal-body">
+          <div class="cpillar">${d.pillar}</div>
+          <div class="ctitle">${d.title}</div>
+          <div class="ctag">→ ${d.tag}</div>
+        </div>
+      </div>`).join('');
+  });
+}
+
+// ─── COMPETITORS ───
+const COMPS = [
+  {handle:'@jitu.ux',followers:'80K+',why:'Largest Indian UX creator. Overlapping audience. Figma tutorials, consistent visual template.', steal:'Collab: "We both review the same portfolio — who gives better feedback?"'},
+  {handle:'@ux.wheee',followers:'25K+',why:'Indian designer diaspora, similar life stage. Personal storytelling + design education.', steal:'Collab: "Two Indian designers, two countries — our honest job hunt experience"'},
+  {handle:'@thedesignely',followers:'35K+',why:'Design engineering + code crossover. Similar HCI interest. Technical depth.', steal:'Format: Design engineering explainer — bridges code + design like your HCI background'},
+  {handle:'@designbyjav',followers:'20K+',why:'Framer-specific niche. Best Framer numbers in the space.', steal:'Collab: "I design it, you build it in Framer — 60-min challenge"'},
+  {handle:'@uthinhpham',followers:'30K+',why:'Framer portfolio reel hit 30.1K likes. "FREE FONT FRIDAY" recurring trigger series.', steal:'Format: Weekly recurring trigger series → Launch "FREE TOOL TUESDAY"'},
+  {handle:'@ayzz.thedesigner',followers:'4K',why:'Human-made design vs AI slop got 25.3K likes. Builder energy + results-first format.', steal:'Format: 2-second result reveal — show finished design FIRST, then process'},
+];
+
+const STEAL_HOOKS = [
+  {orig:'@ayzz.thedesigner: Show interactive design → "This took 3 days to make without AI"',steal:'"I designed this landing page in 4 hours with Framer + Claude. Here\'s every decision I made." [Shows finished site first]'},
+  {orig:'@uthinhpham: Font downloads → "FREE FONT FRIDAY" weekly series',steal:'"FREE TOOL TUESDAY" — every Tuesday, one underrated AI/design tool. Comment \'TOOLS\' for the master list.'},
+  {orig:'@jitu.ux: "This Figma trick saved me 2 hours"',steal:'"I don\'t know how this Figma plugin is still free" [screen already showing the finished design system]'},
+  {orig:'@serenainux: "Building AI products and documenting the chaos"',steal:'"The Midnight Build" — one design problem per week, built with AI, filmed at night. You already did this once (Chrome extension).'},
+  {orig:'@vaibhavshukla.design: Industry commentary, Hinglish occasionally',steal:'Full Hinglish rant — "European design agencies mein Indian designers ko kya problem" — no one owns this lane.'},
+];
+
+const WHITESPACE = [
+  {title:'Hindi/Hinglish UX Education',text:'Zero creators making UX/product design education in Hindi. India has the largest design student population globally. Completely ownable category.'},
+  {title:'Indian Designer in Europe POV',text:'"Indian designer in Germany" returns lifestyle travel content. Zero UX creators documenting this experience: German work culture, visa realities, European vs Indian clients, salary comparisons.'},
+  {title:'HCI Research Explained for Practitioners',text:'Academic HCI research never gets translated for Instagram. No creator takes real HCI studies (Fitts\' Law, mental models) and makes them digestible for working designers. Only you can do this.'},
+  {title:'Vibe Coding + Design — The Format Exists, Has No Owner',text:'@serenainux: 5.4K likes with 4K followers = algorithm is starving for this. No established designer-builder is documenting "I had a design problem → I built the tool → here\'s the result."'},
+  {title:'Framer + AI Workflow — Specific and Unclaimed',text:'@uthinhpham uses Framer but not Claude. No one documents the AI-assisted Framer workflow for client projects. You do this for every client. Film it.'},
+];
+
+const ALGO = [
+  {sig:'🔥 Hot NOW',text:'AI vs Human Creativity — 4 of top 10 posts this week touched this. Instagram pushing it because long comment threads drive watch time. Post your hot take within 7 days.'},
+  {sig:'⏰ 2–3 months left',text:'"2026 [design stack / portfolio / tools]" format — still working but will saturate by July. Post your "2026 UX + AI toolkit" THIS WEEK.'},
+  {sig:'🚀 Highest ROI',text:'Comment-trigger reels get disproportionate algorithmic push. Comments-per-reach > likes-per-reach in 2026 algorithm. Every post this month needs a trigger.'},
+  {sig:'📈 Tailwind',text:'Framer content is receiving outsized reach regardless of account size. @uthinhpham: 30.1K likes on Framer portfolio reel. Post Framer content this week.'},
+  {sig:'💾 Sustained',text:'Save-bait carousels performing well. @thedesigntrip grid system: 649 reposts. Post one carousel specifically designed to be saved — reference sheet, checklist, or process diagram.'},
+];
+
+function renderCompetitors() {
+  document.getElementById('compGrid').innerHTML = COMPS.map(c=>`
+    <div class="comp-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+        <span class="comp-handle">${c.handle}</span>
+        <span class="comp-followers">${c.followers}</span>
+      </div>
+      <div class="comp-why">${c.why}</div>
+      <div class="steal-btn">→ Steal: ${c.steal}</div>
+    </div>`).join('');
+
+  document.getElementById('stealHooks').innerHTML = STEAL_HOOKS.map((h,i)=>`
+    <div style="background:var(--surface);border-radius:9px;padding:12px;border-left:3px solid var(--accent);">
+      <div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Original Hook ${i+1}</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:7px">${h.orig}</div>
+      <div style="font-size:12px;color:var(--accent3)">→ Yours: ${h.steal}</div>
+    </div>`).join('');
+
+  document.getElementById('whitespaceGrid').innerHTML = WHITESPACE.map(w=>`
+    <div style="background:var(--surface);border-radius:9px;padding:12px;border-left:3px solid var(--accent2);">
+      <div style="font-weight:700;font-size:13px;margin-bottom:4px">${w.title}</div>
+      <div style="font-size:12px;color:var(--muted);line-height:1.5">${w.text}</div>
+    </div>`).join('');
+
+  document.getElementById('algoGrid').innerHTML = ALGO.map(a=>`
+    <div style="background:var(--surface);border-radius:9px;padding:12px;display:flex;gap:12px;align-items:flex-start;">
+      <span style="font-size:11px;font-weight:800;white-space:nowrap;background:var(--card);padding:3px 8px;border-radius:5px;color:var(--text)">${a.sig}</span>
+      <div style="font-size:12px;color:var(--text);line-height:1.5">${a.text}</div>
+    </div>`).join('');
+}
+
+// ─── PRIORITY ACTIONS ───
+const ACTIONS = [
+  {day:'Day 1',text:'Rewrite bio (exact text in Audit page). Set up 5 Highlights: Free Tools 🛠 → Portfolio 💼 → Client Reviews ❤️ → HCI Life 🎓 → Design Tips 📐. Post Video 1 (Figma plugin + "Comment SYSTEM").', impact:'Highest ROI move — replicates your viral formula'},
+  {day:'Day 2',text:'Post Stories: poll about design tools. Reply to EVERY comment on Day 1 post within 60 minutes. DM your reel to 10 design accounts you respect.',impact:'Comment loop = algorithm push'},
+  {day:'Day 3',text:'Post Video 2 (portfolio recruiter take or Hindi rant). Create "FREE TOOL TUESDAY" Google Doc — just 5 tools is enough to start.',impact:'Second trigger post'},
+  {day:'Day 4',text:'Post "7 UX portfolio mistakes" carousel. Every caption: "Save this before you scroll".',impact:'Save-bait — feeds quality signal'},
+  {day:'Day 5',text:'Post Video 4 (Hindi rant on AI). Set up ManyChat or Instagram native DM trigger for: TOOLS, FRAMER, PORTFOLIO, EUROPE, SYSTEM.',impact:'Automation setup for all future triggers'},
+  {day:'Day 6',text:'DM @jitu.ux with specific collab concept: "I\'m making a reel where two designers review the same portfolio — 2 minutes on your side, I\'ll edit everything."',impact:'Collab = fastest path to new audience'},
+  {day:'Day 7',text:'Post Video 3 (Chrome extension story) with "Comment EXTENSION". Review analytics — identify highest reach post and make a Part 2.',impact:'Best recent content re-cut + data-driven decisions'},
+];
+const NON_NEG = [
+  '📌 Post 5–6× per week minimum — the single biggest lever',
+  '💬 Every post needs either a comment trigger OR a save CTA. No exceptions.',
+  '🛠 Launch "FREE TOOL TUESDAY" this week — recurring series trains followers to return',
+  '⏱ Reply to every comment within 60 minutes of posting for first 3 hours',
+  '🤝 One collab reel per week from Week 2 onwards',
+  '📊 Pin top 3 posts: tool tutorial + opinion reel + portfolio/client proof',
+];
+const COLLABS = [
+  {creator:'@jitu.ux',followers:'80K+',concept:'"We both review the same portfolio — who gives better feedback?" You edit everything.'},
+  {creator:'@ux.wheee',followers:'25K+',concept:'"Two Indian designers, two countries — our honest job hunt experience"'},
+  {creator:'@designbyjav',followers:'20K+',concept:'"I design it, you build it in Framer — 60-minute challenge"'},
+  {creator:'@thedesignely',followers:'35K+',concept:'Design engineering explainer — co-hosted reel on code + design'},
+  {creator:'German design peers',followers:'Campus',concept:'Campus life / design school reality check — tagged collab for German audience'},
+];
+
+function renderActions() {
+  document.getElementById('actionList').innerHTML = ACTIONS.map(a=>`
+    <div class="pri-item">
+      <div class="pri-day">${a.day}</div>
+      <div>
+        <div class="pri-text">${a.text}</div>
+        <div class="pri-impact">↑ ${a.impact}</div>
+      </div>
+    </div>`).join('');
+
+  document.getElementById('monthlyNonNeg').innerHTML = NON_NEG.map(n=>`
+    <div style="padding:9px 12px;background:var(--surface);border-radius:8px;">${n}</div>`).join('');
+
+  document.getElementById('collabTable').innerHTML = COLLABS.map(c=>`
+    <tr>
+      <td style="color:var(--accent);font-size:13px;font-weight:600">${c.creator}</td>
+      <td style="color:var(--accent3);font-size:12px">${c.followers}</td>
+      <td style="font-size:12px">${c.concept}</td>
+    </tr>`).join('');
+}
+
+// ─── API STATUS ───
+function updateApiStatus() {
+  const k=document.getElementById('groqKey').value.trim();
+  const s=document.getElementById('apiStatus');
+  if(k.startsWith('gsk_')&&k.length>20){s.textContent='✓ Ready';s.className='api-status ok';}
+  else if(k.length>0){s.textContent='Check key';s.className='api-status empty';}
+  else{s.textContent='No key';s.className='api-status empty';}
+}
+
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2000);}
+
+// ─── INIT ───
+renderIdeas('all');
+renderHooks();
+renderTriggers();
+renderReelTable();
+renderPillars();
+renderCalendar();
+renderCompetitors();
+renderActions();
+</script>
+</body>
+</html>
