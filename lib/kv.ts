@@ -1,4 +1,4 @@
-import { kv } from '@vercel/kv'
+import { Redis } from '@upstash/redis'
 
 export const KV_KEYS = {
   scan: 'uxabhi:scan:latest',
@@ -11,4 +11,7 @@ export const KV_TTL = {
   trends: 60 * 60 * 6,  // 6 hours
 } as const
 
-export { kv }
+export const kv = new Redis({
+  url: process.env.KV_REST_API_URL!,
+  token: process.env.KV_REST_API_TOKEN!,
+})
