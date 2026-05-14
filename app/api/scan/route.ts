@@ -6,9 +6,10 @@ import { buildScanSchema, parseGroqJson, buildTomorrowDate, validateScanResult }
 import { ScanResult } from '@/types/scan'
 import { GROQ_MODEL } from '@/lib/groq'
 
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
+export const dynamic = 'force-dynamic'
 
 export async function POST(req: NextRequest) {
+  const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
   try {
     const { profileInput, forceRefresh = false } = await req.json()
 

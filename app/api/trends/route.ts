@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import { kv, KV_KEYS, KV_TTL } from '@/lib/kv'
 import { fetchTrend, TREND_KEYWORDS, TrendResult } from '@/lib/trends'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET() {
   try {
     const cached = await kv.get<TrendResult[]>(KV_KEYS.trends)

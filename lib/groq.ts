@@ -1,10 +1,10 @@
 import Groq from 'groq-sdk'
 
-export const groqClient = new Groq({
-  apiKey: process.env.GROQ_API_KEY,
-})
-
 export const GROQ_MODEL = 'llama-3.3-70b-versatile'
+
+function getClient() {
+  return new Groq({ apiKey: process.env.GROQ_API_KEY })
+}
 
 export async function groqComplete(
   prompt: string,
@@ -17,7 +17,7 @@ export async function groqComplete(
   }
   messages.push({ role: 'user', content: prompt })
 
-  const completion = await groqClient.chat.completions.create({
+  const completion = await getClient().chat.completions.create({
     model: GROQ_MODEL,
     messages,
     max_tokens: maxTokens,
