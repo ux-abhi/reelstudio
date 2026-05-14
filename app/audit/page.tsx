@@ -3,16 +3,16 @@ import { useState, useEffect } from 'react'
 import { useScan } from '@/components/scan/ScanContext'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { SkeletonCard } from '@/components/shared/SkeletonCard'
+import { PageHeader } from '@/components/shared/PageHeader'
 import { Post } from '@/types/scan'
 
 export default function AuditPage() {
   const { scan, isScanning } = useScan()
   const [barWidths, setBarWidths] = useState(false)
-
   useEffect(() => { setTimeout(() => setBarWidths(true), 150) }, [])
 
   if (isScanning) return (
-    <div className="page-enter flex flex-col gap-4">
+    <div className="page-enter" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       {[1,2,3].map(i => <SkeletonCard key={i} lines={4} />)}
     </div>
   )
@@ -20,38 +20,36 @@ export default function AuditPage() {
 
   const { accountHealth, posts, bioFix, hashtagClusters } = scan
   const sortedPosts = [...(posts ?? [])].sort((a, b) => (b.likes + b.comments) - (a.likes + a.comments))
-
   const engRate = parseFloat(accountHealth?.engagementRate ?? '0')
-  const engBarClass = engRate >= 5 ? 'bar-good' : engRate >= 3 ? 'bar-medium' : 'bar-low'
+  const engFill = engRate >= 5 ? 'good' : engRate >= 3 ? 'medium' : 'low'
   const bioScore = accountHealth?.bioScore ?? 0
+  const bioFill  = bioScore >= 7 ? 'good' : bioScore >= 4 ? 'medium' : 'low'
 
   return (
-    <div className="page-enter flex flex-col gap-8">
-      <div>
-        <h1 className="text-3xl font-bold" style={{ letterSpacing: '-0.04em', color: 'rgba(255,255,255,0.92)' }}>Account Audit</h1>
-        <p className="text-sm mt-1" style={{ color: 'rgba(255,255,255,0.40)' }}>Your real account health, analysed by Groq</p>
-        <hr className="divider mt-4" />
-      </div>
+    <div className="page-enter" style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>
+      <PageHeader title="Account Audit" subtitle="Your real account health, analysed by Groq" />
 
-      {/* Health bars */}
+      {/* Health metrics */}
       {accountHealth && (
-        <section className="card flex flex-col gap-5">
-          <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.30)' }}>Health Metrics</p>
-          <HealthBar label="Engagement Rate" value={accountHealth.engagementRate} barClass={engBarClass} pct={Math.min(engRate * 10, 100)} animate={barWidths} verdict={accountHealth.engagementVerdict} />
-          <HealthBar label="Bio Score" value={`${bioScore}/10`} barClass={bioScore >= 7 ? 'bar-good' : bioScore >= 4 ? 'bar-medium' : 'bar-low'} pct={bioScore * 10} animate={barWidths} verdict={accountHealth.bioIssues?.join(' · ') ?? ''} />
-          <div>
-            <div className="flex justify-between mb-1">
-              <span className="text-xs font-medium" style={{ color: 'rgba(255,255,255,0.55)' }}>Top Format</span>
-              <span className="text-xs" style={{ color: 'rgba(255,255,255,0.70)' }}>{accountHealth.topPerformingFormat}</span>
+        <section>
+          <p className="section-label" style={{ marginBottom: 16 }}>Health Metrics</p>
+          <div className="card" style={{ padding: '20px 24px' }}>
+            <HealthBar label="Engagement Rate" value={accountHealth.engagementRate} fill={engFill} pct={Math.min(engRate * 10, 100)} animate={barWidths} note={accountHealth.engagementVerdict} />
+            <HealthBar label="Bio Score" value={`${bioScore}/10`} fill={bioFill} pct={bioScore * 10} animate={barWidths} note={accountHealth.bioIssues?.join(' · ') ?? ''} />
+            <div style={{ paddingTop: 8, borderTop: '1px solid var(--border-subtle)', marginTop: 8, display: 'flex', gap: 32 }}>
+              <div>
+                <p style={{ fontSize: 11, color: 'var(--text-tertiary)', textTransform: 'uppercase' as const, letterSpacing: '0.04em', fontWeight: 600, marginBottom: 4 }}>Top Format</p>
+                <p style={{ fontSize: 13, color: 'var(--text-primary)', fontWeight: 500 }}>{accountHealth.topPerformingFormat}</p>
+              </div>
+              <div>
+                <p style={{ fontSize: 11, color: 'var(--text-tertiary)', textTransform: 'uppercase' as const, letterSpacing: '0.04em', fontWeight: 600, marginBottom: 4 }}>Weakest Format</p>
+                <p style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{accountHealth.weakestFormat}</p>
+              </div>
+              <div>
+                <p style={{ fontSize: 11, color: 'var(--text-tertiary)', textTransform: 'uppercase' as const, letterSpacing: '0.04em', fontWeight: 600, marginBottom: 4 }}>Posting Cadence</p>
+                <p style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{accountHealth.postingCadence}</p>
+              </div>
             </div>
-            <div className="flex justify-between">
-              <span className="text-xs font-medium" style={{ color: 'rgba(255,255,255,0.55)' }}>Weakest Format</span>
-              <span className="text-xs" style={{ color: 'rgba(255,255,255,0.40)' }}>{accountHealth.weakestFormat}</span>
-            </div>
-          </div>
-          <div>
-            <span className="text-xs font-medium" style={{ color: 'rgba(255,255,255,0.55)' }}>Posting Cadence: </span>
-            <span className="text-xs" style={{ color: 'rgba(255,255,255,0.70)' }}>{accountHealth.postingCadence}</span>
           </div>
         </section>
       )}
@@ -59,24 +57,24 @@ export default function AuditPage() {
       {/* Bio fix */}
       {bioFix && (
         <section>
-          <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.30)', marginBottom: 12 }}>Bio Fix</p>
+          <p className="section-label" style={{ marginBottom: 16 }}>Bio Fix</p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="card" style={{ border: '0.5px solid rgba(255,69,58,0.20)', background: 'rgba(255,69,58,0.05)' }}>
-              <p className="text-xs font-semibold mb-2" style={{ color: '#FF453A', letterSpacing: '0.04em' }}>CURRENT</p>
-              <p className="text-sm" style={{ color: 'rgba(255,255,255,0.65)', lineHeight: 1.6 }}>{bioFix.current}</p>
+            <div className="card" style={{ borderColor: 'rgba(229,72,77,0.25)' }}>
+              <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.04em', color: 'var(--red)', textTransform: 'uppercase' as const, marginBottom: 10 }}>Current</p>
+              <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.7, marginBottom: 12 }}>{bioFix.current}</p>
               {bioFix.issues?.length > 0 && (
-                <ul className="mt-3 flex flex-col gap-1">
+                <ul style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                   {bioFix.issues.map((issue, i) => (
-                    <li key={i} className="text-xs flex items-start gap-1.5" style={{ color: '#FF453A' }}>
+                    <li key={i} style={{ display: 'flex', gap: 6, fontSize: 12, color: 'var(--red)' }}>
                       <span>×</span>{issue}
                     </li>
                   ))}
                 </ul>
               )}
             </div>
-            <div className="card" style={{ border: '0.5px solid rgba(52,199,89,0.20)', background: 'rgba(52,199,89,0.05)' }}>
-              <p className="text-xs font-semibold mb-2" style={{ color: '#34C759', letterSpacing: '0.04em' }}>RECOMMENDED</p>
-              <p className="text-sm whitespace-pre-line" style={{ color: 'rgba(255,255,255,0.80)', lineHeight: 1.7 }}>{bioFix.recommended}</p>
+            <div className="card" style={{ borderColor: 'rgba(48,164,108,0.25)' }}>
+              <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.04em', color: 'var(--green)', textTransform: 'uppercase' as const, marginBottom: 10 }}>Recommended</p>
+              <p style={{ fontSize: 13, color: 'var(--text-primary)', lineHeight: 1.7, whiteSpace: 'pre-line' }}>{bioFix.recommended}</p>
             </div>
           </div>
         </section>
@@ -85,32 +83,30 @@ export default function AuditPage() {
       {/* Posts table */}
       {sortedPosts.length > 0 && (
         <section>
-          <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.30)', marginBottom: 12 }}>All Posts</p>
-          <div className="rounded-2xl overflow-hidden" style={{ border: '0.5px solid rgba(255,255,255,0.09)' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+          <p className="section-label" style={{ marginBottom: 16 }}>All Posts</p>
+          <div className="table-wrapper card" style={{ padding: 0, overflow: 'hidden' }}>
+            <table className="table">
               <thead>
-                <tr style={{ borderBottom: '0.5px solid rgba(255,255,255,0.08)' }}>
+                <tr>
                   {['Post', 'Date', 'Likes', 'Comments', 'Tier', 'Hook', 'What worked'].map(h => (
-                    <th key={h} style={{ textAlign: 'left', padding: '8px 14px', fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.30)' }}>{h}</th>
+                    <th key={h}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {sortedPosts.map((post: Post, i) => (
-                  <tr key={post.id || i} style={{ borderBottom: i < sortedPosts.length - 1 ? '0.5px solid rgba(255,255,255,0.05)' : 'none' }}>
-                    <td style={{ padding: '10px 14px', color: 'rgba(255,255,255,0.75)', maxWidth: 200 }}>{post.topic}</td>
-                    <td style={{ padding: '10px 14px', color: 'rgba(255,255,255,0.40)', fontSize: 12 }}>{post.date}</td>
-                    <td style={{ padding: '10px 14px', color: 'rgba(255,255,255,0.80)', fontWeight: 500 }}>{post.likes?.toLocaleString()}</td>
-                    <td style={{ padding: '10px 14px', color: 'rgba(255,255,255,0.80)', fontWeight: 500 }}>{post.comments?.toLocaleString()}</td>
-                    <td style={{ padding: '10px 14px' }}>
-                      <span className={`badge badge-t${post.tier}`} style={{ padding: '2px 8px', borderRadius: 980, fontSize: 11, fontWeight: 600 }}>T{post.tier}</span>
-                    </td>
-                    <td style={{ padding: '10px 14px' }}>
-                      <span style={{ fontSize: 11, color: post.hookStrength === 'strong' ? '#34C759' : post.hookStrength === 'medium' ? '#FFD60A' : 'rgba(255,255,255,0.35)' }}>
+                  <tr key={post.id || i}>
+                    <td className="primary" style={{ maxWidth: 220 }}>{post.topic}</td>
+                    <td style={{ whiteSpace: 'nowrap' }}>{post.date}</td>
+                    <td className="primary">{post.likes?.toLocaleString()}</td>
+                    <td className="primary">{post.comments?.toLocaleString()}</td>
+                    <td><span className={`badge badge-t${post.tier}`}>T{post.tier}</span></td>
+                    <td>
+                      <span style={{ fontSize: 11, fontWeight: 500, color: post.hookStrength === 'strong' ? 'var(--green)' : post.hookStrength === 'medium' ? 'var(--yellow)' : 'var(--text-tertiary)' }}>
                         {post.hookStrength}
                       </span>
                     </td>
-                    <td style={{ padding: '10px 14px', color: 'rgba(255,255,255,0.45)', fontSize: 12, maxWidth: 200 }}>{post.whatWorked}</td>
+                    <td style={{ maxWidth: 200, fontSize: 12 }}>{post.whatWorked}</td>
                   </tr>
                 ))}
               </tbody>
@@ -122,20 +118,18 @@ export default function AuditPage() {
       {/* Hashtag clusters */}
       {hashtagClusters && (
         <section>
-          <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.30)', marginBottom: 12 }}>Hashtag Clusters</p>
+          <p className="section-label" style={{ marginBottom: 16 }}>Hashtag Clusters</p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {[
-              { label: 'Tool Tutorials', tags: hashtagClusters.toolTutorials },
+              { label: 'Tool Tutorials',     tags: hashtagClusters.toolTutorials },
               { label: 'Education / Student', tags: hashtagClusters.educationStudent },
-              { label: 'Opinion / India', tags: hashtagClusters.opinionIndia },
+              { label: 'Opinion / India',     tags: hashtagClusters.opinionIndia },
             ].map(cluster => (
               <div key={cluster.label} className="card">
-                <p className="text-xs font-semibold mb-3" style={{ color: 'rgba(255,255,255,0.50)', letterSpacing: '0.04em' }}>{cluster.label}</p>
-                <div className="flex flex-wrap gap-1.5">
+                <p style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)', marginBottom: 12 }}>{cluster.label}</p>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                   {(cluster.tags ?? []).map(tag => (
-                    <span key={tag} className="text-xs px-2 py-0.5 rounded-full" style={{ background: 'rgba(110,106,255,0.10)', color: '#8480ff', border: '0.5px solid rgba(110,106,255,0.20)' }}>
-                      {tag}
-                    </span>
+                    <span key={tag} className="tag tag-toolbox" style={{ fontSize: 11 }}>{tag}</span>
                   ))}
                 </div>
               </div>
@@ -147,17 +141,15 @@ export default function AuditPage() {
   )
 }
 
-function HealthBar({ label, value, barClass, pct, animate, verdict }: { label: string; value: string; barClass: string; pct: number; animate: boolean; verdict: string }) {
+function HealthBar({ label, value, fill, pct, animate, note }: { label: string; value: string; fill: string; pct: number; animate: boolean; note: string }) {
   return (
-    <div>
-      <div className="flex justify-between mb-1.5">
-        <span className="text-sm font-medium" style={{ color: 'rgba(255,255,255,0.70)' }}>{label}</span>
-        <span className="text-sm font-semibold" style={{ color: 'rgba(255,255,255,0.90)' }}>{value}</span>
+    <div className="health-row">
+      <span className="health-label">{label}</span>
+      <div className="health-track">
+        <div className={`health-fill ${fill}`} style={{ width: animate ? `${pct}%` : '0%' }} />
       </div>
-      <div className="bar-track">
-        <div className={`bar-fill ${barClass}`} style={{ width: animate ? `${pct}%` : '0%' }} />
-      </div>
-      {verdict && <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.35)' }}>{verdict}</p>}
+      <span className="health-value">{value}</span>
+      {note && <span style={{ fontSize: 11, color: 'var(--text-tertiary)', marginLeft: 8, flex: 1 }}>{note}</span>}
     </div>
   )
 }

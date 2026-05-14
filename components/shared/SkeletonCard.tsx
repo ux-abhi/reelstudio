@@ -1,12 +1,12 @@
 export function SkeletonCard({ lines = 3 }: { lines?: number }) {
   return (
     <div className="card">
-      <div className="skeleton h-4 w-1/3 mb-3" />
+      <div className="skeleton" style={{ height: 14, width: '35%', marginBottom: 12 }} />
       {Array.from({ length: lines }).map((_, i) => (
         <div
           key={i}
-          className="skeleton mb-2"
-          style={{ height: 13, width: `${70 + (i % 3) * 10}%` }}
+          className="skeleton"
+          style={{ height: 12, width: `${65 + (i % 3) * 12}%`, marginBottom: 8 }}
         />
       ))}
     </div>

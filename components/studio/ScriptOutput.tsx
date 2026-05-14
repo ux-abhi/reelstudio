@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react'
 
-interface ScriptOutputProps {
+interface Props {
   output: string
   onSave: () => void
   isSaving: boolean
@@ -16,11 +16,10 @@ function parseScript(text: string) {
     hook: hookMatch?.[1]?.trim() ?? '',
     body: bodyMatch?.[1]?.trim() ?? '',
     cta:  ctaMatch?.[1]?.trim() ?? '',
-    raw:  text,
   }
 }
 
-export function ScriptOutput({ output, onSave, isSaving, saved }: ScriptOutputProps) {
+export function ScriptOutput({ output, onSave, isSaving, saved }: Props) {
   const [copied, setCopied] = useState(false)
   const parts = parseScript(output)
   const hasStructure = parts.hook || parts.body || parts.cta
@@ -32,56 +31,24 @@ export function ScriptOutput({ output, onSave, isSaving, saved }: ScriptOutputPr
   }
 
   return (
-    <div className="flex flex-col gap-4 h-full">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16, height: '100%' }}>
       {hasStructure ? (
-        <div className="flex flex-col gap-3 flex-1">
-          {parts.hook && (
-            <Section label="HOOK" color="#6e6aff" bg="rgba(110,106,255,0.08)">
-              {parts.hook}
-            </Section>
-          )}
-          {parts.body && (
-            <Section label="BODY" color="rgba(255,255,255,0.70)" bg="rgba(255,255,255,0.04)">
-              {parts.body}
-            </Section>
-          )}
-          {parts.cta && (
-            <Section label="CTA" color="#00e5b4" bg="rgba(0,229,180,0.08)">
-              {parts.cta}
-            </Section>
-          )}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, flex: 1 }}>
+          {parts.hook && <ScriptSection label="HOOK" accent="var(--accent)" bg="var(--accent-subtle)" border="var(--accent-border)" text={parts.hook} />}
+          {parts.body && <ScriptSection label="BODY" accent="var(--text-secondary)" bg="var(--bg-elevated)" border="var(--border)" text={parts.body} />}
+          {parts.cta  && <ScriptSection label="CTA" accent="var(--green)" bg="var(--green-subtle)" border="rgba(48,164,108,0.25)" text={parts.cta} />}
         </div>
       ) : (
-        <pre
-          className="flex-1 text-sm leading-relaxed whitespace-pre-wrap"
-          style={{ color: 'rgba(255,255,255,0.80)', fontFamily: 'inherit' }}
-        >
+        <pre style={{ flex: 1, fontSize: 13, lineHeight: 1.7, whiteSpace: 'pre-wrap', color: 'var(--text-primary)', fontFamily: 'inherit' }}>
           {output}
         </pre>
       )}
 
-      <div className="flex gap-2 mt-auto">
-        <button
-          onClick={handleCopy}
-          className="flex-1 text-sm font-medium py-2 rounded-full transition-all"
-          style={{
-            background: 'rgba(255,255,255,0.07)',
-            color: copied ? '#34C759' : 'rgba(255,255,255,0.80)',
-            border: '0.5px solid rgba(255,255,255,0.12)',
-          }}
-        >
+      <div style={{ display: 'flex', gap: 8, marginTop: 'auto' }}>
+        <button onClick={handleCopy} className="btn-secondary" style={{ flex: 1, color: copied ? 'var(--green)' : undefined }}>
           {copied ? '✓ Copied' : 'Copy'}
         </button>
-        <button
-          onClick={onSave}
-          disabled={isSaving || saved}
-          className="flex-1 text-sm font-medium py-2 rounded-full transition-all"
-          style={{
-            background: saved ? 'rgba(52,199,89,0.15)' : 'rgba(110,106,255,0.15)',
-            color: saved ? '#34C759' : '#6e6aff',
-            border: `0.5px solid ${saved ? 'rgba(52,199,89,0.30)' : 'rgba(110,106,255,0.30)'}`,
-          }}
-        >
+        <button onClick={onSave} disabled={isSaving || saved} className={saved ? 'btn-secondary' : 'btn-primary'} style={{ flex: 1, color: saved ? 'var(--green)' : undefined }}>
           {isSaving ? 'Saving...' : saved ? '✓ Saved' : 'Save to Board'}
         </button>
       </div>
@@ -89,24 +56,14 @@ export function ScriptOutput({ output, onSave, isSaving, saved }: ScriptOutputPr
   )
 }
 
-function Section({
-  label,
-  color,
-  bg,
-  children,
-}: {
-  label: string
-  color: string
-  bg: string
-  children: string
-}) {
+function ScriptSection({ label, accent, bg, border, text }: { label: string; accent: string; bg: string; border: string; text: string }) {
   return (
-    <div className="rounded-xl p-4" style={{ background: bg, border: `0.5px solid ${color}22` }}>
-      <p className="text-xs font-semibold mb-2" style={{ color, letterSpacing: '0.06em' }}>
+    <div style={{ padding: '12px 14px', borderRadius: 8, background: bg, border: `1px solid ${border}` }}>
+      <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', color: accent, marginBottom: 8, textTransform: 'uppercase' as const }}>
         {label}
       </p>
-      <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.85)', whiteSpace: 'pre-wrap' }}>
-        {children}
+      <p style={{ fontSize: 13, lineHeight: 1.7, color: 'var(--text-primary)', whiteSpace: 'pre-wrap' }}>
+        {text}
       </p>
     </div>
   )

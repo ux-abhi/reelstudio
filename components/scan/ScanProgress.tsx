@@ -15,67 +15,56 @@ export function ScanProgress() {
   if (!isScanning) return null
 
   return (
-    <div className="scan-overlay">
-      <div className="flex flex-col items-center gap-8 max-w-sm w-full px-6">
-        {/* Animated ring */}
-        <div className="relative w-16 h-16">
-          <svg className="spin-ring w-16 h-16" viewBox="0 0 64 64" fill="none">
-            <circle
-              cx="32" cy="32" r="28"
-              stroke="rgba(110,106,255,0.15)"
-              strokeWidth="4"
-            />
-            <circle
-              cx="32" cy="32" r="28"
-              stroke="#6e6aff"
-              strokeWidth="4"
-              strokeLinecap="round"
-              strokeDasharray="44 132"
-            />
+    <div className="scan-screen">
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 40, width: 320, padding: '0 16px' }}>
+        {/* Spinner */}
+        <div style={{ position: 'relative', width: 48, height: 48 }}>
+          <svg className="spin-ring" width="48" height="48" viewBox="0 0 48 48" fill="none">
+            <circle cx="24" cy="24" r="20" stroke="var(--border-strong)" strokeWidth="3" />
+            <circle cx="24" cy="24" r="20" stroke="var(--accent)" strokeWidth="3" strokeLinecap="round" strokeDasharray="32 94" />
           </svg>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-xl">⚡</span>
-          </div>
         </div>
 
-        <div className="text-center">
-          <p className="text-base font-semibold" style={{ color: 'rgba(255,255,255,0.92)' }}>
+        <div style={{ textAlign: 'center' }}>
+          <p style={{ fontSize: 20, fontWeight: 600, color: 'var(--text-primary)', letterSpacing: '-0.03em', marginBottom: 6 }}>
             Scanning your account
           </p>
-          <p className="text-sm mt-1" style={{ color: 'rgba(255,255,255,0.40)' }}>
-            Groq is analysing everything...
+          <p style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>
+            Groq + Google Trends analysis
           </p>
         </div>
 
         {/* Steps */}
-        <div className="w-full flex flex-col gap-3">
+        <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 14 }}>
           {ALL_STEPS.map((step, i) => {
-            const done = i < scanProgress.length
+            const done   = i < scanProgress.length
             const active = i === scanProgress.length
-
             return (
-              <div key={step} className="flex items-center gap-3">
+              <div key={step} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <div
-                  className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 text-xs"
                   style={{
-                    background: done
-                      ? 'rgba(52,199,89,0.20)'
-                      : active
-                      ? 'rgba(110,106,255,0.20)'
-                      : 'rgba(255,255,255,0.06)',
-                    border: `0.5px solid ${done ? 'rgba(52,199,89,0.40)' : active ? 'rgba(110,106,255,0.40)' : 'rgba(255,255,255,0.10)'}`,
+                    width: 20,
+                    height: 20,
+                    borderRadius: '50%',
+                    flexShrink: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: 10,
+                    fontWeight: 600,
+                    background: done ? 'var(--green-subtle)' : active ? 'var(--accent-subtle)' : 'var(--bg-elevated)',
+                    border: `1px solid ${done ? 'var(--green)' : active ? 'var(--accent)' : 'var(--border)'}`,
+                    color: done ? 'var(--green)' : active ? 'var(--accent)' : 'var(--text-tertiary)',
+                    transition: 'all 200ms ease',
                   }}
                 >
-                  {done ? '✓' : active ? '·' : ''}
+                  {done ? '✓' : ''}
                 </div>
                 <span
-                  className="text-sm"
                   style={{
-                    color: done
-                      ? 'rgba(52,199,89,0.90)'
-                      : active
-                      ? 'rgba(255,255,255,0.92)'
-                      : 'rgba(255,255,255,0.25)',
+                    fontSize: 13,
+                    color: done ? 'var(--text-primary)' : active ? 'var(--text-primary)' : 'var(--text-tertiary)',
+                    transition: 'color 200ms ease',
                   }}
                 >
                   {step}
@@ -86,9 +75,7 @@ export function ScanProgress() {
         </div>
 
         {error && (
-          <p className="text-sm text-center" style={{ color: '#FF453A' }}>
-            {error}
-          </p>
+          <p style={{ fontSize: 13, color: 'var(--red)', textAlign: 'center' }}>{error}</p>
         )}
       </div>
     </div>

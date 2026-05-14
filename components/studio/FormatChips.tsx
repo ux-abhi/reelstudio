@@ -9,26 +9,11 @@ const FORMATS = [
   'Hinglish Rant',
 ]
 
-export function FormatChips({
-  selected,
-  onChange,
-}: {
-  selected: string
-  onChange: (f: string) => void
-}) {
+export function FormatChips({ selected, onChange }: { selected: string; onChange: (f: string) => void }) {
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className="segmented" style={{ flexWrap: 'wrap', height: 'auto' }}>
       {FORMATS.map(f => (
-        <button
-          key={f}
-          onClick={() => onChange(f)}
-          className="text-xs font-medium px-3 py-1.5 rounded-full transition-all"
-          style={{
-            background: selected === f ? 'rgba(110,106,255,0.15)' : 'rgba(255,255,255,0.05)',
-            color: selected === f ? 'rgba(255,255,255,0.92)' : 'rgba(255,255,255,0.45)',
-            border: `0.5px solid ${selected === f ? 'rgba(110,106,255,0.30)' : 'rgba(255,255,255,0.10)'}`,
-          }}
-        >
+        <button key={f} onClick={() => onChange(f)} className={`segment${selected === f ? ' active' : ''}`}>
           {f}
         </button>
       ))}

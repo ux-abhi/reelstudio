@@ -5,20 +5,20 @@ import { useScan } from '@/components/scan/ScanContext'
 import { ScanStatus } from './ScanStatus'
 
 const CREATE_NAV = [
-  { href: '/studio', label: 'Script Studio', icon: '✍' },
-  { href: '/saved', label: 'Save Board', icon: '🔖' },
-  { href: '/ideas', label: 'Ideas Bank', icon: '💡' },
-  { href: '/hooks', label: 'Hooks Library', icon: '🎣' },
-  { href: '/triggers', label: 'Trigger Words', icon: '💬' },
+  { href: '/studio',  label: 'Script Studio' },
+  { href: '/saved',   label: 'Save Board' },
+  { href: '/ideas',   label: 'Ideas Bank' },
+  { href: '/hooks',   label: 'Hooks Library' },
+  { href: '/triggers',label: 'Trigger Words' },
 ]
 
 const STRATEGY_NAV = [
-  { href: '/dashboard', label: 'Dashboard', icon: '◎' },
-  { href: '/audit', label: 'Account Audit', icon: '📊' },
-  { href: '/pillars', label: 'Content Pillars', icon: '🏛' },
-  { href: '/calendar', label: '30-Day Calendar', icon: '📅' },
-  { href: '/competitors', label: 'Competitors', icon: '🔍' },
-  { href: '/actions', label: 'Priority Actions', icon: '✓' },
+  { href: '/dashboard',   label: 'Dashboard' },
+  { href: '/audit',       label: 'Account Audit' },
+  { href: '/pillars',     label: 'Content Pillars' },
+  { href: '/calendar',    label: '30-Day Calendar' },
+  { href: '/competitors', label: 'Competitors' },
+  { href: '/actions',     label: 'Priority Actions' },
 ]
 
 export function Sidebar() {
@@ -29,48 +29,53 @@ export function Sidebar() {
     <>
       {/* Desktop sidebar */}
       <aside
-        className="fixed left-0 top-0 h-screen flex-col hidden md:flex"
         style={{
-          width: 240,
-          background: 'rgba(12,12,18,0.80)',
-          backdropFilter: 'blur(40px)',
-          borderRight: '0.5px solid rgba(255,255,255,0.08)',
-          padding: '20px 12px',
-          gap: 4,
+          width: 220,
+          height: '100vh',
+          position: 'fixed',
+          left: 0,
+          top: 0,
+          background: 'var(--bg-sidebar)',
+          borderRight: '1px solid var(--border)',
+          padding: '16px 12px',
+          display: 'flex',
+          flexDirection: 'column',
+          overflowY: 'auto',
           zIndex: 50,
         }}
+        className="hidden md:flex"
       >
         {/* Logo */}
-        <div style={{ marginBottom: 12 }}>
-          <div className="flex items-baseline gap-1 px-2 py-1">
-            <span style={{ fontSize: 15, fontWeight: 500, color: 'rgba(255,255,255,0.50)' }}>
-              @uxabhi_
-            </span>
-            <span style={{ fontSize: 15, fontWeight: 700, color: 'rgba(255,255,255,0.92)' }}>
-              Studio
-            </span>
-          </div>
+        <div
+          style={{
+            padding: '8px 8px 16px',
+            borderBottom: '1px solid var(--border-subtle)',
+            marginBottom: 8,
+          }}
+        >
+          <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>
+            @uxabhi_ Studio
+          </p>
           {scan && (
-            <p className="px-2" style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)' }}>
-              {scan.profileInput?.followers?.toLocaleString() ?? ''} followers
+            <p style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2 }}>
+              {scan.profileInput?.followers?.toLocaleString()} followers
             </p>
           )}
-          <div style={{ borderTop: '0.5px solid rgba(255,255,255,0.08)', marginTop: 12 }} />
         </div>
 
-        {/* Create section */}
+        {/* Create */}
         <NavSection label="Create">
           {CREATE_NAV.map(item => (
-            <NavItem key={item.href} {...item} active={pathname === item.href} />
+            <NavItem key={item.href} href={item.href} label={item.label} active={pathname === item.href} />
           ))}
         </NavSection>
 
         <div style={{ height: 8 }} />
 
-        {/* Strategy section */}
+        {/* Strategy */}
         <NavSection label="Strategy">
           {STRATEGY_NAV.map(item => (
-            <NavItem key={item.href} {...item} active={pathname === item.href} />
+            <NavItem key={item.href} href={item.href} label={item.label} active={pathname === item.href} />
           ))}
         </NavSection>
 
@@ -79,16 +84,17 @@ export function Sidebar() {
           <ScanStatus />
           {scan && (
             <div
-              className="px-3 py-3 rounded-xl"
               style={{
-                background: 'rgba(255,255,255,0.04)',
-                border: '0.5px solid rgba(255,255,255,0.08)',
+                padding: '10px',
+                borderRadius: 8,
+                border: '1px solid var(--border)',
+                background: 'var(--bg-subtle)',
               }}
             >
-              <p style={{ fontSize: 13, fontWeight: 500, color: 'rgba(255,255,255,0.80)' }}>
+              <p style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>
                 @{scan.profileInput?.handle}
               </p>
-              <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', marginTop: 2 }}>
+              <p style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2 }}>
                 {scan.profileInput?.followers?.toLocaleString()} → {scan.profileInput?.goal?.toLocaleString()} goal
               </p>
             </div>
@@ -98,32 +104,44 @@ export function Sidebar() {
 
       {/* Mobile bottom bar */}
       <nav
-        className="fixed bottom-0 left-0 right-0 flex md:hidden"
         style={{
-          background: 'rgba(12,12,18,0.95)',
-          backdropFilter: 'blur(40px)',
-          borderTop: '0.5px solid rgba(255,255,255,0.08)',
+          background: 'var(--bg-app)',
+          borderTop: '1px solid var(--border)',
           zIndex: 50,
           padding: '8px 0',
         }}
+        className="fixed bottom-0 left-0 right-0 flex md:hidden"
       >
         {[...CREATE_NAV.slice(0, 3), ...STRATEGY_NAV.slice(0, 2)].map(item => (
           <Link
             key={item.href}
             href={item.href}
-            className="flex-1 flex flex-col items-center gap-1 py-1"
+            className="flex-1 flex flex-col items-center gap-0.5 py-1"
             style={{
-              color: pathname === item.href ? '#6e6aff' : 'rgba(255,255,255,0.40)',
               fontSize: 10,
+              color: pathname === item.href ? 'var(--accent)' : 'var(--text-tertiary)',
+              fontWeight: pathname === item.href ? 500 : 400,
+              textDecoration: 'none',
             }}
           >
-            <span style={{ fontSize: 18 }}>{item.icon}</span>
+            <span style={{ fontSize: 16 }}>{mobileIcon(item.href)}</span>
             <span>{item.label.split(' ')[0]}</span>
           </Link>
         ))}
       </nav>
     </>
   )
+}
+
+function mobileIcon(href: string): string {
+  const icons: Record<string, string> = {
+    '/studio':  '✦',
+    '/saved':   '◈',
+    '/ideas':   '◉',
+    '/dashboard': '⊙',
+    '/audit':   '▦',
+  }
+  return icons[href] ?? '·'
 }
 
 function NavSection({ label, children }: { label: string; children: React.ReactNode }) {
@@ -133,10 +151,10 @@ function NavSection({ label, children }: { label: string; children: React.ReactN
         style={{
           fontSize: 11,
           fontWeight: 600,
-          letterSpacing: '0.08em',
+          letterSpacing: '0.06em',
           textTransform: 'uppercase',
-          color: 'rgba(255,255,255,0.25)',
-          padding: '12px 10px 4px',
+          color: 'var(--text-tertiary)',
+          padding: '12px 8px 4px',
         }}
       >
         {label}
@@ -149,28 +167,31 @@ function NavSection({ label, children }: { label: string; children: React.ReactN
 function NavItem({
   href,
   label,
-  icon,
   active,
 }: {
   href: string
   label: string
-  icon: string
   active: boolean
 }) {
   return (
     <Link
       href={href}
-      className="flex items-center gap-2.5 rounded-lg transition-all"
       style={{
-        padding: '7px 10px',
+        display: 'flex',
+        alignItems: 'center',
+        padding: '7px 8px',
+        borderRadius: 7,
         fontSize: 13,
         fontWeight: active ? 500 : 400,
-        color: active ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.50)',
-        background: active ? 'rgba(110,106,255,0.12)' : 'transparent',
-        border: `0.5px solid ${active ? 'rgba(110,106,255,0.20)' : 'transparent'}`,
+        color: active ? 'var(--text-primary)' : 'var(--text-secondary)',
+        background: active ? 'var(--accent-subtle)' : 'transparent',
+        border: `1px solid ${active ? 'var(--accent-border)' : 'transparent'}`,
+        transition: 'all 140ms ease',
+        textDecoration: 'none',
+        marginBottom: 1,
       }}
+      className="hover:bg-[var(--bg-card)] hover:text-[var(--text-primary)]"
     >
-      <span style={{ fontSize: 14, width: 18, textAlign: 'center' }}>{icon}</span>
       {label}
     </Link>
   )

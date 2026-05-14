@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useScan } from '@/components/scan/ScanContext'
+import { PageHeader } from '@/components/shared/PageHeader'
 import { CompetitorAnalysis } from '@/types/scan'
 
 const NICHE_TAGS = ['ux design', 'figma tutorial', 'framer website', 'ai design tools', 'product design', 'ux portfolio', 'design career', 'indian designer', 'hci design', 'design tools', 'ui ux', 'framer', 'design critique', 'design student', 'vibe coding']
@@ -8,18 +9,20 @@ const NICHE_TAGS = ['ux design', 'figma tutorial', 'framer website', 'ai design 
 export default function CompetitorsPage() {
   const { scan } = useScan()
   const [competitors, setCompetitors] = useState<CompetitorAnalysis[]>([])
+  const [selected, setSelected] = useState<CompetitorAnalysis | null>(null)
   const [handle, setHandle] = useState('')
   const [context, setContext] = useState('')
   const [loading, setLoading] = useState(false)
-  const [batchLoading, setBatchLoading] = useState(false)
-  const [batchReport, setBatchReport] = useState<string | null>(null)
-  const [expanded, setExpanded] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     try {
       const stored = localStorage.getItem('uxabhi:competitors')
-      if (stored) setCompetitors(JSON.parse(stored))
+      if (stored) {
+        const list = JSON.parse(stored)
+        setCompetitors(list)
+        if (list.length > 0) setSelected(list[0])
+      }
     } catch {}
   }, [])
 
@@ -31,17 +34,14 @@ export default function CompetitorsPage() {
   async function analyzeCompetitor() {
     if (!handle.trim()) return
     setLoading(true); setError(null)
-    const trendsStr = JSON.stringify(scan?.trendPulse?.slice(0, 5) ?? [])
-    const prompt = `Analyse this Instagram account as a competitor to @uxabhi_:
+    const prompt = `Analyse this Instagram account as a competitor to @uxabhi_ (UX designer, HCI master's Germany, Indian in Europe, Framer + AI tools, 1,242 followers):
 Handle: @${handle.replace('@', '')}
 Context: ${context || 'Design/UX creator'}
-@uxabhi_ profile: UX designer, HCI master's Germany, Indian designer, Framer + AI tools, 1,242 followers
-Current trends: ${trendsStr}
-
+Trends: ${JSON.stringify(scan?.trendPulse?.slice(0, 5) ?? [])}
 Return ONLY this JSON (no markdown):
 {
   "handle": "@${handle.replace('@', '')}",
-  "strategy": "2-3 sentences on what they post and why it works",
+  "strategy": "2-3 sentences",
   "hooksToSteal": ["hook 1 adapted to @uxabhi_ voice", "hook 2", "hook 3", "hook 4", "hook 5"],
   "gapsTheyLeave": ["gap 1", "gap 2", "gap 3"],
   "threatLevel": "high",
@@ -56,7 +56,9 @@ Return ONLY this JSON (no markdown):
       if (data.error) throw new Error(data.error)
       const clean = data.text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim()
       const result: CompetitorAnalysis = JSON.parse(clean)
-      saveCompetitors([result, ...competitors])
+      const updated = [result, ...competitors]
+      saveCompetitors(updated)
+      setSelected(result)
       setHandle(''); setContext('')
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Analysis failed')
@@ -65,142 +67,149 @@ Return ONLY this JSON (no markdown):
     }
   }
 
-  async function runBatchReport() {
-    if (competitors.length < 3) return
-    setBatchLoading(true)
-    const prompt = `Analyse these competitors for @uxabhi_ (UX designer, HCI master's Germany, Indian designer, Framer + AI tools):
-${competitors.map(c => `${c.handle}: ${c.strategy}`).join('\n')}
-Trends: ${JSON.stringify(scan?.trendPulse?.slice(0,4) ?? [])}
-
-Return ONLY JSON:
-{
-  "combinedStealReport": ["top 5 hooks across all competitors adapted to @uxabhi_ voice"],
-  "sharedGaps": ["3 content gaps ALL competitors leave open"],
-  "topWhitespace": "single best unclaimed content angle for @uxabhi_",
-  "positioningMap": "2-3 sentences on where @uxabhi_ sits vs all competitors"
-}`
-    try {
-      const res = await fetch('/api/groq', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt, maxTokens: 1000 }) })
-      const data = await res.json()
-      if (data.error) throw new Error(data.error)
-      setBatchReport(data.text)
-    } finally {
-      setBatchLoading(false)
-    }
-  }
-
-  const THREAT_COLORS: Record<string, string> = { high: '#FF453A', medium: '#FFD60A', low: '#34C759' }
+  const threatColor = (level: string) =>
+    level === 'high' ? 'var(--red)' : level === 'medium' ? 'var(--yellow)' : 'var(--green)'
 
   return (
-    <div className="page-enter flex flex-col gap-8">
-      <div>
-        <h1 className="text-3xl font-bold" style={{ letterSpacing: '-0.04em', color: 'rgba(255,255,255,0.92)' }}>Competitor Analyzer</h1>
-        <p className="text-sm mt-1" style={{ color: 'rgba(255,255,255,0.40)' }}>Analyse any Instagram account as a competitor — steal hooks, find gaps, get the collab pitch</p>
-        <hr className="divider mt-4" />
-      </div>
+    <div className="page-enter" style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+      <PageHeader title="Competitors" subtitle="Analyse, steal hooks, find whitespace" />
 
-      {/* Add manually */}
-      <section className="card">
-        <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.30)', marginBottom: 12 }}>Add Competitor</p>
-        <div className="flex flex-col gap-3">
-          <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm" style={{ color: 'rgba(255,255,255,0.30)' }}>@</span>
-            <input className="input pl-7" value={handle} onChange={e => setHandle(e.target.value.replace('@', ''))} placeholder="handle" />
-          </div>
-          <input className="input text-sm" value={context} onChange={e => setContext(e.target.value)} placeholder="Optional context (e.g. Framer creator, 50K followers)" />
-          {error && <p className="text-xs" style={{ color: '#FF453A' }}>{error}</p>}
-          <button onClick={analyzeCompetitor} disabled={loading || !handle.trim()} className="py-2.5 rounded-full text-sm font-medium" style={{ background: loading ? 'rgba(110,106,255,0.30)' : '#6e6aff', color: '#fff' }}>
-            {loading ? 'Analysing...' : 'Analyse Competitor'}
-          </button>
-        </div>
-      </section>
-
-      {/* Niche tags */}
-      <section>
-        <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.30)', marginBottom: 12 }}>Quick Add from Niche</p>
-        <div className="flex flex-wrap gap-2">
-          {NICHE_TAGS.map(tag => (
-            <button key={tag} onClick={() => { setContext(`Creates content about: ${tag}`); }} className="text-xs px-3 py-1.5 rounded-full transition-all" style={{ background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.50)', border: '0.5px solid rgba(255,255,255,0.09)' }}>
-              {tag}
-            </button>
-          ))}
-        </div>
-      </section>
-
-      {/* Competitor cards */}
-      {competitors.length > 0 && (
-        <section className="flex flex-col gap-4">
-          <div className="flex items-center justify-between">
-            <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.30)' }}>
-              Tracked ({competitors.length})
-            </p>
-            {competitors.length >= 3 && (
-              <button onClick={runBatchReport} disabled={batchLoading} className="text-xs font-medium px-3 py-1.5 rounded-full" style={{ background: 'rgba(110,106,255,0.12)', color: '#8480ff', border: '0.5px solid rgba(110,106,255,0.20)' }}>
-                {batchLoading ? 'Generating...' : 'Batch Report'}
+      {/* 3-column layout */}
+      <div style={{ display: 'flex', gap: 0, minHeight: '60vh' }}>
+        {/* Left — Filter / competitor list */}
+        <div
+          style={{
+            width: 200,
+            flexShrink: 0,
+            borderRight: '1px solid var(--border)',
+            paddingRight: 0,
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+        >
+          <p className="section-label" style={{ padding: '0 0 12px' }}>Niche Tags</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 1, marginBottom: 24 }}>
+            {NICHE_TAGS.slice(0, 8).map(tag => (
+              <button key={tag} className="chip-filter" style={{ fontSize: 11 }}>
+                {tag}
               </button>
+            ))}
+          </div>
+
+          <p className="section-label" style={{ padding: '0 0 8px' }}>Tracked</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+            {competitors.length === 0 ? (
+              <p style={{ fontSize: 12, color: 'var(--text-tertiary)', padding: '4px 0' }}>None yet</p>
+            ) : (
+              competitors.map((c, i) => (
+                <button
+                  key={i}
+                  onClick={() => setSelected(c)}
+                  className={`chip-filter${selected?.handle === c.handle ? ' active' : ''}`}
+                  style={{ fontSize: 12 }}
+                >
+                  {c.handle}
+                  <span className="chip-count" style={{ background: c.threatLevel === 'high' ? 'var(--red-subtle)' : 'var(--bg-elevated)', color: c.threatLevel === 'high' ? 'var(--red)' : 'var(--text-tertiary)' }}>
+                    {c.threatLevel}
+                  </span>
+                </button>
+              ))
             )}
           </div>
+        </div>
 
-          {competitors.map(comp => (
-            <div key={comp.handle} className="rounded-2xl overflow-hidden" style={{ border: '0.5px solid rgba(255,255,255,0.09)' }}>
-              <div className="flex items-center justify-between px-4 py-3 cursor-pointer" style={{ background: 'rgba(255,255,255,0.04)' }} onClick={() => setExpanded(expanded === comp.handle ? null : comp.handle)}>
-                <div className="flex items-center gap-3">
-                  <span className="text-sm font-semibold" style={{ color: 'rgba(255,255,255,0.90)' }}>{comp.handle}</span>
-                  <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={{ background: `${THREAT_COLORS[comp.threatLevel] ?? '#FFD60A'}18`, color: THREAT_COLORS[comp.threatLevel] ?? '#FFD60A' }}>
-                    {comp.threatLevel} threat
-                  </span>
-                  <span className="text-xs" style={{ color: 'rgba(255,255,255,0.30)' }}>Collab: {comp.collabScore}</span>
+        {/* Center — Analysis output or Add form */}
+        <div style={{ flex: 1, padding: '0 24px', minWidth: 0 }}>
+          {!selected ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <p className="section-label" style={{ marginBottom: 4 }}>Add Competitor</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxWidth: 400 }}>
+                <div>
+                  <label style={{ fontSize: 11, color: 'var(--text-tertiary)', display: 'block', marginBottom: 6, fontWeight: 500 }}>Instagram handle</label>
+                  <div style={{ position: 'relative' }}>
+                    <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', fontSize: 13, color: 'var(--text-tertiary)' }}>@</span>
+                    <input className="input" style={{ paddingLeft: 26 }} value={handle} onChange={e => setHandle(e.target.value.replace('@', ''))} placeholder="jitu.ux" />
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <button onClick={e => { e.stopPropagation(); saveCompetitors(competitors.filter(c => c.handle !== comp.handle)) }} className="text-xs px-2 py-1 rounded-lg" style={{ color: '#FF453A', background: 'rgba(255,69,58,0.10)' }}>✕</button>
-                  <span style={{ color: 'rgba(255,255,255,0.30)', fontSize: 12 }}>{expanded === comp.handle ? '↑' : '↓'}</span>
+                <div>
+                  <label style={{ fontSize: 11, color: 'var(--text-tertiary)', display: 'block', marginBottom: 6, fontWeight: 500 }}>Context (optional)</label>
+                  <input className="input" value={context} onChange={e => setContext(e.target.value)} placeholder="Design/UX creator, 80K followers..." />
+                </div>
+                <button onClick={analyzeCompetitor} disabled={loading || !handle.trim()} className="btn-primary" style={{ alignSelf: 'flex-start' }}>
+                  {loading ? 'Analysing...' : 'Analyse'}
+                </button>
+                {error && <p style={{ fontSize: 12, color: 'var(--red)' }}>{error}</p>}
+              </div>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+                <div>
+                  <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>{selected.handle}</h2>
+                  <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
+                    <span className="badge" style={{ background: 'transparent', color: threatColor(selected.threatLevel), borderColor: threatColor(selected.threatLevel) }}>
+                      {selected.threatLevel} threat
+                    </span>
+                    <span className="badge badge-stable">Collab {selected.collabScore}</span>
+                  </div>
+                </div>
+                <button onClick={() => { setSelected(null); setHandle(''); }} className="btn-secondary" style={{ fontSize: 12, padding: '5px 12px' }}>
+                  + Add new
+                </button>
+              </div>
+
+              <div className="card">
+                <p className="section-label" style={{ marginBottom: 8 }}>Strategy</p>
+                <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6 }}>{selected.strategy}</p>
+              </div>
+
+              <div className="card">
+                <p className="section-label" style={{ marginBottom: 8 }}>Gaps they leave open</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {selected.gapsTheyLeave?.map((gap, i) => (
+                    <p key={i} style={{ fontSize: 13, color: 'var(--text-secondary)', display: 'flex', gap: 8 }}>
+                      <span style={{ color: 'var(--green)' }}>→</span>{gap}
+                    </p>
+                  ))}
                 </div>
               </div>
 
-              {expanded === comp.handle && (
-                <div className="px-4 py-4 flex flex-col gap-4" style={{ background: 'rgba(255,255,255,0.02)', borderTop: '0.5px solid rgba(255,255,255,0.07)' }}>
-                  <div>
-                    <SubLabel>Strategy</SubLabel>
-                    <p className="text-sm" style={{ color: 'rgba(255,255,255,0.65)', lineHeight: 1.6 }}>{comp.strategy}</p>
-                  </div>
-                  <div>
-                    <SubLabel>Hooks to steal</SubLabel>
-                    <div className="flex flex-col gap-1.5">
-                      {comp.hooksToSteal?.map((h, i) => <p key={i} className="text-xs" style={{ color: 'rgba(255,255,255,0.60)', lineHeight: 1.5 }}>→ {h}</p>)}
-                    </div>
-                  </div>
-                  <div>
-                    <SubLabel>Gaps they leave</SubLabel>
-                    <div className="flex flex-col gap-1.5">
-                      {comp.gapsTheyLeave?.map((g, i) => <p key={i} className="text-xs" style={{ color: 'rgba(255,255,255,0.60)', lineHeight: 1.5 }}>→ {g}</p>)}
-                    </div>
-                  </div>
-                  <div>
-                    <SubLabel>Whitespace</SubLabel>
-                    <p className="text-sm" style={{ color: '#34C759', lineHeight: 1.6 }}>{comp.whitespace}</p>
-                  </div>
-                  <div className="rounded-xl p-3" style={{ background: 'rgba(110,106,255,0.06)', border: '0.5px solid rgba(110,106,255,0.15)' }}>
-                    <SubLabel>Collab pitch (copy-paste DM)</SubLabel>
-                    <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.70)', lineHeight: 1.6 }}>{comp.collabPitch}</p>
-                  </div>
-                </div>
-              )}
-            </div>
-          ))}
-        </section>
-      )}
+              <div className="card" style={{ borderColor: 'var(--accent-border)' }}>
+                <p className="section-label" style={{ marginBottom: 8 }}>Whitespace you can own</p>
+                <p style={{ fontSize: 14, color: 'var(--text-primary)', lineHeight: 1.6, fontWeight: 500 }}>{selected.whitespace}</p>
+              </div>
 
-      {/* Batch report */}
-      {batchReport && (
-        <section className="card" style={{ border: '0.5px solid rgba(110,106,255,0.20)' }}>
-          <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#8480ff', marginBottom: 12 }}>Batch Report</p>
-          <pre className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: 'rgba(255,255,255,0.70)', fontFamily: 'inherit' }}>{batchReport}</pre>
-        </section>
-      )}
+              <div className="card">
+                <p className="section-label" style={{ marginBottom: 8 }}>Collab pitch</p>
+                <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6, fontStyle: 'italic' }}>&ldquo;{selected.collabPitch}&rdquo;</p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Right — Quick steal */}
+        <div
+          style={{
+            width: 260,
+            flexShrink: 0,
+            borderLeft: '1px solid var(--border)',
+            paddingLeft: 24,
+          }}
+        >
+          <p className="section-label" style={{ marginBottom: 12 }}>Quick Steal</p>
+          {selected?.hooksToSteal?.length ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {selected.hooksToSteal.map((hook, i) => (
+                <div key={i} style={{ padding: '10px 12px', background: 'var(--bg-subtle)', borderRadius: 7, border: '1px solid var(--border)' }}>
+                  <p style={{ fontSize: 12, color: 'var(--text-primary)', lineHeight: 1.5 }}>{hook}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>Analyse a competitor to see stolen hooks</p>
+          )}
+        </div>
+      </div>
     </div>
   )
-}
-
-function SubLabel({ children }: { children: React.ReactNode }) {
-  return <p className="text-xs font-semibold mb-1" style={{ color: 'rgba(255,255,255,0.30)', letterSpacing: '0.04em', textTransform: 'uppercase' }}>{children}</p>
 }

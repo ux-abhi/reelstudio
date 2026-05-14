@@ -1,8 +1,11 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { PageHeader } from '@/components/shared/PageHeader'
 import { SavedScript } from '@/types/scan'
 
 export default function SavedPage() {
+  const router = useRouter()
   const [scripts, setScripts] = useState<SavedScript[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -24,6 +27,7 @@ export default function SavedPage() {
       body: JSON.stringify({ id }),
     })
     setScripts(s => s.filter(sc => sc.id !== id))
+    if (expanded === id) setExpanded(null)
   }
 
   async function handleCopy(script: SavedScript) {
@@ -50,65 +54,97 @@ export default function SavedPage() {
   })
 
   return (
-    <div className="page-enter flex flex-col gap-6">
-      <div>
-        <h1 className="text-3xl font-bold" style={{ letterSpacing: '-0.04em', color: 'rgba(255,255,255,0.92)' }}>Save Board</h1>
-        <p className="text-sm mt-1" style={{ color: 'rgba(255,255,255,0.40)' }}>{scripts.length} saved scripts</p>
-        <hr className="divider mt-4" />
-      </div>
+    <div className="page-enter" style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
+      <PageHeader title="Save Board" subtitle={`${scripts.length} saved script${scripts.length !== 1 ? 's' : ''}`} />
 
-      <div className="flex flex-wrap items-center gap-3">
-        <input className="input text-sm py-2" style={{ maxWidth: 240 }} placeholder="Search scripts..." value={search} onChange={e => setSearch(e.target.value)} />
-        <div className="flex gap-2 flex-wrap">
+      {/* Filters */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+        <input
+          className="input"
+          style={{ maxWidth: 220, fontSize: 13 }}
+          placeholder="Search scripts..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+        />
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
           {formats.map(f => (
-            <button key={f} onClick={() => setFilterFormat(f)} className="text-xs font-medium px-3 py-1.5 rounded-full transition-all"
-              style={{ background: filterFormat === f ? 'rgba(110,106,255,0.15)' : 'rgba(255,255,255,0.05)', color: filterFormat === f ? '#8480ff' : 'rgba(255,255,255,0.45)', border: `0.5px solid ${filterFormat === f ? 'rgba(110,106,255,0.25)' : 'rgba(255,255,255,0.09)'}` }}>
+            <button
+              key={f}
+              onClick={() => setFilterFormat(f)}
+              className={`pill-filter${filterFormat === f ? ' active' : ''}`}
+            >
               {f}
             </button>
           ))}
         </div>
         {scripts.length > 0 && (
-          <button onClick={exportAll} className="text-xs font-medium px-3 py-1.5 rounded-full ml-auto" style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.55)', border: '0.5px solid rgba(255,255,255,0.10)' }}>
+          <button onClick={exportAll} className="btn-ghost" style={{ fontSize: 12, marginLeft: 'auto' }}>
             Export all
           </button>
         )}
       </div>
 
+      {/* Content */}
       {loading ? (
-        <p className="text-sm" style={{ color: 'rgba(255,255,255,0.35)' }}>Loading...</p>
+        <p style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>Loading...</p>
       ) : filtered.length === 0 ? (
-        <div className="flex flex-col items-center py-16 text-center">
-          <p className="text-base font-medium mb-2" style={{ color: 'rgba(255,255,255,0.50)' }}>No scripts yet</p>
-          <p className="text-sm" style={{ color: 'rgba(255,255,255,0.30)' }}>Go to Studio and save your first script</p>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '64px 0', textAlign: 'center', gap: 8 }}>
+          <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-secondary)' }}>No scripts yet</p>
+          <p style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>Go to Studio and save your first script</p>
+          <button onClick={() => router.push('/studio')} className="btn-primary" style={{ marginTop: 16, fontSize: 13 }}>
+            Open Studio
+          </button>
         </div>
       ) : (
-        <div className="flex flex-col gap-3">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {filtered.map(script => (
-            <div key={script.id} className="rounded-2xl p-4 transition-all" style={{ background: 'rgba(255,255,255,0.04)', border: '0.5px solid rgba(255,255,255,0.08)' }}>
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium mb-1" style={{ color: '#8480ff' }}>{script.hookLine || script.input.slice(0, 80)}</p>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    {script.format && <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.45)' }}>{script.format}</span>}
-                    {script.tone && <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.45)' }}>{script.tone}</span>}
-                    <span className="text-xs" style={{ color: 'rgba(255,255,255,0.25)' }}>{new Date(script.savedAt).toLocaleDateString()}</span>
+            <div key={script.id} className="card" style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+              <div
+                style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, cursor: 'pointer' }}
+                onClick={() => setExpanded(expanded === script.id ? null : script.id)}
+              >
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--accent-hover)', lineHeight: 1.4, marginBottom: 6 }}>
+                    {script.hookLine || script.input.slice(0, 80)}
+                  </p>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                    {script.format && <span className="tag tag-default">{script.format}</span>}
+                    {script.tone && <span className="tag tag-default">{script.tone}</span>}
+                    <span style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>
+                      {new Date(script.savedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                    </span>
                   </div>
                 </div>
-                <button onClick={() => setExpanded(expanded === script.id ? null : script.id)} className="text-xs px-2 py-1 rounded-lg flex-shrink-0" style={{ color: 'rgba(255,255,255,0.40)', background: 'rgba(255,255,255,0.05)' }}>
-                  {expanded === script.id ? '↑' : '↓'}
+                <button className="btn-ghost" style={{ fontSize: 16, flexShrink: 0 }}>
+                  {expanded === script.id ? '−' : '+'}
                 </button>
               </div>
+
               {expanded === script.id && (
-                <div className="mt-3 pt-3" style={{ borderTop: '0.5px solid rgba(255,255,255,0.07)' }}>
-                  <pre className="text-sm leading-relaxed whitespace-pre-wrap mb-4" style={{ color: 'rgba(255,255,255,0.70)', fontFamily: 'inherit' }}>{script.output}</pre>
-                  <div className="flex gap-2 flex-wrap">
-                    <button onClick={() => handleCopy(script)} className="text-xs font-medium px-3 py-1.5 rounded-full" style={{ background: 'rgba(255,255,255,0.07)', color: copied === script.id ? '#34C759' : 'rgba(255,255,255,0.70)', border: '0.5px solid rgba(255,255,255,0.12)' }}>
+                <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  <pre style={{ fontSize: 13, lineHeight: 1.7, whiteSpace: 'pre-wrap', color: 'var(--text-secondary)', fontFamily: 'inherit', background: 'var(--bg-elevated)', padding: '12px 14px', borderRadius: 7, border: '1px solid var(--border)' }}>
+                    {script.output}
+                  </pre>
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+                    <button
+                      onClick={() => handleCopy(script)}
+                      className="btn-secondary"
+                      style={{ fontSize: 12, color: copied === script.id ? 'var(--green)' : undefined }}
+                    >
                       {copied === script.id ? '✓ Copied' : 'Copy'}
                     </button>
-                    <a href={`/studio?idea=${encodeURIComponent(script.input)}`} className="text-xs font-medium px-3 py-1.5 rounded-full" style={{ background: 'rgba(110,106,255,0.12)', color: '#8480ff', border: '0.5px solid rgba(110,106,255,0.20)' }}>
+                    <button
+                      onClick={() => router.push(`/studio?idea=${encodeURIComponent(script.input)}`)}
+                      className="btn-secondary"
+                      style={{ fontSize: 12 }}
+                    >
                       Load in Studio
-                    </a>
-                    <button onClick={() => handleDelete(script.id)} className="text-xs font-medium px-3 py-1.5 rounded-full ml-auto" style={{ background: 'rgba(255,69,58,0.10)', color: '#FF453A', border: '0.5px solid rgba(255,69,58,0.20)' }}>
+                    </button>
+                    <button
+                      onClick={() => handleDelete(script.id)}
+                      className="btn-destructive"
+                      style={{ fontSize: 12, marginLeft: 'auto' }}
+                    >
                       Delete
                     </button>
                   </div>

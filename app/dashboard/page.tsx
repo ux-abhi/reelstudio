@@ -6,6 +6,7 @@ import { EmptyState } from '@/components/shared/EmptyState'
 import { SkeletonCard } from '@/components/shared/SkeletonCard'
 import { TrendBadge } from '@/components/shared/TrendBadge'
 import { PillarTag } from '@/components/shared/PillarTag'
+import { PageHeader } from '@/components/shared/PageHeader'
 import { PriorityAction, TrendKeyword } from '@/types/scan'
 
 export default function DashboardPage() {
@@ -28,10 +29,10 @@ export default function DashboardPage() {
 
   if (isScanning) {
     return (
-      <div className="page-enter flex flex-col gap-6">
-        <PageHeader />
+      <div className="page-enter" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+        <PageHeader title="Dashboard" subtitle="Your AI-generated Instagram command centre" />
         <SkeletonCard lines={2} />
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="stats-row">
           <SkeletonCard lines={2} />
           <SkeletonCard lines={2} />
           <SkeletonCard lines={2} />
@@ -45,7 +46,7 @@ export default function DashboardPage() {
     return (
       <EmptyState
         title="No scan data yet"
-        description="Run your scan to see your personalised dashboard, trend pulse, and today's recommended post."
+        description="Run your scan to see your dashboard, trend pulse, and today's recommended post."
         actionLabel="Run scan"
         actionHref="/onboarding"
       />
@@ -54,29 +55,37 @@ export default function DashboardPage() {
 
   const today = scan.calendar?.[0]
   const top3Actions = scan.priorityActions?.slice(0, 3) ?? []
-  const breakoutTrends = scan.trendPulse?.filter(t => t.breakout).slice(0, 3) ?? []
   const allTrends = scan.trendPulse ?? []
+  const breakoutTrends = allTrends.filter(t => t.breakout).slice(0, 3)
 
   return (
-    <div className="page-enter flex flex-col gap-8">
-      <PageHeader />
+    <div className="page-enter" style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>
+      <PageHeader title="Dashboard" subtitle="Your AI-generated Instagram command centre" />
 
       {/* Trend Pulse strip */}
       {allTrends.length > 0 && (
         <section>
-          <SectionLabel>Trend Pulse</SectionLabel>
-          <div className="flex gap-2 overflow-x-auto pb-2 mt-3" style={{ scrollbarWidth: 'none' }}>
+          <p className="section-label" style={{ marginBottom: 12 }}>Trend Pulse</p>
+          <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4, scrollbarWidth: 'none' }}>
             {allTrends.map((t: TrendKeyword) => (
               <button
                 key={t.keyword}
                 onClick={() => router.push('/ideas')}
-                className="flex items-center gap-2 px-3 py-2 rounded-full flex-shrink-0 transition-all"
                 style={{
-                  background: t.breakout ? 'rgba(110,106,255,0.12)' : 'rgba(255,255,255,0.05)',
-                  border: `0.5px solid ${t.breakout ? 'rgba(110,106,255,0.25)' : 'rgba(255,255,255,0.09)'}`,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  padding: '6px 12px',
+                  borderRadius: 999,
+                  flexShrink: 0,
+                  background: t.breakout ? 'var(--accent-subtle)' : 'var(--bg-card)',
+                  border: `1px solid ${t.breakout ? 'var(--accent-border)' : 'var(--border)'}`,
+                  cursor: 'pointer',
+                  transition: 'all 140ms ease',
+                  fontFamily: 'inherit',
                 }}
               >
-                <span className="text-xs font-medium" style={{ color: t.breakout ? '#8480ff' : 'rgba(255,255,255,0.70)' }}>
+                <span style={{ fontSize: 12, fontWeight: 500, color: t.breakout ? 'var(--accent-hover)' : 'var(--text-secondary)' }}>
                   {t.keyword}
                 </span>
                 <TrendBadge score={t.interest} direction={t.direction} breakout={t.breakout} />
@@ -86,48 +95,40 @@ export default function DashboardPage() {
         </section>
       )}
 
-      {/* Today's recommended post */}
+      {/* Today's post */}
       {today && (
         <section>
-          <SectionLabel>Post Today</SectionLabel>
-          <div className="card-elevated mt-3">
-            <div className="flex items-start justify-between gap-4 flex-wrap">
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-3 flex-wrap">
-                  <span className="text-xs font-semibold px-2 py-1 rounded-full" style={{ background: 'rgba(110,106,255,0.15)', color: '#8480ff' }}>
+          <p className="section-label" style={{ marginBottom: 12 }}>Post Today</p>
+          <div className="card-elevated" style={{ paddingLeft: 24 }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 24, flexWrap: 'wrap' }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
+                  <span className="badge" style={{ background: 'var(--accent-subtle)', color: 'var(--accent-hover)', borderColor: 'var(--accent-border)', fontWeight: 600 }}>
                     {today.postType}
                   </span>
                   <PillarTag pillar={today.pillar} />
                   {today.optimisedFor && (
-                    <span className="text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                    <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>
                       optimised for {today.optimisedFor}
                     </span>
                   )}
                 </div>
-                <h3 className="text-base font-semibold mb-1" style={{ color: 'rgba(255,255,255,0.92)', letterSpacing: '-0.01em' }}>
+                <h3 style={{ fontSize: 18, fontWeight: 600, color: 'var(--text-primary)', letterSpacing: '-0.02em', lineHeight: 1.3, marginBottom: 6 }}>
                   {today.title}
                 </h3>
-                <p className="text-sm" style={{ color: 'rgba(255,255,255,0.50)' }}>
-                  {today.hook}
-                </p>
+                <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6 }}>{today.hook}</p>
                 {today.triggerWord && (
-                  <p className="text-xs mt-2" style={{ color: '#FFD60A' }}>
+                  <p style={{ fontSize: 12, color: 'var(--yellow)', marginTop: 8, fontWeight: 500 }}>
                     Trigger: Comment &ldquo;{today.triggerWord}&rdquo;
                   </p>
                 )}
                 {today.trendSignal && (
-                  <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.35)' }}>
-                    🔥 {today.trendSignal}
-                  </p>
+                  <p style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 4 }}>↑ {today.trendSignal}</p>
                 )}
               </div>
-              <div className="flex flex-col items-end gap-2">
-                <p className="text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>{today.postingTime}</p>
-                <button
-                  onClick={() => router.push(`/studio?idea=${encodeURIComponent(today.title)}`)}
-                  className="text-sm font-medium px-4 py-2 rounded-full transition-all"
-                  style={{ background: '#6e6aff', color: '#fff' }}
-                >
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8, flexShrink: 0 }}>
+                <p style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>{today.postingTime}</p>
+                <button className="btn-primary" onClick={() => router.push(`/studio?idea=${encodeURIComponent(today.title)}`)}>
                   Write this now
                 </button>
               </div>
@@ -136,46 +137,66 @@ export default function DashboardPage() {
         </section>
       )}
 
-      {/* Account health snapshot */}
+      {/* Account health */}
       {scan.accountHealth && (
         <section>
-          <SectionLabel>Account Health</SectionLabel>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
-            <MetricCard label="Engagement Rate" value={scan.accountHealth.engagementRate} verdict={scan.accountHealth.engagementVerdict} />
-            <MetricCard label="Posting Cadence" value={scan.accountHealth.postingCadence} verdict="Consistency is the #1 growth lever" />
-            <MetricCard label="Top Format" value={scan.accountHealth.topPerformingFormat} verdict={`Weakest: ${scan.accountHealth.weakestFormat}`} />
+          <p className="section-label" style={{ marginBottom: 12 }}>Account Health</p>
+          <div className="stats-row">
+            <StatCard label="Engagement Rate" value={scan.accountHealth.engagementRate} sub={scan.accountHealth.engagementVerdict} />
+            <StatCard label="Posting Cadence" value={scan.accountHealth.postingCadence} sub="Consistency is the #1 growth lever" />
+            <StatCard label="Top Format" value={scan.accountHealth.topPerformingFormat} sub={`Weakest: ${scan.accountHealth.weakestFormat}`} />
           </div>
         </section>
       )}
 
-      {/* This week's top 3 actions */}
+      {/* This week's actions */}
       {top3Actions.length > 0 && (
         <section>
-          <div className="flex items-center justify-between mb-3">
-            <SectionLabel>This Week&apos;s Actions</SectionLabel>
-            <button onClick={() => router.push('/actions')} className="text-xs" style={{ color: 'rgba(110,106,255,0.80)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+            <p className="section-label">This Week&apos;s Actions</p>
+            <button onClick={() => router.push('/actions')} style={{ fontSize: 12, color: 'var(--accent)', background: 'none', border: 'none', cursor: 'pointer' }}>
               See all →
             </button>
           </div>
-          <div className="flex flex-col gap-2">
-            {top3Actions.map((action: PriorityAction) => (
-              <div key={action.day} className="flex items-start gap-3 px-4 py-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.04)', border: '0.5px solid rgba(255,255,255,0.08)' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 2, background: 'var(--bg-card)', borderRadius: 10, border: '1px solid var(--border)', overflow: 'hidden' }}>
+            {top3Actions.map((action: PriorityAction, i) => (
+              <div
+                key={action.day}
+                style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: 12,
+                  padding: '12px 16px',
+                  borderBottom: i < top3Actions.length - 1 ? '1px solid var(--border-subtle)' : 'none',
+                  transition: 'background 100ms ease',
+                }}
+              >
                 <button
                   onClick={() => toggleAction(action.day)}
-                  className="w-4 h-4 rounded flex-shrink-0 mt-0.5 flex items-center justify-center transition-all"
                   style={{
-                    background: checked[action.day] ? 'rgba(52,199,89,0.20)' : 'rgba(255,255,255,0.08)',
-                    border: `0.5px solid ${checked[action.day] ? 'rgba(52,199,89,0.40)' : 'rgba(255,255,255,0.15)'}`,
-                    fontSize: 10, color: '#34C759',
+                    width: 16,
+                    height: 16,
+                    borderRadius: 4,
+                    flexShrink: 0,
+                    marginTop: 2,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    background: checked[action.day] ? 'var(--green-subtle)' : 'transparent',
+                    border: `1px solid ${checked[action.day] ? 'var(--green)' : 'var(--border-strong)'}`,
+                    cursor: 'pointer',
+                    fontSize: 10,
+                    color: 'var(--green)',
+                    transition: 'all 140ms ease',
                   }}
                 >
                   {checked[action.day] ? '✓' : ''}
                 </button>
-                <div className="flex-1">
-                  <p className="text-sm" style={{ color: checked[action.day] ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.80)', textDecoration: checked[action.day] ? 'line-through' : 'none' }}>
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontSize: 13, color: checked[action.day] ? 'var(--text-tertiary)' : 'var(--text-primary)', textDecoration: checked[action.day] ? 'line-through' : 'none' }}>
                     {action.action}
                   </p>
-                  <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.30)' }}>{action.impact}</p>
+                  <p style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 2 }}>{action.impact}</p>
                 </div>
                 <UrgencyBadge urgency={action.urgency} />
               </div>
@@ -187,20 +208,16 @@ export default function DashboardPage() {
       {/* Breakout trends */}
       {breakoutTrends.length > 0 && (
         <section>
-          <SectionLabel>Breakout This Week</SectionLabel>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
+          <p className="section-label" style={{ marginBottom: 12 }}>Breakout This Week</p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {breakoutTrends.map((t: TrendKeyword) => (
               <div key={t.keyword} className="card">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-semibold" style={{ color: 'rgba(255,255,255,0.90)' }}>{t.keyword}</span>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{t.keyword}</span>
                   <TrendBadge score={t.interest} direction={t.direction} breakout={t.breakout} />
                 </div>
-                <p className="text-xs mb-3" style={{ color: 'rgba(255,255,255,0.45)' }}>{t.contentOpportunity}</p>
-                <button
-                  onClick={() => router.push(`/studio?idea=${encodeURIComponent(t.keyword)}`)}
-                  className="text-xs font-medium px-3 py-1.5 rounded-full transition-all"
-                  style={{ background: 'rgba(110,106,255,0.12)', color: '#8480ff', border: '0.5px solid rgba(110,106,255,0.20)' }}
-                >
+                <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 12, lineHeight: 1.5 }}>{t.contentOpportunity}</p>
+                <button className="btn-secondary" style={{ fontSize: 12, padding: '5px 12px' }} onClick={() => router.push(`/studio?idea=${encodeURIComponent(t.keyword)}`)}>
                   Write about this
                 </button>
               </div>
@@ -212,44 +229,17 @@ export default function DashboardPage() {
   )
 }
 
-function PageHeader() {
+function StatCard({ label, value, sub }: { label: string; value: string; sub: string }) {
   return (
-    <div>
-      <h1 className="text-3xl font-bold" style={{ letterSpacing: '-0.04em', color: 'rgba(255,255,255,0.92)' }}>Dashboard</h1>
-      <p className="text-sm mt-1" style={{ color: 'rgba(255,255,255,0.40)' }}>Your AI-generated Instagram command centre</p>
-      <hr className="divider mt-4" />
-    </div>
-  )
-}
-
-function SectionLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.30)' }}>
-      {children}
-    </p>
-  )
-}
-
-function MetricCard({ label, value, verdict }: { label: string; value: string; verdict: string }) {
-  return (
-    <div className="card">
-      <p className="text-xs mb-1" style={{ color: 'rgba(255,255,255,0.35)', letterSpacing: '0.04em', textTransform: 'uppercase', fontWeight: 600 }}>{label}</p>
-      <p className="text-lg font-semibold mb-1" style={{ color: 'rgba(255,255,255,0.92)', letterSpacing: '-0.02em' }}>{value}</p>
-      <p className="text-xs" style={{ color: 'rgba(255,255,255,0.40)' }}>{verdict}</p>
+    <div className="card-stat">
+      <p style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-tertiary)', textTransform: 'uppercase' as const, letterSpacing: '0.04em', marginBottom: 8 }}>{label}</p>
+      <p style={{ fontSize: 22, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.03em', lineHeight: 1, marginBottom: 4 }}>{value}</p>
+      <p style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{sub}</p>
     </div>
   )
 }
 
 function UrgencyBadge({ urgency }: { urgency: string }) {
-  const styles: Record<string, { bg: string; color: string }> = {
-    'do first':   { bg: 'rgba(255,69,58,0.12)',    color: '#FF453A' },
-    'this week':  { bg: 'rgba(255,214,10,0.10)',   color: '#FFD60A' },
-    'this month': { bg: 'rgba(255,255,255,0.06)',  color: 'rgba(255,255,255,0.40)' },
-  }
-  const s = styles[urgency] ?? styles['this month']
-  return (
-    <span className="text-xs font-medium px-2 py-0.5 rounded-full flex-shrink-0" style={{ background: s.bg, color: s.color }}>
-      {urgency}
-    </span>
-  )
+  const cls = urgency === 'do first' ? 'badge-urgent' : urgency === 'this week' ? 'badge-soon' : 'badge-later'
+  return <span className={`badge ${cls}`}>{urgency}</span>
 }

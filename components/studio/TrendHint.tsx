@@ -9,23 +9,26 @@ export function TrendHint({ idea }: { idea: string }) {
   const match = scan.trendPulse?.find(t =>
     lower.includes(t.keyword.toLowerCase()) && (t.direction === 'rising' || t.breakout)
   )
-
   if (!match) return null
 
   return (
     <div
-      className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm"
       style={{
-        background: 'rgba(255,214,10,0.08)',
-        border: '0.5px solid rgba(255,214,10,0.20)',
-        color: '#FFD60A',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+        padding: '8px 12px',
+        borderRadius: 7,
+        background: 'var(--yellow-subtle)',
+        border: '1px solid rgba(245,166,35,0.25)',
+        fontSize: 12,
+        color: 'var(--yellow)',
       }}
     >
-      🔥{' '}
-      <span>
-        <strong>{match.keyword}</strong> is{' '}
-        {match.breakout ? 'breaking out' : `trending ${match.direction}`} this week
-        {match.interest > 0 && ` (${match.interest}/100 interest)`} — good timing
+      <span style={{ fontWeight: 600 }}>{match.keyword}</span>
+      <span style={{ color: 'var(--text-secondary)' }}>
+        is {match.breakout ? 'breaking out' : `trending ${match.direction}`} this week
+        {match.interest > 0 && ` · ${match.interest}/100`}
       </span>
     </div>
   )

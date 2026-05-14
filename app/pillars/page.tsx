@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { useScan } from '@/components/scan/ScanContext'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { SkeletonGrid } from '@/components/shared/SkeletonCard'
+import { PageHeader } from '@/components/shared/PageHeader'
 import { Pillar } from '@/types/scan'
 
 const UNFAIR_ADVANTAGES = [
@@ -26,14 +27,14 @@ const UNFAIR_ADVANTAGES = [
   },
   {
     title: 'Uses Framer + Claude Together in Real Client Work',
-    desc: 'The specific workflow of AI-assisted Framer development for client projects. @uthinhpham uses Framer but doesn\'t use Claude. Nobody documents the AI-assisted Framer workflow.',
+    desc: 'The specific workflow of AI-assisted Framer development for client projects. Nobody documents the AI-assisted Framer workflow.',
     reel: '"A client needed a landing page. I had 4 hours. Here\'s the exact Framer + Claude workflow — comment \'WORKFLOW\' for the full process doc."',
     reach: 'Highest save potential — founders + designers + freelancers all save this',
   },
   {
     title: 'Speaks Hindi/Hinglish to a Global Design Audience',
-    desc: 'The authentic bilingual voice that switches naturally between Hindi and English without being performative. Hindi rant: 7.2% engagement — double the niche average.',
-    reel: '"European design agencies mein Indian designers ko kya problem aati hai — aur main iske baare mein honestly baat karta hun jo koi aur nahi karta."',
+    desc: 'The authentic bilingual voice that switches naturally. Hindi rant: 7.2% engagement — double the niche average.',
+    reel: '"European design agencies mein Indian designers ko kya problem aati hai — aur main iske baare mein honestly baat karta hun."',
     reach: 'Indian diaspora design community globally — underserved, highly engaged',
   },
 ]
@@ -41,45 +42,40 @@ const UNFAIR_ADVANTAGES = [
 export default function PillarsPage() {
   const { scan, isScanning } = useScan()
   const [barWidths, setBarWidths] = useState(false)
-
   useEffect(() => { setTimeout(() => setBarWidths(true), 150) }, [])
 
   if (isScanning) return <SkeletonGrid count={5} />
   if (!scan) return <EmptyState title="No pillars yet" description="Run your scan to see your AI-inferred content pillars based on your real post history." />
 
   return (
-    <div className="page-enter flex flex-col gap-10">
-      <div>
-        <h1 className="text-3xl font-bold" style={{ letterSpacing: '-0.04em', color: 'rgba(255,255,255,0.92)' }}>Content Pillars</h1>
-        <p className="text-sm mt-1" style={{ color: 'rgba(255,255,255,0.40)' }}>Inferred by Groq from your actual post history</p>
-        <hr className="divider mt-4" />
-      </div>
+    <div className="page-enter" style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>
+      <PageHeader title="Content Pillars" subtitle="Inferred by Groq from your actual post history" />
 
       {/* Pillars */}
       <section>
-        <SectionLabel>Your 5 Pillars</SectionLabel>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+        <p className="section-label" style={{ marginBottom: 16 }}>Your 5 Pillars</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {(scan.pillars ?? []).map((pillar: Pillar, i) => (
-            <div key={i} className="card flex flex-col gap-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span style={{ fontSize: 20 }}>{pillar.emoji}</span>
-                  <h3 className="text-sm font-semibold" style={{ color: 'rgba(255,255,255,0.90)' }}>{pillar.name}</h3>
+            <div key={i} className="card" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: 18 }}>{pillar.emoji}</span>
+                  <h3 style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{pillar.name}</h3>
                 </div>
-                <span className="text-sm font-bold" style={{ color: '#6e6aff' }}>{pillar.percentage}%</span>
+                <span style={{ fontSize: 20, fontWeight: 700, color: 'var(--accent)', letterSpacing: '-0.02em' }}>{pillar.percentage}%</span>
               </div>
-              <div className="bar-track">
-                <div className="bar-fill bar-accent" style={{ width: barWidths ? `${pillar.percentage}%` : '0%' }} />
+              <div className="health-track">
+                <div className="health-fill accent" style={{ width: barWidths ? `${pillar.percentage}%` : '0%' }} />
               </div>
-              <p className="text-xs" style={{ color: 'rgba(255,255,255,0.50)', lineHeight: 1.5 }}>{pillar.description}</p>
-              <div className="flex flex-col gap-1">
-                <p className="text-xs font-medium" style={{ color: 'rgba(255,255,255,0.35)' }}>Best format: {pillar.bestFormat}</p>
-                <p className="text-xs" style={{ color: 'rgba(255,255,255,0.30)' }}>Based on: {pillar.basedOn}</p>
+              <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>{pillar.description}</p>
+              <div style={{ display: 'flex', gap: 16 }}>
+                <p style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>Best: {pillar.bestFormat}</p>
+                <p style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>Based on: {pillar.basedOn}</p>
               </div>
               {pillar.exampleIdeas?.length > 0 && (
-                <div className="flex flex-col gap-1 mt-1">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4, paddingTop: 8, borderTop: '1px solid var(--border-subtle)' }}>
                   {pillar.exampleIdeas.slice(0, 3).map((idea, j) => (
-                    <p key={j} className="text-xs" style={{ color: 'rgba(255,255,255,0.45)' }}>→ {idea}</p>
+                    <p key={j} style={{ fontSize: 12, color: 'var(--text-secondary)' }}>→ {idea}</p>
                   ))}
                 </div>
               )}
@@ -90,22 +86,22 @@ export default function PillarsPage() {
 
       {/* Unfair advantages */}
       <section>
-        <SectionLabel>Your 5 Unfair Advantages</SectionLabel>
-        <p className="text-xs mt-1 mb-4" style={{ color: 'rgba(255,255,255,0.30)' }}>Content angles that NO 50K+ account in your niche can replicate</p>
-        <div className="flex flex-col gap-4">
+        <p className="section-label" style={{ marginBottom: 4 }}>Your 5 Unfair Advantages</p>
+        <p style={{ fontSize: 12, color: 'var(--text-tertiary)', marginBottom: 16 }}>Content angles no 50K+ account in your niche can replicate</p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {UNFAIR_ADVANTAGES.map((adv, i) => (
-            <div key={i} className="card" style={{ border: '0.5px solid rgba(110,106,255,0.15)' }}>
-              <div className="flex items-start gap-3">
-                <span className="text-lg font-bold flex-shrink-0" style={{ color: 'rgba(110,106,255,0.60)', fontFamily: 'monospace', lineHeight: 1.4 }}>
+            <div key={i} className="card" style={{ borderColor: 'var(--accent-border)' }}>
+              <div style={{ display: 'flex', gap: 16 }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-tertiary)', fontVariantNumeric: 'tabular-nums', flexShrink: 0, lineHeight: 1.5 }}>
                   {String(i + 1).padStart(2, '0')}
                 </span>
-                <div className="flex flex-col gap-2">
-                  <h3 className="text-sm font-semibold" style={{ color: 'rgba(255,255,255,0.90)' }}>{adv.title}</h3>
-                  <p className="text-xs" style={{ color: 'rgba(255,255,255,0.50)', lineHeight: 1.5 }}>{adv.desc}</p>
-                  <div className="rounded-lg p-3 mt-1" style={{ background: 'rgba(110,106,255,0.06)', border: '0.5px solid rgba(110,106,255,0.15)' }}>
-                    <p className="text-xs font-semibold mb-1" style={{ color: 'rgba(110,106,255,0.70)', letterSpacing: '0.04em' }}>THE REEL ONLY YOU CAN MAKE</p>
-                    <p className="text-xs italic" style={{ color: 'rgba(255,255,255,0.65)', lineHeight: 1.5 }}>{adv.reel}</p>
-                    <p className="text-xs mt-2" style={{ color: '#34C759' }}>→ {adv.reach}</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <h3 style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{adv.title}</h3>
+                  <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>{adv.desc}</p>
+                  <div style={{ padding: '10px 12px', borderRadius: 7, background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}>
+                    <p style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-tertiary)', letterSpacing: '0.06em', textTransform: 'uppercase' as const, marginBottom: 6 }}>The reel only you can make</p>
+                    <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5, fontStyle: 'italic' }}>{adv.reel}</p>
+                    <p style={{ fontSize: 12, color: 'var(--green)', marginTop: 8, fontWeight: 500 }}>→ {adv.reach}</p>
                   </div>
                 </div>
               </div>
@@ -114,27 +110,27 @@ export default function PillarsPage() {
         </div>
       </section>
 
-      {/* Do's and Don'ts */}
+      {/* Do's and don'ts */}
       {scan.accountHealth && (
         <section>
-          <SectionLabel>Do&apos;s & Don&apos;ts</SectionLabel>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-            <div className="card" style={{ border: '0.5px solid rgba(52,199,89,0.15)' }}>
-              <p className="text-xs font-semibold mb-3" style={{ color: '#34C759', letterSpacing: '0.04em' }}>DO MORE OF THIS</p>
-              <div className="flex flex-col gap-2">
-                {['Screen recording + practical shortcut + comment trigger', 'Hindi/Hinglish opinion reels — your highest engagement rate format', 'Builder\'s Log: document real builds in progress', 'Result-first hooks — show the output in the first 2 seconds', 'Weekly recurring series (Free Tool Tuesday, etc.)'].map((item, i) => (
-                  <p key={i} className="text-xs flex items-start gap-2" style={{ color: 'rgba(255,255,255,0.65)', lineHeight: 1.5 }}>
-                    <span style={{ color: '#34C759', flexShrink: 0 }}>✓</span>{item}
+          <p className="section-label" style={{ marginBottom: 16 }}>Do&apos;s & Don&apos;ts</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="card" style={{ borderColor: 'rgba(48,164,108,0.25)' }}>
+              <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.04em', color: 'var(--green)', textTransform: 'uppercase' as const, marginBottom: 12 }}>Do more of this</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {['Screen recording + practical shortcut + comment trigger', 'Hindi/Hinglish opinion reels — your highest engagement rate format', "Builder's Log: document real builds in progress", 'Result-first hooks — show the output in the first 2 seconds', 'Weekly recurring series (Free Tool Tuesday, etc.)'].map((item, i) => (
+                  <p key={i} style={{ display: 'flex', gap: 8, fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                    <span style={{ color: 'var(--green)', flexShrink: 0 }}>✓</span>{item}
                   </p>
                 ))}
               </div>
             </div>
-            <div className="card" style={{ border: '0.5px solid rgba(255,69,58,0.15)' }}>
-              <p className="text-xs font-semibold mb-3" style={{ color: '#FF453A', letterSpacing: '0.04em' }}>STOP DOING THIS</p>
-              <div className="flex flex-col gap-2">
-                {['Generic motivation reels (penguin, quotes) — consistently underperform', 'Slow intros ("Hi I\'m Abhishek...") — viewers leave in 2 seconds', 'UX Series episodes without strong hooks — consistently 40-53 likes', 'Productivity content without specific tool angle', 'Posts without a comment trigger or save CTA'].map((item, i) => (
-                  <p key={i} className="text-xs flex items-start gap-2" style={{ color: 'rgba(255,255,255,0.65)', lineHeight: 1.5 }}>
-                    <span style={{ color: '#FF453A', flexShrink: 0 }}>×</span>{item}
+            <div className="card" style={{ borderColor: 'rgba(229,72,77,0.25)' }}>
+              <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.04em', color: 'var(--red)', textTransform: 'uppercase' as const, marginBottom: 12 }}>Stop doing this</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {['Generic motivation reels (penguin, quotes) — consistently underperform', "Slow intros (\"Hi I'm Abhishek...\") — viewers leave in 2 seconds", 'UX Series episodes without strong hooks — consistently 40–53 likes', 'Productivity content without specific tool angle', 'Posts without a comment trigger or save CTA'].map((item, i) => (
+                  <p key={i} style={{ display: 'flex', gap: 8, fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                    <span style={{ color: 'var(--red)', flexShrink: 0 }}>×</span>{item}
                   </p>
                 ))}
               </div>
@@ -144,8 +140,4 @@ export default function PillarsPage() {
       )}
     </div>
   )
-}
-
-function SectionLabel({ children }: { children: React.ReactNode }) {
-  return <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.30)' }}>{children}</p>
 }

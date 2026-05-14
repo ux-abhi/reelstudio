@@ -35,7 +35,7 @@ export default function OnboardingPage() {
   const [followers, setFollowers] = useState(1242)
   const [goal, setGoal] = useState(10000)
   const [niche, setNiche] = useState(
-    'UX designer + HCI master\'s student in Germany. Figma, Framer, AI tools for designers, freelancing, Indian designer in Europe.'
+    "UX designer + HCI master's student in Germany. Figma, Framer, AI tools for designers, freelancing, Indian designer in Europe."
   )
   const [posts, setPosts] = useState<ManualPost[]>(REAL_POSTS)
   const [bio, setBio] = useState(
@@ -55,87 +55,65 @@ export default function OnboardingPage() {
   }
 
   async function handleSubmit() {
-    const profile: ProfileInput = {
-      handle,
-      name,
-      followers,
-      goal,
-      bio,
-      posts,
-    }
+    const profile: ProfileInput = { handle, name, followers, goal, bio, posts }
     await runScan(profile)
     router.push('/dashboard')
   }
 
   const canProceed = step === 1
-    ? handle && name && followers > 0
+    ? !!(handle && name && followers > 0)
     : step === 2
     ? niche.trim().length > 0
     : step === 3
     ? posts.length > 0
     : bio.trim().length > 0
 
+  const STEP_LABELS = ['Basic info', 'Your niche', 'Recent posts', 'Your bio']
+
   return (
     <>
       <ScanProgress />
-      <div className="max-w-xl mx-auto py-12 px-4 page-enter">
+      <div style={{ maxWidth: 560, margin: '0 auto', padding: '48px 16px' }} className="page-enter">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2" style={{ letterSpacing: '-0.04em', color: 'rgba(255,255,255,0.92)' }}>
+        <div style={{ marginBottom: 32 }}>
+          <h1 style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.04em', lineHeight: 1.2, marginBottom: 4 }}>
             Set up your studio
           </h1>
-          <p className="text-sm" style={{ color: 'rgba(255,255,255,0.45)' }}>
-            Step {step} of 4
-          </p>
+          <p style={{ fontSize: 14, color: 'var(--text-tertiary)' }}>Step {step} of 4 — {STEP_LABELS[step - 1]}</p>
 
           {/* Progress bar */}
-          <div className="bar-track mt-4">
+          <div style={{ height: 3, background: 'var(--border)', borderRadius: 99, marginTop: 16, overflow: 'hidden' }}>
             <div
-              className="bar-fill bar-accent"
-              style={{ width: `${(step / 4) * 100}%` }}
+              style={{
+                height: '100%',
+                background: 'var(--accent)',
+                borderRadius: 99,
+                width: `${(step / 4) * 100}%`,
+                transition: 'width 300ms ease',
+              }}
             />
           </div>
         </div>
 
         {/* Step 1 — Basic info */}
         {step === 1 && (
-          <div className="flex flex-col gap-4">
-            <StepHeader
-              title="Basic info"
-              desc="Tell us about your account"
-            />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <StepHeader title="Basic info" desc="Tell us about your account" />
             <Field label="Instagram handle">
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm" style={{ color: 'rgba(255,255,255,0.30)' }}>@</span>
-                <input
-                  className="input pl-7"
-                  value={handle}
-                  onChange={e => setHandle(e.target.value.replace('@', ''))}
-                  placeholder="uxabhi_"
-                />
+              <div style={{ position: 'relative' }}>
+                <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', fontSize: 13, color: 'var(--text-tertiary)' }}>@</span>
+                <input className="input" style={{ paddingLeft: 26 }} value={handle} onChange={e => setHandle(e.target.value.replace('@', ''))} placeholder="uxabhi_" />
               </div>
             </Field>
             <Field label="Your name">
               <input className="input" value={name} onChange={e => setName(e.target.value)} placeholder="Abhishek Jha" />
             </Field>
-            <div className="grid grid-cols-2 gap-3">
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               <Field label="Current followers">
-                <input
-                  className="input"
-                  type="number"
-                  value={followers}
-                  onChange={e => setFollowers(Number(e.target.value))}
-                  placeholder="1242"
-                />
+                <input className="input" type="number" value={followers} onChange={e => setFollowers(Number(e.target.value))} placeholder="1242" />
               </Field>
               <Field label="30-day goal">
-                <input
-                  className="input"
-                  type="number"
-                  value={goal}
-                  onChange={e => setGoal(Number(e.target.value))}
-                  placeholder="10000"
-                />
+                <input className="input" type="number" value={goal} onChange={e => setGoal(Number(e.target.value))} placeholder="10000" />
               </Field>
             </div>
           </div>
@@ -143,11 +121,8 @@ export default function OnboardingPage() {
 
         {/* Step 2 — Niche */}
         {step === 2 && (
-          <div className="flex flex-col gap-4">
-            <StepHeader
-              title="Your niche"
-              desc="What do you post about? Who do you help?"
-            />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <StepHeader title="Your niche" desc="What do you post about? Who do you help?" />
             <textarea
               className="input"
               rows={5}
@@ -160,42 +135,36 @@ export default function OnboardingPage() {
 
         {/* Step 3 — Posts */}
         {step === 3 && (
-          <div className="flex flex-col gap-4">
-            <StepHeader
-              title="Your posts"
-              desc="Add your last 5–10 posts. More data = better dashboard. Pre-filled with your real posts."
-            />
-            <div className="flex flex-col gap-3 max-h-96 overflow-y-auto pr-1">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <StepHeader title="Your recent posts" desc="Pre-filled with real posts. Edit or add more — better data = better recommendations." />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 400, overflowY: 'auto', paddingRight: 4 }}>
               {posts.map((post, i) => (
-                <div
-                  key={i}
-                  className="rounded-xl p-3 flex flex-col gap-2"
-                  style={{ background: 'rgba(255,255,255,0.04)', border: '0.5px solid rgba(255,255,255,0.08)' }}
-                >
-                  <div className="flex items-start justify-between gap-2">
+                <div key={i} className="card" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <div style={{ display: 'flex', gap: 8 }}>
                     <input
-                      className="input text-sm py-1.5 flex-1"
+                      className="input"
+                      style={{ fontSize: 13, flex: 1 }}
                       value={post.title}
                       onChange={e => updatePost(i, 'title', e.target.value)}
                       placeholder="Post title or description"
                     />
                     <button
                       onClick={() => removePost(i)}
-                      className="text-xs px-2 py-1.5 rounded-lg flex-shrink-0"
-                      style={{ color: '#FF453A', background: 'rgba(255,69,58,0.10)' }}
+                      className="btn-destructive"
+                      style={{ fontSize: 12, flexShrink: 0, padding: '6px 10px' }}
                     >
                       ✕
                     </button>
                   </div>
-                  <div className="grid grid-cols-4 gap-2">
-                    <input className="input text-xs py-1" type="number" value={post.likes} onChange={e => updatePost(i, 'likes', Number(e.target.value))} placeholder="Likes" />
-                    <input className="input text-xs py-1" type="number" value={post.comments} onChange={e => updatePost(i, 'comments', Number(e.target.value))} placeholder="Comments" />
-                    <input className="input text-xs py-1" value={post.date} onChange={e => updatePost(i, 'date', e.target.value)} placeholder="Date" />
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1.5fr', gap: 8 }}>
+                    <input className="input" style={{ fontSize: 12 }} type="number" value={post.likes} onChange={e => updatePost(i, 'likes', Number(e.target.value))} placeholder="Likes" />
+                    <input className="input" style={{ fontSize: 12 }} type="number" value={post.comments} onChange={e => updatePost(i, 'comments', Number(e.target.value))} placeholder="Comments" />
+                    <input className="input" style={{ fontSize: 12 }} value={post.date} onChange={e => updatePost(i, 'date', e.target.value)} placeholder="Date" />
                     <select
-                      className="input text-xs py-1"
+                      className="input"
+                      style={{ fontSize: 12, background: 'var(--bg-input)' }}
                       value={post.format}
                       onChange={e => updatePost(i, 'format', e.target.value)}
-                      style={{ background: 'rgba(255,255,255,0.04)' }}
                     >
                       {FORMATS.map(f => <option key={f} value={f}>{f}</option>)}
                     </select>
@@ -203,15 +172,7 @@ export default function OnboardingPage() {
                 </div>
               ))}
             </div>
-            <button
-              onClick={addPost}
-              className="text-sm font-medium py-2 rounded-full transition-all"
-              style={{
-                background: 'rgba(255,255,255,0.05)',
-                color: 'rgba(255,255,255,0.60)',
-                border: '0.5px solid rgba(255,255,255,0.10)',
-              }}
-            >
+            <button onClick={addPost} className="btn-secondary" style={{ fontSize: 13 }}>
               + Add post
             </button>
           </div>
@@ -219,11 +180,8 @@ export default function OnboardingPage() {
 
         {/* Step 4 — Bio */}
         {step === 4 && (
-          <div className="flex flex-col gap-4">
-            <StepHeader
-              title="Your current bio"
-              desc="Paste your Instagram bio exactly as it is. Groq will analyse it and suggest improvements."
-            />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <StepHeader title="Your current bio" desc="Paste your Instagram bio exactly as it appears. Groq will analyse it and suggest improvements." />
             <textarea
               className="input"
               rows={4}
@@ -235,16 +193,12 @@ export default function OnboardingPage() {
         )}
 
         {/* Navigation */}
-        <div className="flex gap-3 mt-8">
+        <div style={{ display: 'flex', gap: 10, marginTop: 32 }}>
           {step > 1 && (
             <button
               onClick={() => setStep(s => s - 1)}
-              className="px-5 py-2.5 rounded-full text-sm font-medium transition-all"
-              style={{
-                background: 'rgba(255,255,255,0.07)',
-                color: 'rgba(255,255,255,0.70)',
-                border: '0.5px solid rgba(255,255,255,0.12)',
-              }}
+              className="btn-secondary"
+              style={{ fontSize: 14 }}
             >
               Back
             </button>
@@ -253,11 +207,8 @@ export default function OnboardingPage() {
             <button
               onClick={() => setStep(s => s + 1)}
               disabled={!canProceed}
-              className="flex-1 px-5 py-2.5 rounded-full text-sm font-medium transition-all"
-              style={{
-                background: canProceed ? '#6e6aff' : 'rgba(110,106,255,0.30)',
-                color: '#fff',
-              }}
+              className="btn-primary"
+              style={{ flex: 1, fontSize: 14, opacity: canProceed ? 1 : 0.4, cursor: canProceed ? 'pointer' : 'not-allowed' }}
             >
               Continue
             </button>
@@ -265,11 +216,8 @@ export default function OnboardingPage() {
             <button
               onClick={handleSubmit}
               disabled={isScanning || !canProceed}
-              className="flex-1 px-5 py-2.5 rounded-full text-sm font-medium transition-all"
-              style={{
-                background: isScanning ? 'rgba(110,106,255,0.30)' : '#6e6aff',
-                color: '#fff',
-              }}
+              className="btn-primary"
+              style={{ flex: 1, fontSize: 14, opacity: (isScanning || !canProceed) ? 0.4 : 1, cursor: (isScanning || !canProceed) ? 'not-allowed' : 'pointer' }}
             >
               {isScanning ? 'Running scan...' : 'Run My Scan'}
             </button>
@@ -282,11 +230,11 @@ export default function OnboardingPage() {
 
 function StepHeader({ title, desc }: { title: string; desc: string }) {
   return (
-    <div className="mb-2">
-      <h2 className="text-xl font-semibold mb-1" style={{ letterSpacing: '-0.02em', color: 'rgba(255,255,255,0.92)' }}>
+    <div style={{ marginBottom: 8 }}>
+      <h2 style={{ fontSize: 18, fontWeight: 600, color: 'var(--text-primary)', letterSpacing: '-0.02em', marginBottom: 4 }}>
         {title}
       </h2>
-      <p className="text-sm" style={{ color: 'rgba(255,255,255,0.40)' }}>{desc}</p>
+      <p style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>{desc}</p>
     </div>
   )
 }
@@ -294,7 +242,7 @@ function StepHeader({ title, desc }: { title: string; desc: string }) {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="block text-xs font-medium mb-1.5" style={{ color: 'rgba(255,255,255,0.50)', letterSpacing: '0.02em' }}>
+      <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-tertiary)', letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 6 }}>
         {label}
       </label>
       {children}

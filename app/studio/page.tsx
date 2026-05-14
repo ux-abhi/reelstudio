@@ -6,6 +6,7 @@ import { FormatChips } from '@/components/studio/FormatChips'
 import { ToneChips } from '@/components/studio/ToneChips'
 import { TrendHint } from '@/components/studio/TrendHint'
 import { ScriptOutput } from '@/components/studio/ScriptOutput'
+import { PageHeader } from '@/components/shared/PageHeader'
 
 const FALLBACK_HOOKS = [
   "I don't know how this Figma plugin is still free",
@@ -35,11 +36,7 @@ function StudioContent() {
 
   const hooks = scan?.hooks?.slice(0, 6) ?? []
   const displayHooks = hooks.length > 0 ? hooks.map(h => h.text) : FALLBACK_HOOKS
-
-  const trendingKeywords = scan?.trendPulse
-    ?.filter(t => t.direction === 'rising' || t.breakout)
-    .map(t => t.keyword).slice(0, 5).join(', ') ?? ''
-
+  const trendingKeywords = scan?.trendPulse?.filter(t => t.direction === 'rising' || t.breakout).map(t => t.keyword).slice(0, 5).join(', ') ?? ''
   const recentPosts = scan?.posts?.slice(0, 5).map(p => p.topic).join(', ') ?? ''
   const triggerWords = scan?.triggerWords?.map(t => t.word).join(', ') ?? 'FRAMER, TOOLS, PORTFOLIO'
 
@@ -56,41 +53,29 @@ FORMAT: ${format}
 CURRENTLY TRENDING: ${trendingKeywords || 'figma, framer, ai design tools'}
 RECENT POSTS (don't repeat): ${recentPosts}
 VIRAL FORMULA: Result shown first → practical shortcut revealed → comment trigger or save CTA.
-
 RAW IDEA: ${idea}
-
 Write the complete script:
 [HOOK] — scroll-stopping first line, no "Hey guys", no slow intro
 [BODY] — punchy, natural pacing, every sentence earns its place
 [CTA] — comment trigger ("Comment 'X' and I'll DM you") OR save prompt
-
 Return script only. No explanation.`
       } else if (promptType === 'hooks') {
-        prompt = `Write 3 Instagram hooks for @uxabhi_ (Abhishek Jha — UX designer, HCI master's Germany, Indian in Europe).
+        prompt = `Write 3 Instagram hooks for @uxabhi_ (UX designer, HCI master's Germany, Indian in Europe).
 Trending: ${trendingKeywords || 'figma, framer, ai tools'}
 Topic: ${idea}
-
 [CURIOSITY] — creates open loop
 [RELATABLE] — calls out a pain they've felt
 [HOT-TAKE] — controversial claim
-
 Each hook works in 2 seconds. No greetings. Sound like Abhishek texting a friend.`
       } else {
         prompt = `Write an Instagram caption for @uxabhi_ (UX designer, HCI master's Germany).
 Format: ${format}. Trending: ${trendingKeywords}. Triggers: ${triggerWords}.
 Topic: ${idea}
-
 Opens punchy (no greeting). Includes comment trigger if relevant. Ends with SAVE prompt or question.
 7-10 hashtags from: #figmatips #figmadesign #framerwebsite #uxtools #designtools #uxstudent #uxportfolio #indiandesigner #designineurope #uxcareer
-
 Return only the caption.`
       }
-
-      const res = await fetch('/api/groq', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt, maxTokens: 1500 }),
-      })
+      const res = await fetch('/api/groq', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt, maxTokens: 1500 }) })
       const data = await res.json()
       if (data.error) throw new Error(data.error)
       setOutput(data.text)
@@ -107,11 +92,7 @@ Return only the caption.`
     const hookMatch = output.match(/\[HOOK\]([\s\S]*?)(?=\[BODY\]|$)/)
     const hookLine = hookMatch?.[1]?.trim().split('\n')[0] ?? output.split('\n')[0]
     try {
-      await fetch('/api/scripts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ format, tone, pillar: '', input: idea, output, hookLine }),
-      })
+      await fetch('/api/scripts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ format, tone, pillar: '', input: idea, output, hookLine }) })
       setSaved(true)
     } finally {
       setIsSaving(false)
@@ -119,26 +100,23 @@ Return only the caption.`
   }
 
   return (
-    <div className="page-enter flex flex-col gap-6">
-      <div>
-        <h1 className="text-3xl font-bold" style={{ letterSpacing: '-0.04em', color: 'rgba(255,255,255,0.92)' }}>Script Studio</h1>
-        <p className="text-sm mt-1" style={{ color: 'rgba(255,255,255,0.40)' }}>Write, rewrite, and hook any content idea</p>
-        <hr className="divider mt-4" />
-      </div>
+    <div className="page-enter" style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+      <PageHeader title="Script Studio" subtitle="Write, rewrite, and hook any content idea" />
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Split panel */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, alignItems: 'start' }} className="block lg:grid">
         {/* Left — Input */}
-        <div className="flex flex-col gap-5">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           <div>
-            <Label>Format</Label>
+            <FieldLabel>Format</FieldLabel>
             <FormatChips selected={format} onChange={setFormat} />
           </div>
           <div>
-            <Label>Tone</Label>
+            <FieldLabel>Tone</FieldLabel>
             <ToneChips selected={tone} onChange={setTone} />
           </div>
           <div>
-            <Label>Your idea</Label>
+            <FieldLabel>Your idea</FieldLabel>
             <textarea
               className="input"
               rows={5}
@@ -146,19 +124,32 @@ Return only the caption.`
               onChange={e => setIdea(e.target.value)}
               placeholder="Drop your raw idea, bullet points, or messy notes here..."
             />
-            <div className="mt-2"><TrendHint idea={idea} /></div>
+            <div style={{ marginTop: 8 }}><TrendHint idea={idea} /></div>
           </div>
 
           {/* Quick inject */}
           <div>
-            <Label>Quick inject hooks</Label>
-            <div className="flex flex-col gap-1.5">
+            <FieldLabel>Quick inject</FieldLabel>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
               {displayHooks.slice(0, 6).map((hook, i) => (
                 <button
                   key={i}
                   onClick={() => setIdea(hook)}
-                  className="text-left text-xs px-3 py-2 rounded-lg transition-all"
-                  style={{ background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.55)', border: '0.5px solid rgba(255,255,255,0.08)' }}
+                  style={{
+                    textAlign: 'left',
+                    fontSize: 12,
+                    padding: '8px 12px',
+                    borderRadius: 7,
+                    background: 'transparent',
+                    border: '1px solid var(--border)',
+                    color: 'var(--text-secondary)',
+                    cursor: 'pointer',
+                    transition: 'all 120ms ease',
+                    fontFamily: 'inherit',
+                    lineHeight: 1.4,
+                  }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--bg-card)'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-primary)' }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-secondary)' }}
                 >
                   {hook}
                 </button>
@@ -167,20 +158,15 @@ Return only the caption.`
           </div>
 
           {/* Action buttons */}
-          <div className="flex flex-col gap-2">
-            <button
-              onClick={() => callGroq('full')}
-              disabled={loading || !idea.trim()}
-              className="py-2.5 rounded-full text-sm font-medium transition-all"
-              style={{ background: loading ? 'rgba(110,106,255,0.30)' : '#6e6aff', color: '#fff' }}
-            >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <button onClick={() => callGroq('full')} disabled={loading || !idea.trim()} className="btn-primary" style={{ width: '100%' }}>
               {loading ? 'Writing...' : 'Rewrite & Hook It'}
             </button>
-            <div className="grid grid-cols-2 gap-2">
-              <button onClick={() => callGroq('hooks')} disabled={loading || !idea.trim()} className="py-2 rounded-full text-sm font-medium transition-all" style={{ background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.70)', border: '0.5px solid rgba(255,255,255,0.12)' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+              <button onClick={() => callGroq('hooks')} disabled={loading || !idea.trim()} className="btn-secondary" style={{ fontSize: 12 }}>
                 3 Hooks Only
               </button>
-              <button onClick={() => callGroq('caption')} disabled={loading || !idea.trim()} className="py-2 rounded-full text-sm font-medium transition-all" style={{ background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.70)', border: '0.5px solid rgba(255,255,255,0.12)' }}>
+              <button onClick={() => callGroq('caption')} disabled={loading || !idea.trim()} className="btn-secondary" style={{ fontSize: 12 }}>
                 Write Caption
               </button>
             </div>
@@ -188,29 +174,37 @@ Return only the caption.`
         </div>
 
         {/* Right — Output */}
-        <div className="rounded-2xl p-5 min-h-64 flex flex-col" style={{ background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.08)' }}>
+        <div
+          style={{
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border)',
+            borderRadius: 10,
+            padding: '20px',
+            minHeight: 420,
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+        >
           {loading && (
-            <div className="flex-1 flex items-center justify-center">
-              <div className="flex flex-col items-center gap-3">
-                <div className="w-8 h-8 relative">
-                  <svg className="spin-ring w-8 h-8" viewBox="0 0 32 32" fill="none">
-                    <circle cx="16" cy="16" r="12" stroke="rgba(110,106,255,0.20)" strokeWidth="3" />
-                    <circle cx="16" cy="16" r="12" stroke="#6e6aff" strokeWidth="3" strokeLinecap="round" strokeDasharray="20 56" />
-                  </svg>
-                </div>
-                <p className="text-sm" style={{ color: 'rgba(255,255,255,0.40)' }}>Groq is writing...</p>
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
+              <div style={{ position: 'relative', width: 32, height: 32 }}>
+                <svg className="spin-ring" width="32" height="32" viewBox="0 0 32 32" fill="none">
+                  <circle cx="16" cy="16" r="12" stroke="var(--border-strong)" strokeWidth="3" />
+                  <circle cx="16" cy="16" r="12" stroke="var(--accent)" strokeWidth="3" strokeLinecap="round" strokeDasharray="20 56" />
+                </svg>
               </div>
+              <p style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>Groq is writing...</p>
             </div>
           )}
           {error && !loading && (
-            <div className="flex-1 flex flex-col items-center justify-center gap-3">
-              <p className="text-sm" style={{ color: '#FF453A' }}>{error}</p>
-              <button onClick={() => callGroq('full')} className="text-xs px-3 py-1.5 rounded-full" style={{ background: 'rgba(255,69,58,0.12)', color: '#FF453A' }}>Retry</button>
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
+              <p style={{ fontSize: 13, color: 'var(--red)' }}>{error}</p>
+              <button onClick={() => callGroq('full')} className="btn-secondary" style={{ fontSize: 12 }}>Retry</button>
             </div>
           )}
           {!loading && !error && !output && (
-            <div className="flex-1 flex items-center justify-center">
-              <p className="text-sm text-center" style={{ color: 'rgba(255,255,255,0.20)' }}>Your script will appear here</p>
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <p style={{ fontSize: 13, color: 'var(--text-tertiary)', textAlign: 'center' }}>Your script will appear here</p>
             </div>
           )}
           {!loading && !error && output && (
@@ -222,13 +216,17 @@ Return only the caption.`
   )
 }
 
-function Label({ children }: { children: React.ReactNode }) {
-  return <p className="text-xs font-semibold mb-2" style={{ color: 'rgba(255,255,255,0.35)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>{children}</p>
+function FieldLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <p style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-tertiary)', letterSpacing: '0.06em', textTransform: 'uppercase' as const, marginBottom: 8 }}>
+      {children}
+    </p>
+  )
 }
 
 export default function StudioPage() {
   return (
-    <Suspense fallback={<div className="page-enter"><p style={{ color: 'rgba(255,255,255,0.40)' }}>Loading...</p></div>}>
+    <Suspense fallback={<div style={{ color: 'var(--text-tertiary)', fontSize: 13 }}>Loading...</div>}>
       <StudioContent />
     </Suspense>
   )

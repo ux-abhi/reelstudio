@@ -1,9 +1,8 @@
 'use client'
-import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useScan } from '@/components/scan/ScanContext'
-import { EmptyState } from '@/components/shared/EmptyState'
 import { SkeletonGrid } from '@/components/shared/SkeletonCard'
+import { PageHeader } from '@/components/shared/PageHeader'
 import { Hook } from '@/types/scan'
 
 const FALLBACK_HOOKS: Hook[] = [
@@ -19,61 +18,38 @@ const FALLBACK_HOOKS: Hook[] = [
   { text: "Every 'best AI tools for designers' post misses the ones I actually use", type: 'hot-take', basedOn: 'AI rant audience signal', trendRelevant: true },
   { text: "POV: You open Figma at 11pm with a client deadline at 9am", type: 'story', basedOn: "Builder's Log pillar", trendRelevant: false },
   { text: "Ye kya ho raha hai design industry mein — main samajh nahi pa raha", type: 'hinglish', basedOn: 'Hindi rant format — double niche engagement rate', trendRelevant: false },
-  { text: "Most designers finish their portfolio, post it on LinkedIn, get zero callbacks — here's why", type: 'curiosity', basedOn: 'Portfolio anxiety audience signal', trendRelevant: false },
+  { text: "Most designers post their portfolio on LinkedIn, get zero callbacks — here's why", type: 'curiosity', basedOn: 'Portfolio anxiety audience signal', trendRelevant: false },
   { text: "My HCI thesis studies something that changes how every product should be designed", type: 'curiosity', basedOn: 'HCI research whitespace', trendRelevant: false },
   { text: "I vibe-coded a landing page in 40 minutes that a client paid me for", type: 'story', basedOn: 'Vibe coding + Framer whitespace', trendRelevant: true },
   { text: "Framer + Claude + 4 hours = client-ready landing page — full workflow", type: 'curiosity', basedOn: 'Unfair advantage: Framer + Claude workflow', trendRelevant: true },
   { text: "Indian designer, German design market — the pay gap nobody talks about", type: 'hot-take', basedOn: 'Indian in Europe POV whitespace', trendRelevant: false },
-  { text: "It's 11pm. I have a design problem and no existing tool solves it. So I'm building one.", type: 'story', basedOn: '"The Midnight Build" series concept', trendRelevant: false },
+  { text: "It's 11pm. I have a design problem and no existing tool solves it. So I'm building one.", type: 'story', basedOn: 'The Midnight Build series concept', trendRelevant: false },
   { text: "Comment 'TOOLS' — I'll DM you everything that's open in my browser right now", type: 'hinglish', basedOn: 'Comment trigger formula — 1900 comments Jun 2024', trendRelevant: false },
   { text: "Honest review: Google AI Studio vs Claude for UX work — I used both for 3 months", type: 'hot-take', basedOn: 'AI tools comparison whitespace', trendRelevant: true },
 ]
 
-const TYPE_CONFIG = {
-  curiosity: { label: 'Curiosity', color: '#6e6aff', bg: 'rgba(110,106,255,0.10)' },
-  story:     { label: 'Story', color: '#34C759', bg: 'rgba(52,199,89,0.10)' },
-  'hot-take':{ label: 'Hot Take', color: '#FF453A', bg: 'rgba(255,69,58,0.10)' },
-  hinglish:  { label: 'Hinglish', color: '#FFD60A', bg: 'rgba(255,214,10,0.10)' },
+const TYPE_CONFIG: Record<string, { label: string; accent: string; bg: string }> = {
+  curiosity: { label: 'Curiosity', accent: 'var(--accent-hover)', bg: 'var(--accent-subtle)' },
+  story:     { label: 'Story',     accent: 'var(--green)',       bg: 'var(--green-subtle)'   },
+  'hot-take':{ label: 'Hot Take',  accent: 'var(--red)',         bg: 'var(--red-subtle)'     },
+  hinglish:  { label: 'Hinglish',  accent: 'var(--yellow)',      bg: 'var(--yellow-subtle)'  },
 }
 
 export default function HooksPage() {
   const { scan, isScanning } = useScan()
   const router = useRouter()
-  const [regenerating, setRegenerating] = useState(false)
 
   if (isScanning) return <SkeletonGrid count={8} />
 
   const hooks: Hook[] = scan?.hooks?.length ? scan.hooks : FALLBACK_HOOKS
-
   const byType = (type: Hook['type']) => hooks.filter(h => h.type === type)
 
-  async function handleRegenerate() {
-    setRegenerating(true)
-    try {
-      const prompt = `Generate 20 Instagram hooks for @uxabhi_ (UX designer, HCI master's Germany, Indian designer in Europe).
-5 per type: curiosity, story, hot-take, hinglish.
-Based on top posts: ${scan?.posts?.slice(0,3).map(p => p.topic).join(', ') ?? 'Figma plugin, Chrome extension, Hindi rant'}
-Return ONLY JSON array: [{ text, type, basedOn, trendRelevant }]`
-      await fetch('/api/groq', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt, maxTokens: 2000 }) })
-    } finally {
-      setRegenerating(false)
-    }
-  }
-
   return (
-    <div className="page-enter flex flex-col gap-8">
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-3xl font-bold" style={{ letterSpacing: '-0.04em', color: 'rgba(255,255,255,0.92)' }}>Hooks Library</h1>
-          <p className="text-sm mt-1" style={{ color: 'rgba(255,255,255,0.40)' }}>
-            {scan ? 'Generated from your account data' : 'Fallback hooks from strategy doc — run scan for personalised hooks'}
-          </p>
-        </div>
-        <button onClick={handleRegenerate} disabled={regenerating} className="text-xs font-medium px-3 py-1.5 rounded-full" style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.55)', border: '0.5px solid rgba(255,255,255,0.10)' }}>
-          {regenerating ? 'Regenerating...' : 'Regenerate'}
-        </button>
-      </div>
-      <hr className="divider" />
+    <div className="page-enter" style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>
+      <PageHeader
+        title="Hooks Library"
+        subtitle={scan ? 'Generated from your account data' : 'Fallback hooks — run scan for personalised hooks'}
+      />
 
       {(['curiosity', 'story', 'hot-take', 'hinglish'] as Hook['type'][]).map(type => {
         const typeHooks = byType(type)
@@ -81,28 +57,43 @@ Return ONLY JSON array: [{ text, type, basedOn, trendRelevant }]`
         const cfg = TYPE_CONFIG[type]
         return (
           <section key={type}>
-            <div className="flex items-center gap-3 mb-4">
-              <span className="text-xs font-semibold px-3 py-1 rounded-full" style={{ background: cfg.bg, color: cfg.color, border: `0.5px solid ${cfg.color}33` }}>
-                {cfg.label}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+              <p className="section-label">{cfg.label}</p>
+              <span className="badge" style={{ background: cfg.bg, color: cfg.accent, borderColor: 'transparent', fontSize: 10 }}>
+                {typeHooks.length}
               </span>
-              <span className="text-xs" style={{ color: 'rgba(255,255,255,0.25)' }}>{typeHooks.length} hooks</span>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 2, background: 'var(--bg-card)', borderRadius: 10, border: '1px solid var(--border)', overflow: 'hidden' }}>
               {typeHooks.map((hook, i) => (
-                <button
+                <div
                   key={i}
-                  onClick={() => router.push(`/studio?idea=${encodeURIComponent(hook.text)}`)}
-                  className="card text-left flex flex-col gap-2 transition-all"
-                  style={{ cursor: 'pointer' }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: 16,
+                    padding: '12px 16px',
+                    borderBottom: i < typeHooks.length - 1 ? '1px solid var(--border-subtle)' : 'none',
+                    transition: 'background 100ms ease',
+                  }}
                 >
-                  <p className="text-sm font-medium" style={{ color: 'rgba(255,255,255,0.88)', lineHeight: 1.5 }}>
-                    {hook.text}
-                  </p>
-                  <div className="flex items-center justify-between mt-auto">
-                    <p className="text-xs" style={{ color: 'rgba(255,255,255,0.30)' }}>Based on: {hook.basedOn}</p>
-                    {hook.trendRelevant && <span className="text-xs" style={{ color: '#FFD60A' }}>🔥 trending</span>}
+                  <div style={{ flex: 1 }}>
+                    <p style={{ fontSize: 13, color: 'var(--text-primary)', lineHeight: 1.5 }}>{hook.text}</p>
+                    <p style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 3 }}>{hook.basedOn}</p>
                   </div>
-                </button>
+                  <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                    {hook.trendRelevant && (
+                      <span className="badge badge-rising" style={{ fontSize: 10 }}>trending</span>
+                    )}
+                    <button
+                      onClick={() => router.push(`/studio?idea=${encodeURIComponent(hook.text)}`)}
+                      className="btn-secondary"
+                      style={{ fontSize: 11, padding: '4px 10px' }}
+                    >
+                      Use
+                    </button>
+                  </div>
+                </div>
               ))}
             </div>
           </section>
