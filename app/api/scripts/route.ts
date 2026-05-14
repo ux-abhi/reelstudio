@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { kv, KV_KEYS } from '@/lib/kv'
 import { SavedScript } from '@/types/scan'
 
+export const dynamic = 'force-dynamic'
+
 const MAX_SCRIPTS = 100
 
 export async function GET() {

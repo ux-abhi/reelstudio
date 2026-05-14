@@ -17,20 +17,10 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <ScanProvider>
-          <div className="flex min-h-screen">
-            <Sidebar />
-            <main
-              className="flex-1 min-h-screen"
-              style={{ marginLeft: 0, paddingBottom: 80 }}
-            >
-              <div
-                className="md:ml-[240px]"
-                style={{ maxWidth: '100%', padding: '32px 24px' }}
-              >
-                {children}
-              </div>
-            </main>
-          </div>
+          <Sidebar />
+          <main className="md:ml-[240px] pb-24 md:pb-0 min-h-screen px-4 py-6 md:px-8 md:py-8 max-w-5xl mx-auto">
+            {children}
+          </main>
         </ScanProvider>
       </body>
     </html>
