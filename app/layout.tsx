@@ -29,10 +29,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ThemeProvider>
           <ScanProvider>
             <Sidebar />
-            <main
-              style={{ minHeight: '100vh', transition: 'margin 200ms ease' }}
-              className="md:ml-[220px] pb-[72px] md:pb-0"
-            >
+            <main className="app-main" style={{ transition: 'margin 200ms ease' }}>
               <div className="max-w-[1080px] mx-auto px-4 py-6 md:px-8 md:py-8">
                 {children}
               </div>

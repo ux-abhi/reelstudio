@@ -649,10 +649,55 @@ select.input {
   gap: 12px;
 }
 
-/* ─── Mobile safe area ───────────────────────────── */
+/* ─── App shell layout ───────────────────────────── */
+
+/* Sidebar: hidden on mobile, flex column on desktop */
+.sidebar-wrap {
+  display: none;
+  flex-direction: column;
+  position: fixed;
+  left: 0;
+  top: 0;
+  height: 100vh;
+  width: 220px;
+  overflow-y: auto;
+  z-index: 40;
+}
+@media (min-width: 768px) {
+  .sidebar-wrap {
+    display: flex;
+  }
+}
+
+/* Main content: full width on mobile, offset by sidebar on desktop */
+.app-main {
+  min-height: 100vh;
+  padding-bottom: 72px; /* clears mobile bottom nav */
+}
+@media (min-width: 768px) {
+  .app-main {
+    margin-left: 220px;
+    padding-bottom: 0;
+  }
+}
+
+/* Mobile bottom nav */
+.mobile-nav-bar {
+  display: flex;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 40;
+}
+@media (min-width: 768px) {
+  .mobile-nav-bar {
+    display: none;
+  }
+}
 
 @supports (padding-bottom: env(safe-area-inset-bottom)) {
-  .mobile-nav {
+  .mobile-nav-bar {
     padding-bottom: max(8px, env(safe-area-inset-bottom));
   }
 }

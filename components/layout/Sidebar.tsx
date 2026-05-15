@@ -39,9 +39,8 @@ export function Sidebar() {
     <>
       {/* ── Desktop sidebar ── */}
       <aside
-        className="hidden md:flex flex-col fixed left-0 top-0 h-screen overflow-y-auto z-40"
+        className="sidebar-wrap"
         style={{
-          width: 220,
           background: 'var(--bg-sidebar)',
           borderRight: '1px solid var(--border)',
           padding: '16px 12px',
@@ -146,7 +145,7 @@ export function Sidebar() {
 
       {/* ── Mobile bottom bar ── */}
       <nav
-        className="mobile-nav fixed bottom-0 left-0 right-0 flex md:hidden z-40"
+        className="mobile-nav-bar"
         style={{
           background: 'var(--bg-sidebar)',
           borderTop: '1px solid var(--border)',
