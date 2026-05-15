@@ -142,7 +142,7 @@ export default function DashboardPage() {
         <section>
           <p className="section-label" style={{ marginBottom: 12 }}>Account Health</p>
           <div className="stats-row">
-            <StatCard label="Engagement Rate" value={scan.accountHealth.engagementRate} sub={scan.accountHealth.engagementVerdict} />
+            <StatCard label="Engagement Rate" value={String(scan.accountHealth.engagementRate)} sub={scan.accountHealth.engagementVerdict} />
             <StatCard label="Posting Cadence" value={scan.accountHealth.postingCadence} sub="Consistency is the #1 growth lever" />
             <StatCard label="Top Format" value={scan.accountHealth.topPerformingFormat} sub={`Weakest: ${scan.accountHealth.weakestFormat}`} />
           </div>

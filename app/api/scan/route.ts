@@ -1,44 +1,108 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Groq from 'groq-sdk'
+import { ApifyClient } from 'apify-client'
 import { kv, KV_KEYS, KV_TTL } from '@/lib/kv'
 import { buildMasterScanPrompt } from '@/lib/prompts/masterScan'
 import { buildScanSchema, parseGroqJson, buildTomorrowDate, validateScanResult } from '@/lib/scan'
-import { ScanResult } from '@/types/scan'
+import { ScanResult, InstagramProfile, ProfileInput } from '@/types/scan'
 import { GROQ_MODEL } from '@/lib/groq'
 
+export const maxDuration = 300
 export const dynamic = 'force-dynamic'
 
 export async function POST(req: NextRequest) {
   const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
   try {
-    const { profileInput, forceRefresh = false } = await req.json()
+    const body = await req.json()
+    const { handle, profileInput, forceRefresh = false } = body as {
+      handle?: string
+      profileInput?: ProfileInput
+      forceRefresh?: boolean
+    }
 
     if (!forceRefresh) {
       const cached = await kv.get<ScanResult>(KV_KEYS.scan)
-      if (cached) {
-        return NextResponse.json(cached)
-      }
-    }
-
-    // Fetch trends — fall back to empty array if unavailable
-    let trendsData: unknown[] = []
-    try {
-      const trendsRes = await fetch(
-        `${process.env.NEXT_PUBLIC_APP_URL}/api/trends`
-      )
-      trendsData = await trendsRes.json()
-    } catch {
-      console.error('Trends fetch failed, continuing with empty trends')
+      if (cached) return NextResponse.json(cached)
     }
 
     const tomorrowDate = buildTomorrowDate()
     const schema = buildScanSchema()
-    const prompt = buildMasterScanPrompt(
-      JSON.stringify(profileInput),
-      JSON.stringify(trendsData),
-      tomorrowDate,
-      schema
-    )
+
+    // Try Apify path first when token is set and handle is provided
+    const useApify = !!(process.env.APIFY_TOKEN && handle)
+    let profileData = ''
+    let postsData = ''
+    let trendsData = '[]'
+    let instagramProfile: InstagramProfile | undefined
+
+    if (useApify) {
+      const cleanHandle = handle!.replace('@', '').toLowerCase()
+      const client = new ApifyClient({ token: process.env.APIFY_TOKEN })
+
+      // Run profile scraper, posts scraper, and trends fetch in parallel
+      const [profileRun, postsRun, trendsResult] = await Promise.allSettled([
+        client.actor('apify/instagram-profile-scraper').call({ usernames: [cleanHandle] }),
+        client.actor('apify/instagram-post-scraper').call({
+          directUrls: [`https://www.instagram.com/${cleanHandle}/`],
+          resultsType: 'posts',
+          resultsLimit: 30,
+        }),
+        fetchTrends(),
+      ])
+
+      if (profileRun.status === 'fulfilled') {
+        const { items } = await client.dataset(profileRun.value.defaultDatasetId).listItems()
+        const raw = items[0] as Record<string, unknown> | undefined
+        if (raw) {
+          instagramProfile = {
+            handle: (raw.username as string) ?? cleanHandle,
+            name: (raw.fullName as string) ?? '',
+            bio: (raw.biography as string) ?? '',
+            followers: (raw.followersCount as number) ?? 0,
+            following: (raw.followingCount as number) ?? 0,
+            postCount: (raw.postsCount as number) ?? 0,
+            isVerified: (raw.verified as boolean) ?? false,
+            profilePicUrl: (raw.profilePicUrl as string) ?? undefined,
+          }
+          profileData = JSON.stringify(instagramProfile)
+          await kv.set(KV_KEYS.apifyProfile, instagramProfile, { ex: KV_TTL.apify })
+        }
+      }
+
+      if (postsRun.status === 'fulfilled') {
+        const { items } = await client.dataset(postsRun.value.defaultDatasetId).listItems()
+        const rawPosts = items.map((p: Record<string, unknown>) => ({
+          id: (p.id as string) ?? (p.shortCode as string) ?? '',
+          timestamp: p.timestamp,
+          caption: (p.caption as string)?.slice(0, 300) ?? '',
+          likesCount: p.likesCount,
+          commentsCount: p.commentsCount,
+          type: p.type,
+          url: p.url,
+          hashtags: (p.hashtags as string[]) ?? [],
+          videoViewCount: p.videoViewCount,
+        }))
+        postsData = JSON.stringify(rawPosts)
+        await kv.set(KV_KEYS.apifyPosts, items, { ex: KV_TTL.apify })
+      }
+
+      if (trendsResult.status === 'fulfilled') {
+        trendsData = JSON.stringify(trendsResult.value)
+      }
+
+      // Fall back gracefully if Apify data is empty
+      if (!profileData) {
+        profileData = handle ? `{ "handle": "${handle}" }` : '{}'
+      }
+      if (!postsData) postsData = '[]'
+    } else {
+      // Legacy: use manually-provided profileInput
+      profileData = JSON.stringify(profileInput ?? {})
+      postsData = JSON.stringify((profileInput as ProfileInput & { posts?: unknown[] })?.posts ?? [])
+      try { trendsData = JSON.stringify(await fetchTrends()) } catch { /* ignore */ }
+    }
+
+    const prompt = buildMasterScanPrompt(profileData, postsData, trendsData, tomorrowDate, schema)
 
     const completion = await groq.chat.completions.create({
       model: GROQ_MODEL,
@@ -54,14 +118,21 @@ export async function POST(req: NextRequest) {
     }
 
     scanResult.scannedAt = new Date().toISOString()
-    scanResult.profileInput = profileInput
+    scanResult.handle = handle ?? profileInput?.handle ?? 'uxabhi_'
+    if (instagramProfile) scanResult.instagramProfile = instagramProfile
+    if (profileInput) scanResult.profileInput = profileInput
 
     await kv.set(KV_KEYS.scan, scanResult, { ex: KV_TTL.scan })
-
     return NextResponse.json(scanResult)
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Scan failed'
     console.error('Scan error:', error)
     return NextResponse.json({ error: message }, { status: 500 })
   }
+}
+
+async function fetchTrends(): Promise<unknown[]> {
+  const base = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
+  const res = await fetch(`${base}/api/trends`)
+  return res.json()
 }

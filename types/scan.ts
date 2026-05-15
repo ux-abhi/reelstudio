@@ -1,8 +1,14 @@
+/* ─── Core scan result ───────────────────────────── */
+
 export interface ScanResult {
   scannedAt: string
-  profileInput: ProfileInput
+  handle: string
+  // Kept for backward compat — populated from Apify or manual input
+  profileInput?: ProfileInput
+  // Real Apify profile (present when APIFY_TOKEN is set)
+  instagramProfile?: InstagramProfile
   accountHealth: AccountHealth
-  posts: Post[]
+  posts: AnalyzedPost[]
   pillars: Pillar[]
   contentGaps: string[]
   ideas: Idea[]
@@ -13,9 +19,23 @@ export interface ScanResult {
   triggerWords: TriggerWord[]
   bioFix: BioFix
   hashtagClusters: HashtagClusters
-  competitors: CompetitorSuggestions
+  competitorSuggestions: string[]
 }
 
+/* ─── Profile types ──────────────────────────────── */
+
+export interface InstagramProfile {
+  handle: string
+  name: string
+  bio: string
+  followers: number
+  following: number
+  postCount: number
+  isVerified: boolean
+  profilePicUrl?: string
+}
+
+/** Manual input (onboarding form / backward compat) */
 export interface ProfileInput {
   handle: string
   name: string
@@ -33,29 +53,46 @@ export interface ManualPost {
   format?: string
 }
 
+/* ─── Account health ─────────────────────────────── */
+
 export interface AccountHealth {
-  engagementRate: string
+  engagementRate: string | number
   engagementVerdict: string
   postingCadence: string
+  cadenceVerdict?: string
   topPerformingFormat: string
   weakestFormat: string
   bioScore: number
   bioIssues: string[]
-  bioFix: string
+  bioFix?: string
+  hookStrengthOverall?: 'strong' | 'medium' | 'weak'
+  visualIdentityScore?: number
 }
 
-export interface Post {
+/* ─── Posts ──────────────────────────────────────── */
+
+export interface AnalyzedPost {
   id: string
   date: string
   topic: string
+  caption?: string
   likes: number
   comments: number
+  hashtags?: string[]
   tier: 1 | 2 | 3
   format: string
   pillarTag: string
+  pillarColorKey?: string
   hookStrength: 'strong' | 'medium' | 'weak'
   whatWorked: string
+  whatDidnt?: string
+  permalink?: string
 }
+
+/** Alias for backward compat */
+export type Post = AnalyzedPost
+
+/* ─── Content strategy ───────────────────────────── */
 
 export interface Pillar {
   name: string
@@ -65,13 +102,17 @@ export interface Pillar {
   bestFormat: string
   exampleIdeas: string[]
   basedOn: string
+  colorKey?: 'toolbox' | 'decoded' | 'take' | 'builder' | 'hci'
 }
 
 export interface Idea {
+  id?: string
   title: string
   pillar: string
+  pillarColorKey?: string
   trendScore: number
   trendDirection: 'rising' | 'falling' | 'stable'
+  trendKeyword?: string
   hookSuggestion: string
   triggerWord?: string
   urgency: 'post this week' | 'post this month' | 'evergreen'
@@ -84,6 +125,7 @@ export interface CalendarDay {
   dayName: string
   postType: 'Reel' | 'Carousel' | 'Stories' | 'Talking Head'
   pillar: string
+  pillarColorKey?: string
   title: string
   hook: string
   optimisedFor: 'Reach' | 'Saves' | 'Comments' | 'DMs'
@@ -93,12 +135,15 @@ export interface CalendarDay {
 }
 
 export interface PriorityAction {
+  id?: string
   day: string
   action: string
   impact: string
-  urgency: 'do first' | 'this week' | 'this month'
+  urgency: 'do first' | 'this week' | 'this month' | 'urgent' | 'soon' | 'later'
   completed?: boolean
 }
+
+/* ─── Trends ─────────────────────────────────────── */
 
 export interface TrendKeyword {
   keyword: string
@@ -109,7 +154,10 @@ export interface TrendKeyword {
   contentOpportunity: string
 }
 
+/* ─── Hooks & triggers ───────────────────────────── */
+
 export interface Hook {
+  id?: string
   text: string
   type: 'curiosity' | 'story' | 'hot-take' | 'hinglish'
   basedOn: string
@@ -124,6 +172,8 @@ export interface TriggerWord {
   captionTemplate: string
 }
 
+/* ─── Bio & hashtags ─────────────────────────────── */
+
 export interface BioFix {
   current: string
   issues: string[]
@@ -136,25 +186,13 @@ export interface HashtagClusters {
   opinionIndia: string[]
 }
 
-export interface CompetitorSuggestions {
-  fromStrategy: string[]
-  trendingInNiche: string[]
-}
-
-export interface SavedScript {
-  id: string
-  savedAt: string
-  format: string
-  tone: string
-  pillar: string
-  input: string
-  output: string
-  hookLine: string
-}
+/* ─── Competitors ────────────────────────────────── */
 
 export interface CompetitorAnalysis {
   handle: string
   strategy: string
+  avgEngagement?: string
+  postingFrequency?: string
   hooksToSteal: string[]
   gapsTheyLeave: string[]
   threatLevel: 'high' | 'medium' | 'low'
@@ -162,4 +200,18 @@ export interface CompetitorAnalysis {
   collabScore: string
   collabPitch: string
   whitespace: string
+  scrapedAt?: string
+}
+
+/* ─── Saved scripts ──────────────────────────────── */
+
+export interface SavedScript {
+  id: string
+  savedAt: string
+  format: string
+  tone: string
+  pillar?: string
+  input: string
+  output: string
+  hookLine: string
 }

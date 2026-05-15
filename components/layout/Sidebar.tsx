@@ -60,7 +60,7 @@ export function Sidebar() {
           </p>
           {scan && (
             <p style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2 }}>
-              {scan.profileInput?.followers?.toLocaleString()} followers
+              {(scan.instagramProfile?.followers ?? scan.profileInput?.followers)?.toLocaleString()} followers
             </p>
           )}
         </div>
@@ -133,10 +133,10 @@ export function Sidebar() {
               }}
             >
               <p style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>
-                @{scan.profileInput?.handle}
+                @{scan.instagramProfile?.handle ?? scan.profileInput?.handle ?? scan.handle}
               </p>
               <p style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2 }}>
-                {scan.profileInput?.followers?.toLocaleString()} → {scan.profileInput?.goal?.toLocaleString()} goal
+                {(scan.instagramProfile?.followers ?? scan.profileInput?.followers)?.toLocaleString()} followers
               </p>
             </div>
           )}

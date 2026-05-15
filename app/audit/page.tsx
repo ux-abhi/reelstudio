@@ -20,7 +20,7 @@ export default function AuditPage() {
 
   const { accountHealth, posts, bioFix, hashtagClusters } = scan
   const sortedPosts = [...(posts ?? [])].sort((a, b) => (b.likes + b.comments) - (a.likes + a.comments))
-  const engRate = parseFloat(accountHealth?.engagementRate ?? '0')
+  const engRate = parseFloat(String(accountHealth?.engagementRate ?? '0'))
   const engFill = engRate >= 5 ? 'good' : engRate >= 3 ? 'medium' : 'low'
   const bioScore = accountHealth?.bioScore ?? 0
   const bioFill  = bioScore >= 7 ? 'good' : bioScore >= 4 ? 'medium' : 'low'
@@ -34,7 +34,7 @@ export default function AuditPage() {
         <section>
           <p className="section-label" style={{ marginBottom: 16 }}>Health Metrics</p>
           <div className="card" style={{ padding: '20px 24px' }}>
-            <HealthBar label="Engagement Rate" value={accountHealth.engagementRate} fill={engFill} pct={Math.min(engRate * 10, 100)} animate={barWidths} note={accountHealth.engagementVerdict} />
+            <HealthBar label="Engagement Rate" value={String(accountHealth.engagementRate)} fill={engFill} pct={Math.min(engRate * 10, 100)} animate={barWidths} note={accountHealth.engagementVerdict} />
             <HealthBar label="Bio Score" value={`${bioScore}/10`} fill={bioFill} pct={bioScore * 10} animate={barWidths} note={accountHealth.bioIssues?.join(' · ') ?? ''} />
             <div style={{ paddingTop: 8, borderTop: '1px solid var(--border-subtle)', marginTop: 8, display: 'flex', gap: 32 }}>
               <div>
