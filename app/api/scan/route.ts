@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import Groq from 'groq-sdk'
 import { ApifyClient } from 'apify-client'
 import { getUser } from '@/lib/supabase/server'
-import { getScanResult, setScanResult, setApifyCache } from '@/lib/db'
+import { getScanResult, setScanResult, setApifyCache, getTrendsCache, setTrendsCache } from '@/lib/db'
 import { buildMasterScanPrompt } from '@/lib/prompts/masterScan'
 import { buildScanSchema, parseGroqJson, buildTomorrowDate, validateScanResult } from '@/lib/scan'
 import { ScanResult, InstagramProfile, ProfileInput } from '@/types/scan'
 import { GROQ_MODEL } from '@/lib/groq'
+import { fetchTrend, TREND_KEYWORDS, TrendResult } from '@/lib/trends'
 
 export const maxDuration = 300
 export const dynamic = 'force-dynamic'
@@ -46,13 +47,17 @@ export async function POST(req: NextRequest) {
 
       const [profileRun, postsRun, trendsResult] = await Promise.allSettled([
         client.actor('apify/instagram-profile-scraper').call({ usernames: [cleanHandle] }),
-        client.actor('apify/instagram-post-scraper').call({
+        client.actor('apify/instagram-scraper').call({
           directUrls: [`https://www.instagram.com/${cleanHandle}/`],
           resultsType: 'posts',
           resultsLimit: 30,
         }),
         fetchTrends(),
       ])
+
+      if (profileRun.status === 'rejected') console.error('[Apify] Profile scraper failed:', profileRun.reason)
+      if (postsRun.status === 'rejected') console.error('[Apify] Post scraper failed:', postsRun.reason)
+      if (trendsResult.status === 'rejected') console.error('[Apify] Trends failed:', trendsResult.reason)
 
       if (profileRun.status === 'fulfilled') {
         const { items } = await client.dataset(profileRun.value.defaultDatasetId).listItems()
@@ -99,7 +104,7 @@ export async function POST(req: NextRequest) {
     } else {
       profileData = JSON.stringify(profileInput ?? {})
       postsData = JSON.stringify((profileInput as ProfileInput & { posts?: unknown[] })?.posts ?? [])
-      try { trendsData = JSON.stringify(await fetchTrends()) } catch { /* ignore */ }
+      try { trendsData = JSON.stringify(await fetchTrends()) } catch (e) { console.error('[Trends] fetch failed:', e) }
     }
 
     const prompt = buildMasterScanPrompt(profileData, postsData, trendsData, tomorrowDate, schema)
@@ -131,8 +136,13 @@ export async function POST(req: NextRequest) {
   }
 }
 
-async function fetchTrends(): Promise<unknown[]> {
-  const base = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
-  const res = await fetch(`${base}/api/trends`)
-  return res.json()
+async function fetchTrends(): Promise<TrendResult[]> {
+  const cached = await getTrendsCache()
+  if (cached) return cached as TrendResult[]
+  const results = await Promise.allSettled(TREND_KEYWORDS.map(fetchTrend))
+  const trends = results
+    .filter(r => r.status === 'fulfilled')
+    .map(r => (r as PromiseFulfilledResult<TrendResult>).value)
+  await setTrendsCache(trends)
+  return trends
 }

@@ -7,11 +7,11 @@ import { PageHeader } from '@/components/shared/PageHeader'
 import { Pillar } from '@/types/scan'
 
 export default function PillarsPage() {
-  const { scan, isScanning } = useScan()
+  const { scan, isScanning, isInitialLoad } = useScan()
   const [barWidths, setBarWidths] = useState(false)
   useEffect(() => { setTimeout(() => setBarWidths(true), 150) }, [])
 
-  if (isScanning) return <SkeletonGrid count={5} />
+  if (isScanning || isInitialLoad) return <SkeletonGrid count={5} />
   if (!scan) return <EmptyState title="No pillars yet" description="Run your scan to see your AI-inferred content pillars based on your real post history." />
 
   // Build do's from scan data: top formats and what worked in tier-1 posts

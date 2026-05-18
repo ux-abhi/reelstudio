@@ -4,7 +4,8 @@ import { ScanResult, ProfileInput } from '@/types/scan'
 
 interface ScanContextType {
   scan: ScanResult | null
-  isScanning: boolean
+  isScanning: boolean       // running a new forced scan (shows full-screen progress overlay)
+  isInitialLoad: boolean    // loading cached scan from Supabase on mount (show inline skeletons)
   scanProgress: string[]
   error: string | null
   runScan: (handleOrProfile: string | ProfileInput, force?: boolean) => Promise<void>
@@ -14,6 +15,7 @@ interface ScanContextType {
 const ScanContext = createContext<ScanContextType>({
   scan: null,
   isScanning: false,
+  isInitialLoad: false,
   scanProgress: [],
   error: null,
   runScan: async () => {},
@@ -31,31 +33,44 @@ const SCAN_STEPS = [
 export function ScanProvider({ children }: { children: ReactNode }) {
   const [scan, setScan] = useState<ScanResult | null>(null)
   const [isScanning, setIsScanning] = useState(false)
+  const [isInitialLoad, setIsInitialLoad] = useState(false)
   const [scanProgress, setScanProgress] = useState<string[]>([])
   const [error, setError] = useState<string | null>(null)
   const [hasProfile, setHasProfile] = useState(false)
 
-  // On mount: load cached scan if we have a stored handle
+  // On mount: load cached scan from Supabase (or trigger fresh scan if expired)
   useEffect(() => {
     const storedHandle = localStorage.getItem('ss:handle')
-    // Legacy: also support old profile-based storage
     const storedProfile = localStorage.getItem('ss:profile')
 
-    if (storedHandle || storedProfile) {
-      setHasProfile(true)
-      const body = storedHandle
-        ? { handle: storedHandle, forceRefresh: false }
-        : { profileInput: JSON.parse(storedProfile!), forceRefresh: false }
+    if (!storedHandle && !storedProfile) return
 
-      fetch('/api/scan', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
+    setHasProfile(true)
+    setIsInitialLoad(true)
+
+    const body = storedHandle
+      ? { handle: storedHandle, forceRefresh: false }
+      : { profileInput: JSON.parse(storedProfile!), forceRefresh: false }
+
+    fetch('/api/scan', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (data.error) {
+          console.warn('[ScanContext] initial load error:', data.error)
+          setError(data.error)
+        } else {
+          setScan(data)
+        }
       })
-        .then(r => r.json())
-        .then(data => { if (!data.error) setScan(data) })
-        .catch(() => {})
-    }
+      .catch(e => {
+        console.warn('[ScanContext] initial load failed:', e)
+        setError(e instanceof Error ? e.message : 'Failed to load scan')
+      })
+      .finally(() => setIsInitialLoad(false))
   }, [])
 
   const runScan = useCallback(async (handleOrProfile: string | ProfileInput, force = false) => {
@@ -63,7 +78,6 @@ export function ScanProvider({ children }: { children: ReactNode }) {
     setError(null)
     setScanProgress([])
 
-    // Animate steps while scan runs
     let stepIndex = 0
     const stepInterval = setInterval(() => {
       if (stepIndex < SCAN_STEPS.length) {
@@ -107,7 +121,7 @@ export function ScanProvider({ children }: { children: ReactNode }) {
   }, [])
 
   return (
-    <ScanContext.Provider value={{ scan, isScanning, scanProgress, error, runScan, hasProfile }}>
+    <ScanContext.Provider value={{ scan, isScanning, isInitialLoad, scanProgress, error, runScan, hasProfile }}>
       {children}
     </ScanContext.Provider>
   )

@@ -3,18 +3,18 @@
 const googleTrends = require('google-trends-api')
 
 export const TREND_KEYWORDS = [
-  'ux design',
-  'figma',
-  'framer',
-  'ai design tools',
-  'ux portfolio',
-  'hci',
-  'product design',
-  'framer website',
-  'ui ux',
-  'design career',
-  'indian designer',
-  'design tools',
+  'content creator',
+  'instagram growth',
+  'social media strategy',
+  'ai tools',
+  'short form video',
+  'personal brand',
+  'instagram reels',
+  'content marketing',
+  'creator economy',
+  'viral content',
+  'digital marketing',
+  'audience growth',
 ]
 
 export interface TrendResult {

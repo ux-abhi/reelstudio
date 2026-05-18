@@ -22,10 +22,10 @@ const POST_TYPE_COLOR: Record<string, string> = {
 }
 
 export default function CalendarPage() {
-  const { scan, isScanning } = useScan()
+  const { scan, isScanning, isInitialLoad } = useScan()
   const router = useRouter()
 
-  if (isScanning) return <SkeletonGrid count={8} />
+  if (isScanning || isInitialLoad) return <SkeletonGrid count={8} />
   if (!scan?.calendar?.length) return <EmptyState title="No calendar yet" description="Run your scan to generate a 30-day content calendar with real dates, post types, and hooks." />
 
   const weeks: CalendarDay[][] = [[], [], [], []]

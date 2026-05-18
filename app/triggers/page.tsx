@@ -58,11 +58,11 @@ const GENERIC_TRIGGERS: TriggerWord[] = [
 ]
 
 export default function TriggersPage() {
-  const { scan, isScanning } = useScan()
+  const { scan, isScanning, isInitialLoad } = useScan()
   const [expanded, setExpanded] = useState<string | null>(null)
   const [copied, setCopied] = useState<string | null>(null)
 
-  if (isScanning) return (
+  if (isScanning || isInitialLoad) return (
     <div className="page-enter" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <SkeletonCard lines={3} />
       <SkeletonCard lines={3} />

@@ -6,24 +6,16 @@ import { SkeletonCard } from '@/components/shared/SkeletonCard'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { PriorityAction } from '@/types/scan'
 
-const COLLAB_TARGETS = [
-  { handle: '@jitu.ux',      followers: '80K+', pitch: '"We both review the same portfolio — who gives better feedback?" collab reel',       threat: 'medium' },
-  { handle: '@ux.wheee',     followers: '25K+', pitch: '"Two Indian designers, two countries — our honest job hunt experience"',             threat: 'low'    },
-  { handle: '@designbyjav',  followers: '20K+', pitch: '"I design it, you build it in Framer — 60-minute challenge"',                        threat: 'low'    },
-  { handle: '@thedesignely', followers: '35K+', pitch: 'Design engineering explainer, co-hosted reel',                                       threat: 'medium' },
-  { handle: '@uthinhpham',   followers: '73K+', pitch: '"Framer + Claude workflow — I design the system, you build the components"',          threat: 'medium' },
-]
-
 const MONTHLY_NON_NEG = [
-  'Post 5–6× per week minimum. Cadence is the #1 growth blocker — 2.6 posts/month cannot reach 10K.',
+  'Post consistently — cadence is the #1 growth blocker at every follower count.',
   'Every post needs a comment trigger OR a save CTA. No exceptions.',
   'Reply to every comment within 60 minutes of posting. The algorithm window closes after 3 hours.',
-  'Launch "FREE TOOL TUESDAY" as a weekly recurring series — trains audience to come back weekly.',
-  'One collab reel per week from Week 2 onwards. Offer to do all editing to reduce friction.',
+  'Pick one weekly recurring series format — trains your audience to come back every week.',
+  'One collab reel per month minimum. Offer to do all editing to reduce friction.',
 ]
 
 export default function ActionsPage() {
-  const { scan, isScanning } = useScan()
+  const { scan, isScanning, isInitialLoad } = useScan()
   const [checked, setChecked] = useState<Record<string, boolean>>({})
 
   useEffect(() => {
@@ -39,7 +31,7 @@ export default function ActionsPage() {
     localStorage.setItem('ss:actions:checked', JSON.stringify(next))
   }
 
-  if (isScanning) return (
+  if (isScanning || isInitialLoad) return (
     <div className="page-enter" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       {[1,2,3].map(i => <SkeletonCard key={i} lines={3} />)}
     </div>
@@ -133,26 +125,6 @@ export default function ActionsPage() {
         </div>
       </section>
 
-      {/* Collab targets */}
-      <section>
-        <p className="section-label" style={{ marginBottom: 12 }}>Collab Targets</p>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {COLLAB_TARGETS.map((target, i) => (
-            <div key={i} className="card" style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
-              <div style={{ flex: 1 }}>
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 6 }}>
-                  <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{target.handle}</span>
-                  <span style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>{target.followers}</span>
-                  <span className={`badge ${target.threat === 'high' ? 'badge-urgent' : target.threat === 'medium' ? 'badge-soon' : 'badge-later'}`} style={{ fontSize: 10 }}>
-                    {target.threat} threat
-                  </span>
-                </div>
-                <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>{target.pitch}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
     </div>
   )
 }

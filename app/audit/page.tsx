@@ -7,11 +7,11 @@ import { PageHeader } from '@/components/shared/PageHeader'
 import { Post } from '@/types/scan'
 
 export default function AuditPage() {
-  const { scan, isScanning } = useScan()
+  const { scan, isScanning, isInitialLoad } = useScan()
   const [barWidths, setBarWidths] = useState(false)
   useEffect(() => { setTimeout(() => setBarWidths(true), 150) }, [])
 
-  if (isScanning) return (
+  if (isScanning || isInitialLoad) return (
     <div className="page-enter" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       {[1,2,3].map(i => <SkeletonCard key={i} lines={4} />)}
     </div>

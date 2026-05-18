@@ -10,7 +10,7 @@ import { PageHeader } from '@/components/shared/PageHeader'
 import { PriorityAction, TrendKeyword } from '@/types/scan'
 
 export default function DashboardPage() {
-  const { scan, isScanning } = useScan()
+  const { scan, isScanning, isInitialLoad } = useScan()
   const router = useRouter()
   const [checked, setChecked] = useState<Record<string, boolean>>({})
 
@@ -27,7 +27,7 @@ export default function DashboardPage() {
     localStorage.setItem('ss:actions:checked', JSON.stringify(next))
   }
 
-  if (isScanning) {
+  if (isScanning || isInitialLoad) {
     return (
       <div className="page-enter" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
         <PageHeader title="Dashboard" subtitle="Your AI-generated Instagram command centre" />

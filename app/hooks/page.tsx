@@ -6,26 +6,18 @@ import { PageHeader } from '@/components/shared/PageHeader'
 import { Hook } from '@/types/scan'
 
 const FALLBACK_HOOKS: Hook[] = [
-  { text: "I don't know how this Figma plugin is still free", type: 'curiosity', basedOn: 'Jun 2024 viral post formula', trendRelevant: true },
-  { text: "Every Indian designer posting 'AI will replace you' — let's talk", type: 'hot-take', basedOn: 'Apr 2026 Hindi rant — 7.2% engagement', trendRelevant: true },
-  { text: "Your portfolio isn't landing interviews and it's not because your work is bad", type: 'curiosity', basedOn: 'Audience pain: portfolio anxiety', trendRelevant: false },
-  { text: "I built this at 2am and it saved me 4 hours the next morning", type: 'story', basedOn: 'Chrome extension reel — 34 comments', trendRelevant: false },
-  { text: "Main ye soch raha tha ki ye kaise kaam karta hai — phir maine banaya", type: 'hinglish', basedOn: 'Hindi rant format — 7.2% engagement rate', trendRelevant: false },
-  { text: "Stop putting Figma under Technical Skills in your portfolio", type: 'hot-take', basedOn: 'Audience signal from comments', trendRelevant: false },
-  { text: "This Framer plugin copies any site's style in 30 seconds — watch", type: 'curiosity', basedOn: 'Framer plugin reel — 57 likes from 1242 followers', trendRelevant: true },
-  { text: "European design agencies mein Indian designers ko kya problem aati hai", type: 'hinglish', basedOn: 'Whitespace: Indian in Europe POV', trendRelevant: false },
-  { text: "I applied to 12 UX roles in Germany in 3 months — here's what happened", type: 'story', basedOn: 'From India to Germany pillar', trendRelevant: false },
-  { text: "Every 'best AI tools for designers' post misses the ones I actually use", type: 'hot-take', basedOn: 'AI rant audience signal', trendRelevant: true },
-  { text: "POV: You open Figma at 11pm with a client deadline at 9am", type: 'story', basedOn: "Builder's Log pillar", trendRelevant: false },
-  { text: "Ye kya ho raha hai design industry mein — main samajh nahi pa raha", type: 'hinglish', basedOn: 'Hindi rant format — double niche engagement rate', trendRelevant: false },
-  { text: "Most designers post their portfolio on LinkedIn, get zero callbacks — here's why", type: 'curiosity', basedOn: 'Portfolio anxiety audience signal', trendRelevant: false },
-  { text: "My HCI thesis studies something that changes how every product should be designed", type: 'curiosity', basedOn: 'HCI research whitespace', trendRelevant: false },
-  { text: "I vibe-coded a landing page in 40 minutes that a client paid me for", type: 'story', basedOn: 'Vibe coding + Framer whitespace', trendRelevant: true },
-  { text: "Framer + Claude + 4 hours = client-ready landing page — full workflow", type: 'curiosity', basedOn: 'Unfair advantage: Framer + Claude workflow', trendRelevant: true },
-  { text: "Indian designer, German design market — the pay gap nobody talks about", type: 'hot-take', basedOn: 'Indian in Europe POV whitespace', trendRelevant: false },
-  { text: "It's 11pm. I have a design problem and no existing tool solves it. So I'm building one.", type: 'story', basedOn: 'The Midnight Build series concept', trendRelevant: false },
-  { text: "Comment 'TOOLS' — I'll DM you everything that's open in my browser right now", type: 'hinglish', basedOn: 'Comment trigger formula — 1900 comments Jun 2024', trendRelevant: false },
-  { text: "Honest review: Google AI Studio vs Claude for UX work — I used both for 3 months", type: 'hot-take', basedOn: 'AI tools comparison whitespace', trendRelevant: true },
+  { text: "I don't know how this tool is still free", type: 'curiosity', basedOn: 'Tool reveal format — high engagement in creator niches', trendRelevant: true },
+  { text: "Everyone talking about [trend] is missing the most important part", type: 'hot-take', basedOn: 'Contrarian take format — drives comments', trendRelevant: true },
+  { text: "This is what I wish someone told me when I started", type: 'story', basedOn: 'Hindsight advice format — high save rate', trendRelevant: false },
+  { text: "I built this at 2am and it saved me 4 hours the next morning", type: 'story', basedOn: 'Late-night build story — relatable to creators', trendRelevant: false },
+  { text: "Stop doing this — it's the reason your content isn't growing", type: 'hot-take', basedOn: 'Mistake callout format — high share rate', trendRelevant: false },
+  { text: "The tool I use that nobody in my niche is talking about", type: 'curiosity', basedOn: 'Hidden gem format — saves + DMs', trendRelevant: true },
+  { text: "I tested 5 different approaches so you don't have to", type: 'curiosity', basedOn: 'Comparison/test format — drives saves', trendRelevant: false },
+  { text: "Honest take: most advice about [topic] is wrong", type: 'hot-take', basedOn: 'Myth-busting format — strong comment driver', trendRelevant: true },
+  { text: "I spent 3 months figuring this out — here's the shortcut", type: 'story', basedOn: 'Hard-won insight format — high engagement', trendRelevant: false },
+  { text: "POV: You're trying to fix a problem at 11pm with a deadline at 9am", type: 'story', basedOn: 'POV relatable story — saves + shares', trendRelevant: false },
+  { text: "Comment 'TOOLS' and I'll DM you everything I actually use", type: 'curiosity', basedOn: 'Comment trigger format — proven DM driver', trendRelevant: false },
+  { text: "The thing nobody tells you about growing in this niche", type: 'curiosity', basedOn: 'Insider knowledge format — saves heavily', trendRelevant: false },
 ]
 
 const TYPE_CONFIG: Record<string, { label: string; accent: string; bg: string }> = {
@@ -36,10 +28,10 @@ const TYPE_CONFIG: Record<string, { label: string; accent: string; bg: string }>
 }
 
 export default function HooksPage() {
-  const { scan, isScanning } = useScan()
+  const { scan, isScanning, isInitialLoad } = useScan()
   const router = useRouter()
 
-  if (isScanning) return <SkeletonGrid count={8} />
+  if (isScanning || isInitialLoad) return <SkeletonGrid count={8} />
 
   const hooks: Hook[] = scan?.hooks?.length ? scan.hooks : FALLBACK_HOOKS
   const byType = (type: Hook['type']) => hooks.filter(h => h.type === type)
