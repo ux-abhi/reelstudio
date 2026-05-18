@@ -1,28 +1,35 @@
 export function buildCompetitorPrompt(
-  handle: string,
-  context: string,
+  competitorHandle: string,
+  competitorData: string,
+  userContext: string,
   trendsData: string
 ): string {
-  return `Analyse this Instagram account as a competitor to @uxabhi_:
+  return `You are performing a competitive Instagram analysis.
 
-COMPETITOR:
-Handle: ${handle}
-Context: ${context}
+IMPORTANT RULE: The two accounts below belong to DIFFERENT people. Never apply attributes, location, bio, niche, or tone from one account to the other. Analyse each account using ONLY its own data.
 
-@uxabhi_ PROFILE:
-UX designer, HCI master's Germany, Indian designer, Framer + AI tools, 1,242 followers
-Viral formula: screen recording + practical shortcut + comment trigger
-Whitespace: Hindi/Hinglish UX education, Indian designer in Europe POV, HCI research simplified
+══════════════════════════════════════════════
+SECTION A — MY ACCOUNT (the person I am analysing FOR)
+${userContext}
+[END SECTION A — do not apply any of the above to the competitor]
+══════════════════════════════════════════════
+
+══════════════════════════════════════════════
+SECTION B — COMPETITOR ACCOUNT (the account being analysed)
+Handle: @${competitorHandle}
+${competitorData}
+[END SECTION B — do not apply any of the above to my account]
+══════════════════════════════════════════════
 
 CURRENT TRENDS IN NICHE:
 ${trendsData}
 
-Return this exact JSON (no markdown, no explanation):
+Using ONLY the competitor's own data from Section B, return this exact JSON (no markdown, no explanation):
 {
-  "handle": "${handle}",
-  "strategy": "2-3 sentences on what they post and why it works",
+  "handle": "@${competitorHandle}",
+  "strategy": "2-3 sentences on what the competitor posts and why it works — based on their data only",
   "hooksToSteal": [
-    "hook 1 adapted to @uxabhi_ voice",
+    "hook 1 adapted to MY voice (Section A), inspired by competitor style",
     "hook 2",
     "hook 3",
     "hook 4",
@@ -34,53 +41,43 @@ Return this exact JSON (no markdown, no explanation):
     "specific gap 3"
   ],
   "threatLevel": "high | medium | low",
-  "threatReason": "specific reason why",
+  "threatReason": "specific reason based on competitor's actual content",
   "collabScore": "X/10",
   "collabPitch": "exact DM message ready to copy-paste",
-  "whitespace": "the one specific angle they never touch that @uxabhi_ can own"
+  "whitespace": "the one specific angle the competitor never touches that I can own"
 }`
 }
 
-export function buildNicheSuggestionsPrompt(trendsData: string): string {
-  return `Suggest 6 Instagram accounts that are competitors or relevant creators to @uxabhi_.
+export function buildCompetitorIdeasPrompt(
+  handle: string,
+  gapsTheyLeave: string[],
+  hooksToSteal: string[],
+  whitespace: string,
+  userContext: string
+): string {
+  return `Based on a competitor analysis of @${handle}, generate 5 content ideas I can create in MY OWN voice.
 
-@uxabhi_ profile: UX designer, HCI master's student Germany, Indian designer in Europe,
-Figma + Framer + AI tools + vibe coding, 1,242 followers, goal: 10K in 30 days.
+MY PROFILE:
+${userContext}
 
-Current trends in niche:
-${trendsData}
+COMPETITOR GAPS (topics their audience wants but competitor doesn't cover):
+${gapsTheyLeave.map((g, i) => `${i + 1}. ${g}`).join('\n')}
+
+HOOKS I CAN ADAPT:
+${hooksToSteal.slice(0, 3).map((h, i) => `${i + 1}. ${h}`).join('\n')}
+
+WHITESPACE I CAN OWN:
+${whitespace}
+
+Generate 5 content ideas adapted to MY voice — not copies of the competitor.
 
 Return ONLY this JSON array (no markdown):
 [
   {
-    "handle": "@username",
-    "approxFollowers": "50K",
-    "niche": "what they post about",
-    "whyRelevant": "specific reason for @uxabhi_",
-    "threatLevel": "high | medium | low"
+    "title": "specific content idea title",
+    "hook": "opening hook line for this idea",
+    "angle": "what makes this distinctly mine vs the competitor",
+    "format": "Reel | Carousel | Caption"
   }
 ]`
-}
-
-export function buildBatchReportPrompt(
-  competitors: string,
-  trendsData: string
-): string {
-  return `You are analysing a group of Instagram competitors for @uxabhi_.
-
-@uxabhi_ profile: UX designer, HCI master's Germany, Indian designer, Framer + AI tools.
-
-COMPETITORS:
-${competitors}
-
-CURRENT TRENDS:
-${trendsData}
-
-Return ONLY this JSON (no markdown):
-{
-  "combinedStealReport": ["top 5 hooks across all competitors adapted to @uxabhi_ voice"],
-  "sharedGaps": ["3 content gaps ALL competitors leave open"],
-  "topWhitespace": "the single best unclaimed content angle for @uxabhi_",
-  "positioningMap": "2-3 sentences on where @uxabhi_ sits vs all competitors"
-}`
 }

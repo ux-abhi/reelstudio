@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { ApifyClient } from 'apify-client'
 import Groq from 'groq-sdk'
 import { getUser } from '@/lib/supabase/server'
-import { getApifyCache, setApifyCache } from '@/lib/db'
+import { getApifyCache, setApifyCache, getScanResult } from '@/lib/db'
 import { CompetitorAnalysis } from '@/types/scan'
 import { buildCompetitorPrompt } from '@/lib/prompts/competitorAnalysis'
 import { parseGroqJson } from '@/lib/scan'
@@ -31,6 +31,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'APIFY_TOKEN not configured' }, { status: 503 })
     }
 
+    // Build user context from their actual scan — isolated from competitor data
+    const userScan = await getScanResult(user.id)
+    const userProfile = userScan?.instagramProfile
+    const userContext = [
+      userProfile?.handle ? `Handle: @${userProfile.handle}` : '',
+      userProfile?.bio ? `Bio: ${userProfile.bio}` : '',
+      userProfile?.followers ? `Followers: ${userProfile.followers.toLocaleString()}` : '',
+      userScan?.pillars?.slice(0, 3).map(p => p.name).join(', ')
+        ? `Content pillars: ${userScan.pillars.slice(0, 3).map(p => p.name).join(', ')}`
+        : '',
+    ].filter(Boolean).join('\n') || 'Instagram content creator'
+
     const client = new ApifyClient({ token: process.env.APIFY_TOKEN })
     const [profileRun, postsRun] = await Promise.all([
       client.actor('apify/instagram-profile-scraper').call({ usernames: [cleanHandle] }),
@@ -47,27 +59,28 @@ export async function POST(req: NextRequest) {
     ])
 
     const rawProfile = profileItems[0] as Record<string, unknown> | undefined
-    const profileContext = rawProfile
-      ? JSON.stringify({
-          handle: rawProfile.username,
-          name: rawProfile.fullName,
-          bio: rawProfile.biography,
-          followers: rawProfile.followersCount,
-          following: rawProfile.followingCount,
-          postCount: rawProfile.postsCount,
-          isVerified: rawProfile.verified,
-        })
-      : `handle: ${cleanHandle} (profile unavailable)`
+    // Only use data scraped from Apify — no fallback to user's own data
+    const competitorData = rawProfile
+      ? `Name: ${rawProfile.fullName ?? 'unknown'}
+Bio: ${rawProfile.biography ?? 'no bio'}
+Followers: ${rawProfile.followersCount ?? 'unknown'}
+Following: ${rawProfile.followingCount ?? 'unknown'}
+Posts: ${rawProfile.postsCount ?? 'unknown'}
+Verified: ${rawProfile.verified ?? false}`
+      : `Profile data unavailable for @${cleanHandle} — analyse from posts only`
 
-    const postsContext = JSON.stringify(
-      postItems.slice(0, 20).map((p: Record<string, unknown>) => ({
-        caption: (p.caption as string)?.slice(0, 200),
-        likes: p.likesCount,
-        comments: p.commentsCount,
-        type: p.type,
-        timestamp: p.timestamp,
-      }))
-    )
+    const postsContext = postItems.length > 0
+      ? `Recent posts (${postItems.length} scraped):\n` +
+        JSON.stringify(
+          postItems.slice(0, 20).map((p: Record<string, unknown>) => ({
+            caption: (p.caption as string)?.slice(0, 200),
+            likes: p.likesCount,
+            comments: p.commentsCount,
+            type: p.type,
+            timestamp: p.timestamp,
+          }))
+        )
+      : 'No post data available'
 
     let trendsData = '[]'
     try {
@@ -76,7 +89,12 @@ export async function POST(req: NextRequest) {
     } catch { /* ignore */ }
 
     const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
-    const prompt = buildCompetitorPrompt(cleanHandle, `PROFILE: ${profileContext}\n\nRECENT POSTS: ${postsContext}`, trendsData)
+    const prompt = buildCompetitorPrompt(
+      cleanHandle,
+      `${competitorData}\n\n${postsContext}`,
+      userContext,
+      trendsData
+    )
 
     const completion = await groq.chat.completions.create({
       model: GROQ_MODEL,

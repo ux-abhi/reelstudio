@@ -659,7 +659,7 @@ select.input {
   left: 0;
   top: 0;
   height: 100vh;
-  width: 220px;
+  width: 232px;
   overflow-y: auto;
   z-index: 40;
 }
@@ -676,7 +676,7 @@ select.input {
 }
 @media (min-width: 768px) {
   .app-main {
-    margin-left: 220px;
+    margin-left: 232px;
     padding-bottom: 0;
   }
 }

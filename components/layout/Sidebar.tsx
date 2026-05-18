@@ -56,7 +56,7 @@ export function Sidebar() {
         style={{
           background: 'var(--bg-sidebar)',
           borderRight: '1px solid var(--border)',
-          padding: '16px 12px',
+          padding: '20px 14px',
           transition: 'background 200ms ease, border-color 200ms ease',
         }}
       >

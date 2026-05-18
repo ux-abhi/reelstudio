@@ -8,6 +8,16 @@ import { TrendHint } from '@/components/studio/TrendHint'
 import { ScriptOutput } from '@/components/studio/ScriptOutput'
 import { PageHeader } from '@/components/shared/PageHeader'
 
+type Language = 'Hinglish' | 'English' | 'Hindi'
+
+const LANGUAGES: Language[] = ['Hinglish', 'English', 'Hindi']
+
+const LANG_INSTRUCTION: Record<Language, string> = {
+  Hinglish: 'Write in Hinglish — mix Hindi and English naturally, like texting a desi friend. Use Devanagari words in Roman script (e.g. "bhai", "ekdum", "kya scene hai"). Never force it; let it flow.',
+  English:  'Write entirely in English. Casual and direct — like texting a design friend, not presenting to a crowd.',
+  Hindi:    'Write primarily in Hindi using Devanagari script. Keep minimal English only for technical terms (Figma, Framer, UX). Make it feel natural, not translated.',
+}
+
 const FALLBACK_HOOKS = [
   "I don't know how this Figma plugin is still free",
   "Every Indian designer posting 'AI will replace you' — let's talk",
@@ -22,6 +32,7 @@ function StudioContent() {
   const { scan } = useScan()
   const [format, setFormat] = useState('Reel 30–45s')
   const [tone, setTone] = useState('Casual')
+  const [language, setLanguage] = useState<Language>('Hinglish')
   const [idea, setIdea] = useState('')
   const [output, setOutput] = useState('')
   const [loading, setLoading] = useState(false)
@@ -43,12 +54,13 @@ function StudioContent() {
   async function callGroq(promptType: 'full' | 'hooks' | 'caption') {
     if (!idea.trim()) return
     setLoading(true); setError(null); setOutput(''); setSaved(false)
+    const langInstruction = LANG_INSTRUCTION[language]
     try {
       let prompt = ''
       if (promptType === 'full') {
-        prompt = `You are writing an Instagram script for @uxabhi_ — Abhishek Jha.
-PROFILE: UX designer + HCI master's student in Germany. Indian designer in Europe. Speaks Hindi/Hinglish naturally.
-TONE: ${tone} — like texting a design friend, never presenting to a crowd.
+        prompt = `You are writing an Instagram script for a UX designer and content creator.
+LANGUAGE: ${langInstruction}
+TONE: ${tone} — never stiff, never a brand voice.
 FORMAT: ${format}
 CURRENTLY TRENDING: ${trendingKeywords || 'figma, framer, ai design tools'}
 RECENT POSTS (don't repeat): ${recentPosts}
@@ -60,22 +72,28 @@ Write the complete script:
 [CTA] — comment trigger ("Comment 'X' and I'll DM you") OR save prompt
 Return script only. No explanation.`
       } else if (promptType === 'hooks') {
-        prompt = `Write 3 Instagram hooks for @uxabhi_ (UX designer, HCI master's Germany, Indian in Europe).
+        prompt = `Write 3 Instagram hooks for a UX designer (Figma, Framer, AI tools, design education).
+LANGUAGE: ${langInstruction}
 Trending: ${trendingKeywords || 'figma, framer, ai tools'}
 Topic: ${idea}
 [CURIOSITY] — creates open loop
 [RELATABLE] — calls out a pain they've felt
 [HOT-TAKE] — controversial claim
-Each hook works in 2 seconds. No greetings. Sound like Abhishek texting a friend.`
+Each hook works in 2 seconds. No greetings.`
       } else {
-        prompt = `Write an Instagram caption for @uxabhi_ (UX designer, HCI master's Germany).
+        prompt = `Write an Instagram caption for a UX designer.
+LANGUAGE: ${langInstruction}
 Format: ${format}. Trending: ${trendingKeywords}. Triggers: ${triggerWords}.
 Topic: ${idea}
 Opens punchy (no greeting). Includes comment trigger if relevant. Ends with SAVE prompt or question.
 7-10 hashtags from: #figmatips #figmadesign #framerwebsite #uxtools #designtools #uxstudent #uxportfolio #indiandesigner #designineurope #uxcareer
 Return only the caption.`
       }
-      const res = await fetch('/api/groq', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt, maxTokens: 1500 }) })
+      const res = await fetch('/api/groq', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt, maxTokens: 1500 }),
+      })
       const data = await res.json()
       if (data.error) throw new Error(data.error)
       setOutput(data.text)
@@ -92,7 +110,11 @@ Return only the caption.`
     const hookMatch = output.match(/\[HOOK\]([\s\S]*?)(?=\[BODY\]|$)/)
     const hookLine = hookMatch?.[1]?.trim().split('\n')[0] ?? output.split('\n')[0]
     try {
-      await fetch('/api/scripts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ format, tone, pillar: '', input: idea, output, hookLine }) })
+      await fetch('/api/scripts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ format, tone, pillar: '', input: idea, output, hookLine }),
+      })
       setSaved(true)
     } finally {
       setIsSaving(false)
@@ -103,7 +125,6 @@ Return only the caption.`
     <div className="page-enter" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       <PageHeader title="Script Studio" subtitle="Write, rewrite, and hook any content idea" />
 
-      {/* Split panel */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
         {/* Left — Input */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -115,6 +136,24 @@ Return only the caption.`
             <FieldLabel>Tone</FieldLabel>
             <ToneChips selected={tone} onChange={setTone} />
           </div>
+
+          {/* Language tabs */}
+          <div>
+            <FieldLabel>Language</FieldLabel>
+            <div className="segmented" style={{ width: '100%' }}>
+              {LANGUAGES.map(lang => (
+                <button
+                  key={lang}
+                  onClick={() => setLanguage(lang)}
+                  className={`segment${language === lang ? ' active' : ''}`}
+                  style={{ flex: 1, justifyContent: 'center' }}
+                >
+                  {lang}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div>
             <FieldLabel>Your idea</FieldLabel>
             <textarea
@@ -148,8 +187,16 @@ Return only the caption.`
                     fontFamily: 'inherit',
                     lineHeight: 1.4,
                   }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--bg-card)'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-primary)' }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-secondary)' }}
+                  onMouseEnter={e => {
+                    const el = e.currentTarget
+                    el.style.background = 'var(--bg-card)'
+                    el.style.color = 'var(--text-primary)'
+                  }}
+                  onMouseLeave={e => {
+                    const el = e.currentTarget
+                    el.style.background = 'transparent'
+                    el.style.color = 'var(--text-secondary)'
+                  }}
                 >
                   {hook}
                 </button>
@@ -159,8 +206,13 @@ Return only the caption.`
 
           {/* Action buttons */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <button onClick={() => callGroq('full')} disabled={loading || !idea.trim()} className="btn-primary" style={{ width: '100%' }}>
-              {loading ? 'Writing...' : 'Rewrite & Hook It'}
+            <button
+              onClick={() => callGroq('full')}
+              disabled={loading || !idea.trim()}
+              className="btn-primary"
+              style={{ width: '100%' }}
+            >
+              {loading ? 'Writing...' : `Rewrite & Hook It in ${language}`}
             </button>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
               <button onClick={() => callGroq('hooks')} disabled={loading || !idea.trim()} className="btn-secondary" style={{ fontSize: 12 }}>
@@ -180,20 +232,18 @@ Return only the caption.`
             border: '1px solid var(--border)',
             borderRadius: 10,
             padding: '20px',
-            minHeight: 420,
+            minHeight: 440,
             display: 'flex',
             flexDirection: 'column',
           }}
         >
           {loading && (
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
-              <div style={{ position: 'relative', width: 32, height: 32 }}>
-                <svg className="spin-ring" width="32" height="32" viewBox="0 0 32 32" fill="none">
-                  <circle cx="16" cy="16" r="12" stroke="var(--border-strong)" strokeWidth="3" />
-                  <circle cx="16" cy="16" r="12" stroke="var(--accent)" strokeWidth="3" strokeLinecap="round" strokeDasharray="20 56" />
-                </svg>
-              </div>
-              <p style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>Groq is writing...</p>
+              <svg className="spin-ring" width="32" height="32" viewBox="0 0 32 32" fill="none">
+                <circle cx="16" cy="16" r="12" stroke="var(--border-strong)" strokeWidth="3" />
+                <circle cx="16" cy="16" r="12" stroke="var(--accent)" strokeWidth="3" strokeLinecap="round" strokeDasharray="20 56" />
+              </svg>
+              <p style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>Writing in {language}...</p>
             </div>
           )}
           {error && !loading && (
@@ -208,7 +258,13 @@ Return only the caption.`
             </div>
           )}
           {!loading && !error && output && (
-            <ScriptOutput output={output} onSave={handleSave} isSaving={isSaving} saved={saved} />
+            <ScriptOutput
+              output={output}
+              onOutputChange={setOutput}
+              onSave={handleSave}
+              isSaving={isSaving}
+              saved={saved}
+            />
           )}
         </div>
       </div>
@@ -218,7 +274,14 @@ Return only the caption.`
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-tertiary)', letterSpacing: '0.06em', textTransform: 'uppercase' as const, marginBottom: 8 }}>
+    <p style={{
+      fontSize: 11,
+      fontWeight: 600,
+      color: 'var(--text-tertiary)',
+      letterSpacing: '0.06em',
+      textTransform: 'uppercase' as const,
+      marginBottom: 8,
+    }}>
       {children}
     </p>
   )
