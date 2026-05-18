@@ -1,12 +1,25 @@
+import type { MasterDocSummary } from '@/lib/db'
+
 export function buildMasterScanPrompt(
   profileData: string,
   postsData: string,
   trendsData: string,
   tomorrowDate: string,
-  schema: string
+  schema: string,
+  masterDoc?: MasterDocSummary
 ): string {
-  return `You are an Instagram growth strategist performing a comprehensive account analysis.
+  const docSection = masterDoc ? `
+CREATOR'S BRAND DOCUMENT (uploaded by user — use this to calibrate ALL recommendations):
+Niche: ${masterDoc.niche}
+Tone: ${masterDoc.tone}
+Target Audience: ${masterDoc.targetAudience}
+Key Topics: ${masterDoc.keyTopics?.join(', ')}
+Unique Angles: ${masterDoc.uniqueAngles?.join(' | ')}
+Goals: ${masterDoc.contentGoals?.join(', ')}
+` : ''
 
+  return `You are an Instagram growth strategist performing a comprehensive account analysis.
+${docSection}
 LIVE ACCOUNT PROFILE:
 ${profileData}
 Fields: handle, name, bio, followers, following, postCount, isVerified, category (Creator/Business/Personal), website
@@ -15,7 +28,7 @@ LIVE RECENT POSTS (last 30, most recent first):
 ${postsData}
 Fields per post: id, timestamp, caption (up to 500 chars), likesCount, commentsCount, type (Image/Video/Sidecar),
 hashtags[], videoViewCount (reels), videoPlayCount (reels), location (tagged location),
-topComments[] (top 3 comment texts + authors — use these to understand audience sentiment and what questions arise)
+topComments[] (top 3 comment texts + authors — use to understand audience sentiment and recurring questions)
 
 LIVE GOOGLE TRENDS DATA (this week):
 ${trendsData}
@@ -24,9 +37,9 @@ Analyse everything above and return a complete JSON object.
 Calendar starts from tomorrow: ${tomorrowDate}
 
 Rules:
-- Base ALL recommendations on the actual account data provided above
-- Infer the creator's niche, tone, and audience from their actual bio, posts, captions, and top comments
-- Use videoViewCount and videoPlayCount to assess reel performance separately from image/carousel performance
+- Base ALL recommendations on the actual account data above
+${masterDoc ? '- The Brand Document overrides any inferences — if niche/tone/audience is specified there, use it exactly' : '- Infer the creator\'s niche, tone, and audience from their actual bio, posts, captions, and top comments'}
+- Use videoViewCount/videoPlayCount to assess reel performance separately from image/carousel performance
 - Use topComments to understand what topics drive conversation and what questions the audience asks
 - Use location data to identify local vs global content angles where relevant
 - Use the website field to understand the creator's off-Instagram goals (course, portfolio, product, etc.)

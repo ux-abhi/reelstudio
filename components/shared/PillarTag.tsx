@@ -1,13 +1,11 @@
-const PILLAR_CLASS: Record<string, string> = {
-  "Designer's Toolbox": 'tag-toolbox',
-  'Design Decoded':     'tag-decoded',
-  "Builder's Log":      'tag-builder',
-  'The Honest Take':    'tag-take',
-  'From India to Germany': 'tag-hci',
-  'HCI Life':           'tag-hci',
+const CLASSES = ['tag-toolbox', 'tag-decoded', 'tag-take', 'tag-builder', 'tag-hci']
+
+function pillarClass(name: string): string {
+  let hash = 0
+  for (let i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) & 0xffffff
+  return CLASSES[hash % CLASSES.length]
 }
 
 export function PillarTag({ pillar }: { pillar: string }) {
-  const cls = PILLAR_CLASS[pillar] ?? 'tag-default'
-  return <span className={`tag ${cls}`}>{pillar}</span>
+  return <span className={`tag ${pillarClass(pillar)}`}>{pillar}</span>
 }

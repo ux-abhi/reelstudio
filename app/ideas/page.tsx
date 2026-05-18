@@ -42,14 +42,14 @@ function uid() { return Math.random().toString(36).slice(2, 10) }
 // ── Fallbacks ──────────────────────────────────────────────────────────────────
 
 const FALLBACK_HOOKS: UserHook[] = [
-  { id: 'fh1', text: "I don't know how this Figma plugin is still free", type: 'curiosity', basedOn: 'Jun 2024 viral post', trendRelevant: true },
-  { id: 'fh2', text: "Every Indian designer posting 'AI will replace you' — let's talk", type: 'hot-take', basedOn: 'Apr 2026 Hindi rant', trendRelevant: true },
-  { id: 'fh3', text: "Your portfolio isn't landing interviews and it's not because your work is bad", type: 'curiosity', basedOn: 'Audience pain: portfolio anxiety', trendRelevant: false },
-  { id: 'fh4', text: "I built this at 2am and it saved me 4 hours the next morning", type: 'story', basedOn: 'Chrome extension reel', trendRelevant: false },
-  { id: 'fh5', text: "Main ye soch raha tha ki ye kaise kaam karta hai — phir maine banaya", type: 'hinglish', basedOn: 'Hindi rant format', trendRelevant: false },
-  { id: 'fh6', text: "Stop putting Figma under Technical Skills in your portfolio", type: 'hot-take', basedOn: 'Audience signal from comments', trendRelevant: false },
-  { id: 'fh7', text: "This Framer plugin copies any site's style in 30 seconds — watch", type: 'curiosity', basedOn: 'Framer plugin reel', trendRelevant: true },
-  { id: 'fh8', text: "I applied to 12 UX roles in Germany in 3 months — here's what happened", type: 'story', basedOn: 'From India to Germany', trendRelevant: false },
+  { id: 'fh1', text: "I don't know how this tool is still free", type: 'curiosity', basedOn: 'Tool reveal format — high engagement in creator niches', trendRelevant: true },
+  { id: 'fh2', text: "Everyone posting about [trend] is missing the most important part", type: 'hot-take', basedOn: 'Contrarian take format — drives comments', trendRelevant: true },
+  { id: 'fh3', text: "This is what I wish someone told me when I started", type: 'curiosity', basedOn: 'Hindsight advice format — high save rate', trendRelevant: false },
+  { id: 'fh4', text: "I built this at 2am and it saved me 4 hours the next morning", type: 'story', basedOn: 'Late-night build story — relatable to creators', trendRelevant: false },
+  { id: 'fh5', text: "Stop doing this — it's the reason your content isn't growing", type: 'hot-take', basedOn: 'Mistake callout format — high share rate', trendRelevant: false },
+  { id: 'fh6', text: "The tool I use that nobody in my niche is talking about", type: 'curiosity', basedOn: 'Hidden gem format — saves + DMs', trendRelevant: true },
+  { id: 'fh7', text: "I tested 5 different approaches so you don't have to", type: 'curiosity', basedOn: 'Comparison/test format — drives saves', trendRelevant: false },
+  { id: 'fh8', text: "I spent 3 months figuring this out — here's the shortcut", type: 'story', basedOn: 'Hard-won insight format — high engagement', trendRelevant: false },
 ]
 
 // ── Hook type config ───────────────────────────────────────────────────────────
@@ -86,7 +86,7 @@ function NicheSelector({ niche, onChange }: { niche: string; onChange: (v: strin
           onKeyDown={e => { if (e.key === 'Enter') save(); if (e.key === 'Escape') setEditing(false) }}
           style={{ fontSize: 12, maxWidth: 320, padding: '4px 10px' }}
           autoFocus
-          placeholder="e.g. UX designer, Figma & Framer, design education"
+          placeholder="e.g. fitness coach, productivity tools, personal finance"
         />
         <button onClick={save} className="btn-primary" style={{ fontSize: 12, padding: '4px 12px' }}>Save</button>
         <button onClick={() => setEditing(false)} className="btn-ghost" style={{ fontSize: 12, width: 'auto', padding: '4px 8px' }}>Cancel</button>
@@ -549,7 +549,7 @@ Return ONLY a JSON array of 3 strings:
               value={aiTopic}
               onChange={e => setAiTopic(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && generateHooksWithAI()}
-              placeholder="Topic or idea (e.g. Figma auto-layout tips, portfolio mistakes, vibe coding)"
+              placeholder="Topic or idea (e.g. morning routine, tool review, audience Q&amp;A)"
               autoFocus
               style={{ fontSize: 13 }}
             />
@@ -802,7 +802,7 @@ Return ONLY a JSON array (no markdown):
     setSavedIdxs(prev => new Set(prev).add(idx))
   }
 
-  const pillarOptions = scan?.pillars?.map(p => p.name) ?? ['Toolbox', 'Design Decoded', 'Honest Take', "Builder's Log", 'HCI Life']
+  const pillarOptions = scan?.pillars?.map(p => p.name) ?? ['Education', 'Tools & Resources', 'Behind the Scenes', 'Opinion', 'Community']
   const pillars       = ['All', ...Array.from(new Set(ideas.map(i => i.pillar).filter(Boolean)))]
   const filtered      = ideas.filter(i => filterPillar === 'All' || i.pillar === filterPillar)
   const sorted        = [...filtered].sort((a, b) => {
@@ -848,7 +848,7 @@ Return ONLY a JSON array (no markdown):
               value={aiTopic}
               onChange={e => setAiTopic(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && generateIdeasWithAI()}
-              placeholder="Topic or theme (e.g. Figma tips, portfolio mistakes, AI tools comparison)"
+              placeholder="Topic or theme (e.g. content batching, audience growth, tool workflow)"
               style={{ fontSize: 13, flex: 1, minWidth: 200 }}
               autoFocus
             />

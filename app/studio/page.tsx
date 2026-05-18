@@ -8,14 +8,14 @@ import { TrendHint } from '@/components/studio/TrendHint'
 import { ScriptOutput } from '@/components/studio/ScriptOutput'
 import { PageHeader } from '@/components/shared/PageHeader'
 
-type Language = 'Hinglish' | 'English' | 'Hindi'
+type Language = 'English' | 'Hinglish' | 'Hindi'
 
-const LANGUAGES: Language[] = ['Hinglish', 'English', 'Hindi']
+const LANGUAGES: Language[] = ['English', 'Hinglish', 'Hindi']
 
 const LANG_INSTRUCTION: Record<Language, string> = {
-  Hinglish: 'Write in Hinglish — mix Hindi and English naturally, like texting a desi friend. Use Devanagari words in Roman script (e.g. "bhai", "ekdum", "kya scene hai"). Never force it; let it flow.',
-  English:  'Write entirely in English. Casual and direct — like texting a design friend, not presenting to a crowd.',
-  Hindi:    'Write primarily in Hindi using Devanagari script. Keep minimal English only for technical terms (Figma, Framer, UX). Make it feel natural, not translated.',
+  English:  'Write entirely in English. Casual and direct — never stiff, never a brand voice.',
+  Hinglish: 'Write in Hinglish — mix Hindi and English naturally. Use Devanagari words in Roman script. Never force it; let it flow.',
+  Hindi:    'Write primarily in Hindi using Devanagari script. Keep minimal English only for technical terms. Make it feel natural, not translated.',
 }
 
 const FALLBACK_HOOKS = [
@@ -27,23 +27,33 @@ const FALLBACK_HOOKS = [
   "Stop doing this if you want people to watch past 3 seconds",
 ]
 
+interface DocSummary { niche: string; tone: string; targetAudience: string; keyTopics: string[]; uniqueAngles: string[] }
+
 function StudioContent() {
   const searchParams = useSearchParams()
   const { scan } = useScan()
   const [format, setFormat] = useState('Reel 30–45s')
   const [tone, setTone] = useState('Casual')
-  const [language, setLanguage] = useState<Language>('Hinglish')
+  const [language, setLanguage] = useState<Language>('English')
   const [idea, setIdea] = useState('')
   const [output, setOutput] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [masterDoc, setMasterDoc] = useState<DocSummary | null>(null)
 
   useEffect(() => {
     const param = searchParams.get('idea')
     if (param) setIdea(decodeURIComponent(param))
   }, [searchParams])
+
+  useEffect(() => {
+    fetch('/api/user-context')
+      .then(r => r.json())
+      .then(data => { if (data.masterDocSummary) setMasterDoc(data.masterDocSummary) })
+      .catch(() => {})
+  }, [])
 
   const hooks = scan?.hooks?.slice(0, 6) ?? []
   const displayHooks = hooks.length > 0 ? hooks.map(h => h.text) : FALLBACK_HOOKS
@@ -51,10 +61,10 @@ function StudioContent() {
   const recentPosts = scan?.posts?.slice(0, 5).map(p => p.topic).join(', ') ?? ''
   const triggerWords = scan?.triggerWords?.map(t => t.word).join(', ') ?? 'TOOLS, TEMPLATE, RESOURCE'
 
-  // Dynamic user identity — never hardcoded
   const userHandle = scan?.instagramProfile?.handle ?? scan?.handle ?? ''
-  const userBio = scan?.instagramProfile?.bio ?? ''
-  const userNiche = (typeof window !== 'undefined' ? localStorage.getItem('ss:niche') : null)
+  const userBio = scan?.instagramProfile?.bio ?? masterDoc?.targetAudience ?? ''
+  const userNiche = masterDoc?.niche
+    ?? (typeof window !== 'undefined' ? localStorage.getItem('ss:niche') : null)
     ?? scan?.pillars?.slice(0, 2).map(p => p.name).join(', ')
     ?? 'content creator'
   const hashtags = [
@@ -63,6 +73,9 @@ function StudioContent() {
     ...(scan?.hashtagClusters?.niche ?? []),
   ].slice(0, 20).map(h => `#${h}`).join(' ')
   const who = userHandle ? `@${userHandle} — ${userNiche}` : userNiche
+  const docContext = masterDoc
+    ? `Brand context: niche=${masterDoc.niche}, tone=${masterDoc.tone}, audience=${masterDoc.targetAudience}, topics=${masterDoc.keyTopics?.join(', ')}`
+    : ''
 
   async function callGroq(promptType: 'full' | 'hooks' | 'caption') {
     if (!idea.trim()) return
@@ -73,6 +86,7 @@ function StudioContent() {
       if (promptType === 'full') {
         prompt = `You are writing an Instagram script for: ${who}
 ${userBio ? `Bio: ${userBio}` : ''}
+${docContext}
 LANGUAGE: ${langInstruction}
 TONE: ${tone} — never stiff, never a brand voice.
 FORMAT: ${format}
@@ -87,6 +101,7 @@ Write the complete script:
 Return script only. No explanation.`
       } else if (promptType === 'hooks') {
         prompt = `Write 3 Instagram hooks for: ${who}
+${docContext}
 LANGUAGE: ${langInstruction}
 Trending: ${trendingKeywords || 'content creation, social media tools'}
 Topic: ${idea}
@@ -97,8 +112,9 @@ Each hook works in 2 seconds. No greetings.`
       } else {
         const hashtagLine = hashtags
           ? `Use these hashtags (pick 7-10): ${hashtags}`
-          : 'Use 7-10 relevant hashtags for this creator\'s niche'
+          : `Use 7-10 relevant hashtags for this creator's niche`
         prompt = `Write an Instagram caption for: ${who}
+${docContext}
 LANGUAGE: ${langInstruction}
 Format: ${format}. Trending: ${trendingKeywords}. Triggers: ${triggerWords}.
 Topic: ${idea}

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import Groq from 'groq-sdk'
 import { ApifyClient } from 'apify-client'
 import { getUser } from '@/lib/supabase/server'
-import { getScanResult, setScanResult, setApifyCache, getTrendsCache, setTrendsCache } from '@/lib/db'
+import { getScanResult, setScanResult, setApifyCache, getTrendsCache, setTrendsCache, getUserContext } from '@/lib/db'
 import { buildMasterScanPrompt } from '@/lib/prompts/masterScan'
 import { buildScanSchema, parseGroqJson, buildTomorrowDate, validateScanResult } from '@/lib/scan'
 import { ScanResult, InstagramProfile, ProfileInput } from '@/types/scan'
@@ -34,6 +34,7 @@ export async function POST(req: NextRequest) {
 
     const tomorrowDate = buildTomorrowDate()
     const schema = buildScanSchema()
+    const userContext = await getUserContext(user.id)
 
     const useApify = !!(process.env.APIFY_TOKEN && handle)
     let profileData = ''
@@ -114,7 +115,7 @@ export async function POST(req: NextRequest) {
       try { trendsData = JSON.stringify(await fetchTrends()) } catch (e) { console.error('[Trends] fetch failed:', e) }
     }
 
-    const prompt = buildMasterScanPrompt(profileData, postsData, trendsData, tomorrowDate, schema)
+    const prompt = buildMasterScanPrompt(profileData, postsData, trendsData, tomorrowDate, schema, userContext?.masterDocSummary)
 
     const completion = await groq.chat.completions.create({
       model: GROQ_MODEL,

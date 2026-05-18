@@ -20,7 +20,7 @@ interface CompetitorIdea {
   format: string
 }
 
-const NICHE_TAGS = ['ux design', 'figma tutorial', 'framer', 'ai design tools', 'product design', 'ux portfolio', 'design career', 'hci design', 'design tools', 'ui ux', 'design student', 'vibe coding']
+const NICHE_TAGS = ['content creator', 'instagram growth', 'personal brand', 'social media tips', 'creator economy', 'short form video', 'instagram reels', 'content strategy', 'audience growth', 'digital marketing', 'creator tools', 'viral content']
 
 export default function CompetitorsPage() {
   const { scan } = useScan()
