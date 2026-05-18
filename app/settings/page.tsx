@@ -55,7 +55,7 @@ export default function SettingsPage() {
     router.push('/dashboard')
   }
 
-  const currentHandle = scan?.instagramProfile?.handle ?? scan?.handle ?? localStorage.getItem?.('ss:handle') ?? ''
+  const currentHandle = scan?.instagramProfile?.handle ?? scan?.handle ?? extractHandle(handleInput)
 
   return (
     <div className="page-enter" style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
