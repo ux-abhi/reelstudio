@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Groq from 'groq-sdk'
 import { ApifyClient } from 'apify-client'
-import { kv, KV_KEYS, KV_TTL } from '@/lib/kv'
+import { getUser } from '@/lib/supabase/server'
+import { getScanResult, setScanResult, setApifyCache } from '@/lib/db'
 import { buildMasterScanPrompt } from '@/lib/prompts/masterScan'
 import { buildScanSchema, parseGroqJson, buildTomorrowDate, validateScanResult } from '@/lib/scan'
 import { ScanResult, InstagramProfile, ProfileInput } from '@/types/scan'
@@ -10,7 +11,12 @@ import { GROQ_MODEL } from '@/lib/groq'
 export const maxDuration = 300
 export const dynamic = 'force-dynamic'
 
+const APIFY_TTL = 60 * 60 * 24
+
 export async function POST(req: NextRequest) {
+  const user = await getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
   const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
   try {
     const body = await req.json()
@@ -21,14 +27,13 @@ export async function POST(req: NextRequest) {
     }
 
     if (!forceRefresh) {
-      const cached = await kv.get<ScanResult>(KV_KEYS.scan)
+      const cached = await getScanResult(user.id)
       if (cached) return NextResponse.json(cached)
     }
 
     const tomorrowDate = buildTomorrowDate()
     const schema = buildScanSchema()
 
-    // Try Apify path first when token is set and handle is provided
     const useApify = !!(process.env.APIFY_TOKEN && handle)
     let profileData = ''
     let postsData = ''
@@ -39,7 +44,6 @@ export async function POST(req: NextRequest) {
       const cleanHandle = handle!.replace('@', '').toLowerCase()
       const client = new ApifyClient({ token: process.env.APIFY_TOKEN })
 
-      // Run profile scraper, posts scraper, and trends fetch in parallel
       const [profileRun, postsRun, trendsResult] = await Promise.allSettled([
         client.actor('apify/instagram-profile-scraper').call({ usernames: [cleanHandle] }),
         client.actor('apify/instagram-post-scraper').call({
@@ -65,7 +69,7 @@ export async function POST(req: NextRequest) {
             profilePicUrl: (raw.profilePicUrl as string) ?? undefined,
           }
           profileData = JSON.stringify(instagramProfile)
-          await kv.set(KV_KEYS.apifyProfile, instagramProfile, { ex: KV_TTL.apify })
+          await setApifyCache(`apify:profile:${cleanHandle}`, instagramProfile, APIFY_TTL)
         }
       }
 
@@ -83,20 +87,16 @@ export async function POST(req: NextRequest) {
           videoViewCount: p.videoViewCount,
         }))
         postsData = JSON.stringify(rawPosts)
-        await kv.set(KV_KEYS.apifyPosts, items, { ex: KV_TTL.apify })
+        await setApifyCache(`apify:posts:${cleanHandle}`, items, APIFY_TTL)
       }
 
       if (trendsResult.status === 'fulfilled') {
         trendsData = JSON.stringify(trendsResult.value)
       }
 
-      // Fall back gracefully if Apify data is empty
-      if (!profileData) {
-        profileData = handle ? `{ "handle": "${handle}" }` : '{}'
-      }
+      if (!profileData) profileData = handle ? `{ "handle": "${handle}" }` : '{}'
       if (!postsData) postsData = '[]'
     } else {
-      // Legacy: use manually-provided profileInput
       profileData = JSON.stringify(profileInput ?? {})
       postsData = JSON.stringify((profileInput as ProfileInput & { posts?: unknown[] })?.posts ?? [])
       try { trendsData = JSON.stringify(await fetchTrends()) } catch { /* ignore */ }
@@ -122,7 +122,7 @@ export async function POST(req: NextRequest) {
     if (instagramProfile) scanResult.instagramProfile = instagramProfile
     if (profileInput) scanResult.profileInput = profileInput
 
-    await kv.set(KV_KEYS.scan, scanResult, { ex: KV_TTL.scan })
+    await setScanResult(user.id, scanResult)
     return NextResponse.json(scanResult)
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Scan failed'

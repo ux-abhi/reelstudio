@@ -48,7 +48,7 @@ export default function PillarsPage() {
   if (!scan) return <EmptyState title="No pillars yet" description="Run your scan to see your AI-inferred content pillars based on your real post history." />
 
   return (
-    <div className="page-enter" style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>
+    <div className="page-enter" style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
       <PageHeader title="Content Pillars" subtitle="Inferred by Groq from your actual post history" />
 
       {/* Pillars */}

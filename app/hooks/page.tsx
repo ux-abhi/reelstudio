@@ -45,7 +45,7 @@ export default function HooksPage() {
   const byType = (type: Hook['type']) => hooks.filter(h => h.type === type)
 
   return (
-    <div className="page-enter" style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>
+    <div className="page-enter" style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
       <PageHeader
         title="Hooks Library"
         subtitle={scan ? 'Generated from your account data' : 'Fallback hooks — run scan for personalised hooks'}

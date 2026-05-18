@@ -43,7 +43,7 @@ export default function TriggersPage() {
   }
 
   return (
-    <div className="page-enter" style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>
+    <div className="page-enter" style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
       <PageHeader
         title="Trigger Words"
         subtitle="Comment triggers that drive DMs — your Jun 2024 post proved this format works (1,900 comments)"

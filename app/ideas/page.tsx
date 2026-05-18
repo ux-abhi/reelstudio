@@ -52,7 +52,7 @@ Return ONLY a JSON array: [{ title, pillar, trendScore, trendDirection, hookSugg
   }
 
   return (
-    <div className="page-enter" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+    <div className="page-enter" style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
       <PageHeader title="Ideas Bank" subtitle={`${scan.ideas?.length ?? 0} ideas ranked by trend score`} />
 
       <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 12 }}>

@@ -1,9 +1,10 @@
 'use client'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { useScan } from '@/components/scan/ScanContext'
 import { useTheme } from './ThemeProvider'
 import { ScanStatus } from './ScanStatus'
+import { createClient } from '@/lib/supabase/client'
 
 const CREATE_NAV = [
   { href: '/studio',   label: 'Script Studio' },
@@ -22,6 +23,10 @@ const STRATEGY_NAV = [
   { href: '/actions',     label: 'Priority Actions' },
 ]
 
+const ACCOUNT_NAV = [
+  { href: '/settings', label: 'Settings' },
+]
+
 const MOBILE_NAV = [
   { href: '/studio',    label: 'Studio',    icon: '✦' },
   { href: '/ideas',     label: 'Ideas',     icon: '◉' },
@@ -34,6 +39,14 @@ export function Sidebar() {
   const pathname = usePathname()
   const { scan } = useScan()
   const { theme, toggle } = useTheme()
+  const router = useRouter()
+
+  async function handleSignOut() {
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    router.push('/login')
+    router.refresh()
+  }
 
   return (
     <>
@@ -56,7 +69,9 @@ export function Sidebar() {
           }}
         >
           <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', letterSpacing: '-0.01em' }}>
-            @uxabhi_ Studio
+            {scan?.instagramProfile?.handle ?? scan?.handle
+              ? `@${scan.instagramProfile?.handle ?? scan.handle} Studio`
+              : 'Script Studio'}
           </p>
           {scan && (
             <p style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2 }}>
@@ -81,9 +96,52 @@ export function Sidebar() {
           ))}
         </NavSection>
 
+        {/* Account */}
+        <div style={{ height: 8 }} />
+        <NavSection label="Account">
+          {ACCOUNT_NAV.map(item => (
+            <NavItem key={item.href} href={item.href} label={item.label} active={pathname === item.href} />
+          ))}
+        </NavSection>
+
         {/* Bottom */}
         <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 8, paddingTop: 16 }}>
           <ScanStatus />
+
+          {/* Sign out */}
+          <button
+            onClick={handleSignOut}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              padding: '7px 8px',
+              borderRadius: 7,
+              fontSize: 12,
+              fontWeight: 400,
+              color: 'var(--text-tertiary)',
+              background: 'transparent',
+              border: '1px solid transparent',
+              cursor: 'pointer',
+              transition: 'all 140ms ease',
+              width: '100%',
+              textAlign: 'left',
+              fontFamily: 'inherit',
+            }}
+            onMouseEnter={e => {
+              const el = e.currentTarget
+              el.style.background = 'var(--red-subtle)'
+              el.style.color = 'var(--red)'
+            }}
+            onMouseLeave={e => {
+              const el = e.currentTarget
+              el.style.background = 'transparent'
+              el.style.color = 'var(--text-tertiary)'
+            }}
+          >
+            <span style={{ fontSize: 13, flexShrink: 0 }}>↩</span>
+            <span>Sign out</span>
+          </button>
 
           {/* Theme toggle */}
           <button

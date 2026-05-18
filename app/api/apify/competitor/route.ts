@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { ApifyClient } from 'apify-client'
 import Groq from 'groq-sdk'
-import { kv, KV_KEYS, KV_TTL } from '@/lib/kv'
+import { getUser } from '@/lib/supabase/server'
+import { getApifyCache, setApifyCache } from '@/lib/db'
 import { CompetitorAnalysis } from '@/types/scan'
 import { buildCompetitorPrompt } from '@/lib/prompts/competitorAnalysis'
 import { parseGroqJson } from '@/lib/scan'
@@ -10,14 +11,19 @@ import { GROQ_MODEL } from '@/lib/groq'
 export const maxDuration = 300
 export const dynamic = 'force-dynamic'
 
+const COMPETITOR_TTL = 60 * 60 * 24
+
 export async function POST(req: NextRequest) {
+  const user = await getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
   try {
     const { handle, forceRefresh = false } = await req.json()
     const cleanHandle = (handle as string).replace('@', '').toLowerCase()
-    const cacheKey = KV_KEYS.apifyCompetitor(cleanHandle)
+    const cacheKey = `apify:competitor:${cleanHandle}`
 
     if (!forceRefresh) {
-      const cached = await kv.get<CompetitorAnalysis>(cacheKey)
+      const cached = await getApifyCache<CompetitorAnalysis>(cacheKey)
       if (cached) return NextResponse.json(cached)
     }
 
@@ -26,12 +32,8 @@ export async function POST(req: NextRequest) {
     }
 
     const client = new ApifyClient({ token: process.env.APIFY_TOKEN })
-
-    // Scrape profile + posts in parallel
     const [profileRun, postsRun] = await Promise.all([
-      client.actor('apify/instagram-profile-scraper').call({
-        usernames: [cleanHandle],
-      }),
+      client.actor('apify/instagram-profile-scraper').call({ usernames: [cleanHandle] }),
       client.actor('apify/instagram-post-scraper').call({
         directUrls: [`https://www.instagram.com/${cleanHandle}/`],
         resultsType: 'posts',
@@ -67,23 +69,14 @@ export async function POST(req: NextRequest) {
       }))
     )
 
-    // Fetch trends for context
     let trendsData = '[]'
     try {
-      const trendsRes = await fetch(
-        `${process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'}/api/trends`
-      )
+      const trendsRes = await fetch(`${process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'}/api/trends`)
       trendsData = JSON.stringify(await trendsRes.json())
-    } catch {
-      // ignore
-    }
+    } catch { /* ignore */ }
 
     const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
-    const prompt = buildCompetitorPrompt(
-      cleanHandle,
-      `PROFILE: ${profileContext}\n\nRECENT POSTS: ${postsContext}`,
-      trendsData
-    )
+    const prompt = buildCompetitorPrompt(cleanHandle, `PROFILE: ${profileContext}\n\nRECENT POSTS: ${postsContext}`, trendsData)
 
     const completion = await groq.chat.completions.create({
       model: GROQ_MODEL,
@@ -95,7 +88,7 @@ export async function POST(req: NextRequest) {
     const analysis = parseGroqJson<CompetitorAnalysis>(raw)
     analysis.scrapedAt = new Date().toISOString()
 
-    await kv.set(cacheKey, analysis, { ex: KV_TTL.competitor })
+    await setApifyCache(cacheKey, analysis, COMPETITOR_TTL)
     return NextResponse.json(analysis)
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Competitor analysis failed'

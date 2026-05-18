@@ -2,8 +2,8 @@ import type { Metadata } from 'next'
 import { Geist } from 'next/font/google'
 import './globals.css'
 import { ScanProvider } from '@/components/scan/ScanContext'
-import { Sidebar } from '@/components/layout/Sidebar'
 import { ThemeProvider } from '@/components/layout/ThemeProvider'
+import { LayoutShell } from '@/components/layout/LayoutShell'
 
 const geist = Geist({
   subsets: ['latin'],
@@ -12,28 +12,22 @@ const geist = Geist({
 })
 
 export const metadata: Metadata = {
-  title: '@uxabhi_ Studio',
-  description: 'AI-powered Instagram content command centre for @uxabhi_',
+  title: 'Script Studio',
+  description: 'AI-powered Instagram content command centre',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={geist.variable} data-theme="dark" suppressHydrationWarning>
       <body>
-        {/* Sync theme from localStorage before first paint — prevents FOUC */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `try{var t=localStorage.getItem('uxabhi:theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t)}catch(e){}`,
+            __html: `try{var t=localStorage.getItem('ss:theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t)}catch(e){}`,
           }}
         />
         <ThemeProvider>
           <ScanProvider>
-            <Sidebar />
-            <main className="app-main" style={{ transition: 'margin 200ms ease' }}>
-              <div className="max-w-[1080px] mx-auto px-4 py-6 md:px-8 md:py-8">
-                {children}
-              </div>
-            </main>
+            <LayoutShell>{children}</LayoutShell>
           </ScanProvider>
         </ThemeProvider>
       </body>

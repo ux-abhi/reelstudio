@@ -35,7 +35,7 @@ export default function CalendarPage() {
   })
 
   return (
-    <div className="page-enter" style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>
+    <div className="page-enter" style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
       <PageHeader title="30-Day Calendar" subtitle="Real dates. AI-generated hooks. Trend-aware." />
 
       {weeks.map((week, wi) =>

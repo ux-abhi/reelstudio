@@ -16,7 +16,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     try {
-      const stored = localStorage.getItem('uxabhi:actions:checked')
+      const stored = localStorage.getItem('ss:actions:checked')
       if (stored) setChecked(JSON.parse(stored))
     } catch {}
   }, [])
@@ -24,7 +24,7 @@ export default function DashboardPage() {
   function toggleAction(day: string) {
     const next = { ...checked, [day]: !checked[day] }
     setChecked(next)
-    localStorage.setItem('uxabhi:actions:checked', JSON.stringify(next))
+    localStorage.setItem('ss:actions:checked', JSON.stringify(next))
   }
 
   if (isScanning) {
@@ -59,7 +59,7 @@ export default function DashboardPage() {
   const breakoutTrends = allTrends.filter(t => t.breakout).slice(0, 3)
 
   return (
-    <div className="page-enter" style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>
+    <div className="page-enter" style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
       <PageHeader title="Dashboard" subtitle="Your AI-generated Instagram command centre" />
 
       {/* Trend Pulse strip */}

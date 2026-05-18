@@ -1,6 +1,6 @@
 export function PageHeader({ title, subtitle }: { title: string; subtitle?: string }) {
   return (
-    <div style={{ marginBottom: 32 }}>
+    <div>
       <h1
         style={{
           fontSize: 28,

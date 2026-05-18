@@ -28,7 +28,7 @@ export default function ActionsPage() {
 
   useEffect(() => {
     try {
-      const stored = localStorage.getItem('uxabhi:actions:checked')
+      const stored = localStorage.getItem('ss:actions:checked')
       if (stored) setChecked(JSON.parse(stored))
     } catch {}
   }, [])
@@ -36,7 +36,7 @@ export default function ActionsPage() {
   function toggle(key: string) {
     const next = { ...checked, [key]: !checked[key] }
     setChecked(next)
-    localStorage.setItem('uxabhi:actions:checked', JSON.stringify(next))
+    localStorage.setItem('ss:actions:checked', JSON.stringify(next))
   }
 
   if (isScanning) return (
@@ -58,7 +58,7 @@ export default function ActionsPage() {
   }
 
   return (
-    <div className="page-enter" style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>
+    <div className="page-enter" style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
       <PageHeader
         title="Priority Actions"
         subtitle={`${doneCount}/${sorted.length} completed`}

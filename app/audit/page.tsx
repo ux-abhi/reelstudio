@@ -26,7 +26,7 @@ export default function AuditPage() {
   const bioFill  = bioScore >= 7 ? 'good' : bioScore >= 4 ? 'medium' : 'low'
 
   return (
-    <div className="page-enter" style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>
+    <div className="page-enter" style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
       <PageHeader title="Account Audit" subtitle="Your real account health, analysed by Groq" />
 
       {/* Health metrics */}

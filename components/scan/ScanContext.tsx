@@ -37,9 +37,9 @@ export function ScanProvider({ children }: { children: ReactNode }) {
 
   // On mount: load cached scan if we have a stored handle
   useEffect(() => {
-    const storedHandle = localStorage.getItem('uxabhi:handle')
+    const storedHandle = localStorage.getItem('ss:handle')
     // Legacy: also support old profile-based storage
-    const storedProfile = localStorage.getItem('uxabhi:profile')
+    const storedProfile = localStorage.getItem('ss:profile')
 
     if (storedHandle || storedProfile) {
       setHasProfile(true)
@@ -77,12 +77,12 @@ export function ScanProvider({ children }: { children: ReactNode }) {
 
       if (typeof handleOrProfile === 'string') {
         const cleanHandle = handleOrProfile.replace('@', '').toLowerCase()
-        localStorage.setItem('uxabhi:handle', cleanHandle)
-        localStorage.removeItem('uxabhi:profile')
+        localStorage.setItem('ss:handle', cleanHandle)
+        localStorage.removeItem('ss:profile')
         body = { handle: cleanHandle, forceRefresh: force }
       } else {
-        localStorage.setItem('uxabhi:profile', JSON.stringify(handleOrProfile))
-        localStorage.removeItem('uxabhi:handle')
+        localStorage.setItem('ss:profile', JSON.stringify(handleOrProfile))
+        localStorage.removeItem('ss:handle')
         body = { profileInput: handleOrProfile, forceRefresh: force }
       }
 

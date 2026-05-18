@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Groq from 'groq-sdk'
 import { GROQ_MODEL } from '@/lib/groq'
+import { getUser } from '@/lib/supabase/server'
 
 export const dynamic = 'force-dynamic'
 
 export async function POST(req: NextRequest) {
+  const user = await getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
   const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
   try {
     const { prompt, systemPrompt, maxTokens = 1000 } = await req.json()

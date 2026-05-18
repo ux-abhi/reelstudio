@@ -1,18 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { ApifyClient } from 'apify-client'
-import { kv, KV_KEYS, KV_TTL } from '@/lib/kv'
+import { getUser } from '@/lib/supabase/server'
+import { getApifyCache, setApifyCache } from '@/lib/db'
 import { InstagramProfile } from '@/types/scan'
 
 export const maxDuration = 300
 export const dynamic = 'force-dynamic'
 
+const APIFY_TTL = 60 * 60 * 24
+
 export async function POST(req: NextRequest) {
+  const user = await getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
   try {
     const { handle, forceRefresh = false } = await req.json()
     const cleanHandle = (handle as string).replace('@', '').toLowerCase()
+    const cacheKey = `apify:profile:${cleanHandle}`
 
     if (!forceRefresh) {
-      const cached = await kv.get<InstagramProfile>(KV_KEYS.apifyProfile)
+      const cached = await getApifyCache<InstagramProfile>(cacheKey)
       if (cached) return NextResponse.json(cached)
     }
 
@@ -21,11 +28,9 @@ export async function POST(req: NextRequest) {
     }
 
     const client = new ApifyClient({ token: process.env.APIFY_TOKEN })
-    const run = await client.actor('apify/instagram-profile-scraper').call({
-      usernames: [cleanHandle],
-    })
-
+    const run = await client.actor('apify/instagram-profile-scraper').call({ usernames: [cleanHandle] })
     const { items } = await client.dataset(run.defaultDatasetId).listItems()
+
     if (!items.length) {
       return NextResponse.json({ error: 'Profile not found on Instagram' }, { status: 404 })
     }
@@ -42,7 +47,7 @@ export async function POST(req: NextRequest) {
       profilePicUrl: (raw.profilePicUrl as string) ?? undefined,
     }
 
-    await kv.set(KV_KEYS.apifyProfile, profile, { ex: KV_TTL.apify })
+    await setApifyCache(cacheKey, profile, APIFY_TTL)
     return NextResponse.json(profile)
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Profile scrape failed'

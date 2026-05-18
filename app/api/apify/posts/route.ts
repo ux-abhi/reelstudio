@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { ApifyClient } from 'apify-client'
-import { kv, KV_KEYS, KV_TTL } from '@/lib/kv'
+import { getUser } from '@/lib/supabase/server'
+import { getApifyCache, setApifyCache } from '@/lib/db'
 
 export const maxDuration = 300
 export const dynamic = 'force-dynamic'
+
+const APIFY_TTL = 60 * 60 * 24
 
 export interface RawApifyPost {
   id: string
@@ -22,12 +25,16 @@ export interface RawApifyPost {
 }
 
 export async function POST(req: NextRequest) {
+  const user = await getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
   try {
     const { handle, forceRefresh = false } = await req.json()
     const cleanHandle = (handle as string).replace('@', '').toLowerCase()
+    const cacheKey = `apify:posts:${cleanHandle}`
 
     if (!forceRefresh) {
-      const cached = await kv.get<RawApifyPost[]>(KV_KEYS.apifyPosts)
+      const cached = await getApifyCache<RawApifyPost[]>(cacheKey)
       if (cached) return NextResponse.json(cached)
     }
 
@@ -43,7 +50,6 @@ export async function POST(req: NextRequest) {
     })
 
     const { items } = await client.dataset(run.defaultDatasetId).listItems()
-
     const posts: RawApifyPost[] = items.map((raw: Record<string, unknown>) => ({
       id: (raw.id as string) ?? (raw.shortCode as string) ?? '',
       timestamp: (raw.timestamp as string) ?? '',
@@ -60,7 +66,7 @@ export async function POST(req: NextRequest) {
       displayUrl: (raw.displayUrl as string) ?? undefined,
     }))
 
-    await kv.set(KV_KEYS.apifyPosts, posts, { ex: KV_TTL.apify })
+    await setApifyCache(cacheKey, posts, APIFY_TTL)
     return NextResponse.json(posts)
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Posts scrape failed'

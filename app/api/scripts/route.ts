@@ -1,40 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { kv, KV_KEYS } from '@/lib/kv'
-import { SavedScript } from '@/types/scan'
+import { getUser } from '@/lib/supabase/server'
+import { getScripts, addScript, deleteScript } from '@/lib/db'
 
 export const dynamic = 'force-dynamic'
 
-const MAX_SCRIPTS = 100
-
 export async function GET() {
-  const scripts = await kv.get<SavedScript[]>(KV_KEYS.scripts) ?? []
+  const user = await getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const scripts = await getScripts(user.id)
   return NextResponse.json(scripts)
 }
 
 export async function POST(req: NextRequest) {
+  const user = await getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const body = await req.json()
-  const scripts = await kv.get<SavedScript[]>(KV_KEYS.scripts) ?? []
-
-  const newScript: SavedScript = {
-    id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
-    savedAt: new Date().toISOString(),
+  const script = await addScript(user.id, {
     format: body.format ?? '',
     tone: body.tone ?? '',
     pillar: body.pillar ?? '',
     input: body.input ?? '',
     output: body.output ?? '',
     hookLine: body.hookLine ?? '',
-  }
-
-  const updated = [newScript, ...scripts].slice(0, MAX_SCRIPTS)
-  await kv.set(KV_KEYS.scripts, updated)
-  return NextResponse.json(newScript)
+  })
+  return NextResponse.json(script)
 }
 
 export async function DELETE(req: NextRequest) {
+  const user = await getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const { id } = await req.json()
-  const scripts = await kv.get<SavedScript[]>(KV_KEYS.scripts) ?? []
-  const updated = scripts.filter(s => s.id !== id)
-  await kv.set(KV_KEYS.scripts, updated)
+  await deleteScript(user.id, id)
   return NextResponse.json({ ok: true })
 }
