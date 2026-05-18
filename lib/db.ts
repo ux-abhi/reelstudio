@@ -473,6 +473,49 @@ export async function setApifyCache(key: string, value: unknown, ttlSeconds: num
   )
 }
 
+// ─── User context (master document) ──────────────────
+
+export interface MasterDocSummary {
+  niche: string
+  tone: string
+  keyTopics: string[]
+  uniqueAngles: string[]
+  targetAudience: string
+  contentGoals: string[]
+}
+
+export interface UserContext {
+  masterDocName?: string
+  masterDocText?: string
+  masterDocSummary?: MasterDocSummary
+}
+
+export async function getUserContext(userId: string): Promise<UserContext | null> {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('user_context')
+    .select('*')
+    .eq('user_id', userId)
+    .maybeSingle()
+  if (!data) return null
+  return {
+    masterDocName: data.master_doc_name ?? undefined,
+    masterDocText: data.master_doc_text ?? undefined,
+    masterDocSummary: (data.master_doc_summary as MasterDocSummary) ?? undefined,
+  }
+}
+
+export async function upsertUserContext(userId: string, ctx: UserContext): Promise<void> {
+  const supabase = await createClient()
+  await supabase.from('user_context').upsert({
+    user_id: userId,
+    master_doc_name: ctx.masterDocName ?? null,
+    master_doc_text: ctx.masterDocText ?? null,
+    master_doc_summary: ctx.masterDocSummary ?? null,
+    updated_at: new Date().toISOString(),
+  }, { onConflict: 'user_id' })
+}
+
 // ─── Competitors ──────────────────────────────────────
 
 export async function getCompetitors(userId: string): Promise<CompetitorAnalysis[]> {

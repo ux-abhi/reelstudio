@@ -34,7 +34,7 @@ export default function LoginPage() {
       <div style={{ width: '100%', maxWidth: 340 }}>
         <div style={{ marginBottom: 32, textAlign: 'center' }}>
           <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--accent)', letterSpacing: '-0.01em', marginBottom: 8 }}>
-            @uxabhi_ Studio
+            ReelStudio
           </p>
           <h1 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.03em' }}>
             Welcome back

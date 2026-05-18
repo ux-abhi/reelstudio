@@ -118,7 +118,7 @@ export async function POST(req: NextRequest) {
     }
 
     scanResult.scannedAt = new Date().toISOString()
-    scanResult.handle = handle ?? profileInput?.handle ?? 'uxabhi_'
+    scanResult.handle = handle ?? profileInput?.handle ?? ''
     if (instagramProfile) scanResult.instagramProfile = instagramProfile
     if (profileInput) scanResult.profileInput = profileInput
 

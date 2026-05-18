@@ -1,9 +1,10 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useScan } from '@/components/scan/ScanContext'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { createClient } from '@/lib/supabase/client'
+import { MasterDocSummary } from '@/lib/db'
 
 function extractHandle(input: string): string {
   const trimmed = input.trim()
@@ -22,6 +23,15 @@ export default function SettingsPage() {
   const [scanning, setScanning] = useState(false)
   const [error, setError] = useState('')
 
+  // Master document state
+  const fileRef = useRef<HTMLInputElement>(null)
+  const [docName, setDocName] = useState<string | null>(null)
+  const [docSummary, setDocSummary] = useState<MasterDocSummary | null>(null)
+  const [docLoading, setDocLoading] = useState(false)
+  const [docError, setDocError] = useState('')
+  const [docSaved, setDocSaved] = useState(false)
+  const [docInitLoading, setDocInitLoading] = useState(true)
+
   useEffect(() => {
     try {
       setName(localStorage.getItem('ss:name') ?? '')
@@ -31,6 +41,16 @@ export default function SettingsPage() {
     createClient().auth.getUser().then(({ data }) => {
       if (data.user?.email) setUserEmail(data.user.email)
     })
+
+    // Load existing master doc context
+    fetch('/api/user-context')
+      .then(r => r.json())
+      .then(data => {
+        if (data.masterDocName) setDocName(data.masterDocName)
+        if (data.masterDocSummary) setDocSummary(data.masterDocSummary)
+      })
+      .catch(() => {})
+      .finally(() => setDocInitLoading(false))
   }, [])
 
   function saveProfile() {
@@ -53,6 +73,44 @@ export default function SettingsPage() {
     await runScan(handle, true)
     setScanning(false)
     router.push('/dashboard')
+  }
+
+  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (file.size > 500 * 1024) { setDocError('File too large — max 500KB'); return }
+
+    setDocLoading(true)
+    setDocError('')
+    setDocSaved(false)
+
+    try {
+      const text = await file.text()
+      const res = await fetch('/api/user-context', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, name: file.name }),
+      })
+      const data = await res.json()
+      if (data.error) throw new Error(data.error)
+      setDocName(data.name)
+      setDocSummary(data.summary)
+      setDocSaved(true)
+      setTimeout(() => setDocSaved(false), 3000)
+    } catch (err: unknown) {
+      setDocError(err instanceof Error ? err.message : 'Upload failed')
+    } finally {
+      setDocLoading(false)
+      if (fileRef.current) fileRef.current.value = ''
+    }
+  }
+
+  async function removeDoc() {
+    setDocLoading(true)
+    await fetch('/api/user-context', { method: 'DELETE' })
+    setDocName(null)
+    setDocSummary(null)
+    setDocLoading(false)
   }
 
   const currentHandle = scan?.instagramProfile?.handle ?? scan?.handle ?? extractHandle(handleInput)
@@ -80,7 +138,7 @@ export default function SettingsPage() {
               className="input"
               value={name}
               onChange={e => setName(e.target.value)}
-              placeholder="Abhishek"
+              placeholder="Your name"
             />
           </div>
 
@@ -92,7 +150,7 @@ export default function SettingsPage() {
               className="input"
               value={handleInput}
               onChange={e => setHandleInput(e.target.value)}
-              placeholder="@uxabhi_ or instagram.com/uxabhi_"
+              placeholder="@yourhandle or instagram.com/yourhandle"
               autoComplete="off"
               spellCheck={false}
             />
@@ -107,6 +165,103 @@ export default function SettingsPage() {
           >
             {saved ? '✓ Saved' : 'Save changes'}
           </button>
+        </div>
+      </section>
+
+      {/* Master Document */}
+      <section>
+        <p className="section-label" style={{ marginBottom: 4 }}>Master Document</p>
+        <p style={{ fontSize: 12, color: 'var(--text-tertiary)', marginBottom: 16 }}>
+          Upload your brand strategy, content brief, or account notes — Groq analyses it and uses it to personalise all content generation for your account.
+        </p>
+        <div className="card" style={{ maxWidth: 480, display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {docInitLoading ? (
+            <p style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>Loading...</p>
+          ) : docName && docSummary ? (
+            <>
+              {/* Current document */}
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
+                <div>
+                  <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{docName}</p>
+                  <p style={{ fontSize: 11, color: 'var(--green)', marginTop: 2 }}>✓ Analysed by Groq</p>
+                </div>
+                <button
+                  onClick={removeDoc}
+                  disabled={docLoading}
+                  className="btn-ghost"
+                  style={{ color: 'var(--red)', fontSize: 13, width: 28, height: 28 }}
+                  title="Remove document"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Summary */}
+              <div style={{ background: 'var(--bg-elevated)', borderRadius: 8, padding: '12px 14px', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <SummaryRow label="Niche" value={docSummary.niche} />
+                <SummaryRow label="Tone" value={docSummary.tone} />
+                <SummaryRow label="Audience" value={docSummary.targetAudience} />
+                {docSummary.keyTopics?.length > 0 && (
+                  <div>
+                    <p style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-tertiary)', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 6 }}>Key Topics</p>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                      {docSummary.keyTopics.map((t, i) => (
+                        <span key={i} style={{ fontSize: 11, padding: '2px 8px', borderRadius: 5, background: 'var(--accent-subtle)', color: 'var(--accent)', border: '1px solid var(--accent-border)' }}>{t}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {docSummary.uniqueAngles?.length > 0 && (
+                  <div>
+                    <p style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-tertiary)', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 6 }}>Unique Angles</p>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      {docSummary.uniqueAngles.map((a, i) => (
+                        <p key={i} style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>→ {a}</p>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Replace */}
+              <button
+                onClick={() => fileRef.current?.click()}
+                disabled={docLoading}
+                className="btn-secondary"
+                style={{ alignSelf: 'flex-start', fontSize: 12 }}
+              >
+                {docLoading ? 'Analysing...' : 'Replace document'}
+              </button>
+            </>
+          ) : (
+            <>
+              <div>
+                <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 4 }}>No document uploaded yet</p>
+                <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+                  Upload a .txt or .md file — your brand brief, content strategy, or account notes.
+                  Groq will extract your niche, tone, key topics, and unique angles to personalise all generation.
+                </p>
+              </div>
+              <button
+                onClick={() => fileRef.current?.click()}
+                disabled={docLoading}
+                className="btn-primary"
+                style={{ alignSelf: 'flex-start' }}
+              >
+                {docLoading ? 'Analysing...' : docSaved ? '✓ Saved' : 'Upload document'}
+              </button>
+            </>
+          )}
+
+          {docError && <p style={{ fontSize: 12, color: 'var(--red)' }}>{docError}</p>}
+
+          <input
+            ref={fileRef}
+            type="file"
+            accept=".txt,.md"
+            onChange={handleFileUpload}
+            style={{ display: 'none' }}
+          />
         </div>
       </section>
 
@@ -152,6 +307,15 @@ export default function SettingsPage() {
           </button>
         </div>
       </section>
+    </div>
+  )
+}
+
+function SummaryRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <p style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-tertiary)', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 3 }}>{label}</p>
+      <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>{value}</p>
     </div>
   )
 }

@@ -136,7 +136,7 @@ export default function OnboardingPage() {
                     className="input"
                     value={name}
                     onChange={e => setName(e.target.value)}
-                    placeholder="Abhishek"
+                    placeholder="Your name"
                     autoFocus
                     autoComplete="given-name"
                   />
@@ -189,7 +189,7 @@ export default function OnboardingPage() {
                     className="input"
                     value={handleInput}
                     onChange={e => setHandleInput(e.target.value)}
-                    placeholder="@uxabhi_ or instagram.com/uxabhi_"
+                    placeholder="@yourhandle or instagram.com/yourhandle"
                     autoFocus
                     autoComplete="off"
                     spellCheck={false}

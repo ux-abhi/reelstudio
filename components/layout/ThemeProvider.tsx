@@ -15,7 +15,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     try {
-      const saved = (localStorage.getItem('ss:theme') ?? localStorage.getItem('uxabhi:theme')) as Theme | null
+      const saved = localStorage.getItem('ss:theme') as Theme | null
       if (saved === 'light' || saved === 'dark') {
         setTheme(saved)
         document.documentElement.setAttribute('data-theme', saved)

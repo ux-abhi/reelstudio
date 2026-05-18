@@ -6,20 +6,55 @@ import { PageHeader } from '@/components/shared/PageHeader'
 import { TriggerWord } from '@/types/scan'
 
 const COMPETITOR_SWIPE = [
-  { account: '@uxabhi_ (Jun 2024)',     trigger: 'MAGIC',     offer: 'Animated Figma component library link',         comments: '1,900' },
-  { account: '@ayzz.thedesigner',       trigger: 'COLOR',     offer: '4-step color system resource',                  comments: '521'   },
-  { account: '@uthinhpham',             trigger: 'ANIMATION', offer: 'All Framer components used in portfolio',        comments: '4,700' },
-  { account: '@uthinhpham',             trigger: 'FRIDAY',    offer: 'Google Doc of free fonts (updated weekly)',      comments: '691'   },
-  { account: '@vaibhavshukla.design',   trigger: 'DESIGN',    offer: 'AI design hiring system mini-course',           comments: '2,400' },
+  { account: '@ayzz.thedesigner',     trigger: 'COLOR',     offer: '4-step color system resource',              comments: '521'   },
+  { account: '@uthinhpham',           trigger: 'ANIMATION', offer: 'All Framer components used in portfolio',   comments: '4,700' },
+  { account: '@uthinhpham',           trigger: 'FRIDAY',    offer: 'Google Doc of free fonts (updated weekly)', comments: '691'   },
+  { account: '@vaibhavshukla.design', trigger: 'DESIGN',    offer: 'AI design hiring system mini-course',       comments: '2,400' },
 ]
 
-const SUGGESTED_TRIGGERS: TriggerWord[] = [
-  { word: 'FRAMER',    offer: 'Your favourite Framer components used in client work',                      expectedComments: '300–800', basedOn: 'Framer content getting outsized reach right now',         captionTemplate: 'I\'ve been using this in every client project and people keep asking.\n\nComment "FRAMER" below and I\'ll DM you the link.\n\nSAVE this post so you can find it later.' },
-  { word: 'EUROPE',   offer: 'Step-by-step guide: getting UX clients in Europe as an Indian designer',    expectedComments: '200–500', basedOn: 'Unique angle no competitor owns',                        captionTemplate: 'Nobody talks about this honestly.\n\nComment "EUROPE" and I\'ll send you the full guide.\n\nSAVE this — you\'ll want to come back to it.' },
-  { word: 'HCI',      offer: 'Your semester UX research notes as a Notion doc',                           expectedComments: '150–400', basedOn: 'Academic credibility — nobody else has this',           captionTemplate: 'I spent a semester studying this in depth.\n\nComment "HCI" and I\'ll DM you my research notes.\n\nSAVE for when you need this.' },
-  { word: 'TOOLS',    offer: 'Your current AI + design tool stack as a living Google Sheet',              expectedComments: '500–1500', basedOn: 'Proven: similar triggers get 500–2000 comments',       captionTemplate: 'My entire tool stack in one doc — updated every month.\n\nComment "TOOLS" and I\'ll DM you the link.\n\nSAVE this post.' },
-  { word: 'PORTFOLIO', offer: 'Your UX portfolio checklist — what you look for when reviewing',           expectedComments: '300–700', basedOn: 'High pain point for your audience',                     captionTemplate: 'I review portfolios every week. Here\'s the exact checklist.\n\nComment "PORTFOLIO" and I\'ll send it over.\n\nSAVE this for your next portfolio update.' },
-  { word: 'STACK',    offer: 'Your 2026 UX toolkit (same as TOOLS, positioned for product designers)',    expectedComments: '400–900', basedOn: '"2026 stack" format currently breakout on the algorithm', captionTemplate: 'My 2026 design stack — every tool I\'m actually using.\n\nComment "STACK" and I\'ll DM you the full list.\n\nSAVE this before the algorithm buries it.' },
+const GENERIC_TRIGGERS: TriggerWord[] = [
+  {
+    word: 'TOOLS',
+    offer: 'Your current toolkit as a shareable doc or sheet',
+    expectedComments: '200–800',
+    basedOn: 'Tool roundups are consistently high-engagement in creator niches',
+    captionTemplate: 'I use these tools in every single project.\n\nComment "TOOLS" and I\'ll DM you the full list.\n\nSAVE this so you can find it later.',
+  },
+  {
+    word: 'TEMPLATE',
+    offer: 'Your most-used template or framework',
+    expectedComments: '150–500',
+    basedOn: 'Resource-gating consistently drives DMs',
+    captionTemplate: 'This is my go-to template for this kind of work.\n\nComment "TEMPLATE" and I\'ll send it over.\n\nSAVE this — you\'ll come back to it.',
+  },
+  {
+    word: 'RESOURCE',
+    offer: 'A curated resource list relevant to your niche',
+    expectedComments: '150–400',
+    basedOn: 'Curated lists get saved and shared',
+    captionTemplate: 'I\'ve been collecting these for months and finally putting them in one place.\n\nComment "RESOURCE" and I\'ll DM you the link.\n\nSAVE this post.',
+  },
+  {
+    word: 'CHECKLIST',
+    offer: 'A step-by-step checklist for a common problem in your niche',
+    expectedComments: '200–600',
+    basedOn: 'Checklists reduce friction — high save and share rates',
+    captionTemplate: 'I wish I had this checklist when I started.\n\nComment "CHECKLIST" and I\'ll send it to your DMs.\n\nSAVE this before the algorithm buries it.',
+  },
+  {
+    word: 'GUIDE',
+    offer: 'A detailed guide or process doc for your main workflow',
+    expectedComments: '200–700',
+    basedOn: 'Guides drive comments from people who want the shortcut',
+    captionTemplate: 'I spent a long time figuring this out so you don\'t have to.\n\nComment "GUIDE" and I\'ll DM you the full breakdown.\n\nSAVE this for when you need it.',
+  },
+  {
+    word: 'STACK',
+    offer: 'Your current tech/tool stack for your specific workflow',
+    expectedComments: '300–900',
+    basedOn: '"My stack" format is breakout on the algorithm — high curiosity and shareability',
+    captionTemplate: 'My current stack — every tool I\'m actually using.\n\nComment "STACK" and I\'ll DM you the full list.\n\nSAVE this before the algorithm buries it.',
+  },
 ]
 
 export default function TriggersPage() {
@@ -34,7 +69,8 @@ export default function TriggersPage() {
     </div>
   )
 
-  const triggers: TriggerWord[] = scan?.triggerWords?.length ? scan.triggerWords : SUGGESTED_TRIGGERS
+  const triggers: TriggerWord[] = scan?.triggerWords?.length ? scan.triggerWords : GENERIC_TRIGGERS
+  const isFromScan = !!(scan?.triggerWords?.length)
 
   async function copyTemplate(word: string, template: string) {
     await navigator.clipboard.writeText(template)
@@ -46,7 +82,7 @@ export default function TriggersPage() {
     <div className="page-enter" style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
       <PageHeader
         title="Trigger Words"
-        subtitle="Comment triggers that drive DMs — your Jun 2024 post proved this format works (1,900 comments)"
+        subtitle={isFromScan ? 'Comment triggers generated from your account scan' : 'Proven comment-trigger formats — run a scan for personalised triggers'}
       />
 
       {/* Your triggers */}
@@ -97,7 +133,7 @@ export default function TriggersPage() {
       {/* Competitor swipe file */}
       <section>
         <p className="section-label" style={{ marginBottom: 4 }}>Competitor Swipe File</p>
-        <p style={{ fontSize: 12, color: 'var(--text-tertiary)', marginBottom: 16 }}>Real triggers that worked in your niche</p>
+        <p style={{ fontSize: 12, color: 'var(--text-tertiary)', marginBottom: 16 }}>Real triggers that have worked in creator niches</p>
         <div style={{ background: 'var(--bg-card)', borderRadius: 10, border: '1px solid var(--border)', overflow: 'hidden' }}>
           <table className="table">
             <thead>

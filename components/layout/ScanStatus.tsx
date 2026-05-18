@@ -16,9 +16,10 @@ export function ScanStatus() {
   if (!hasProfile) return null
 
   async function handleRefresh() {
-    const saved = localStorage.getItem('uxabhi:profile')
-    if (!saved) return
-    await runScan(JSON.parse(saved), true)
+    const handle = localStorage.getItem('ss:handle')
+    if (handle) { await runScan(handle, true); return }
+    const profile = localStorage.getItem('ss:profile')
+    if (profile) { try { await runScan(JSON.parse(profile), true) } catch { /* ignore */ } }
   }
 
   return (

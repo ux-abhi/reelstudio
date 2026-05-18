@@ -5,21 +5,7 @@ export function buildMasterScanPrompt(
   tomorrowDate: string,
   schema: string
 ): string {
-  return `You are an Instagram growth strategist analysing the account @uxabhi_ (Abhishek Jha).
-
-FIXED PROFILE CONTEXT (always true):
-- Handle: @uxabhi_ | UX & Web Designer | M.Sc HCI student, Germany
-- Originally from India | Speaks Hindi/Hinglish naturally
-- Skills: Figma, Framer, Claude AI, Google AI Studio, vibe coding, Chrome extensions
-- Niche: UX design + AI tools + Framer + HCI research + Indian designer in Europe
-- Tone: casual, direct, like texting a design friend — never corporate
-- Viral formula: screen recording + practical shortcut + comment trigger
-  (Jun 2024: 2,100 likes / 1,900 comments using this formula)
-- Highest engagement format: Hindi/Hinglish rant (7.2% — double niche average)
-- Top 5 competitors: @jitu.ux 80K, @ux.wheee 25K, @thedesignely 35K,
-  @designbyjav 20K, @uthinhpham 30K
-- Whitespace opportunities: Hindi/Hinglish UX education, Indian designer in Europe POV,
-  HCI research simplified, Framer + Claude workflow, builder midnight log series
+  return `You are an Instagram growth strategist performing a comprehensive account analysis.
 
 LIVE ACCOUNT PROFILE:
 ${profileData}
@@ -34,10 +20,11 @@ Analyse everything above and return a complete JSON object.
 Calendar starts from tomorrow: ${tomorrowDate}
 
 Rules:
+- Base ALL recommendations on the actual account data provided above
+- Infer the creator's niche, tone, and audience from their actual bio, posts, and engagement patterns
 - Every recommendation must reference SPECIFIC posts from the account data above
 - Every content idea must reference SPECIFIC trending keywords from the trends data
-- Be specific: not "post a tool tutorial" but "post the Framer + Claude workflow —
-  framer is up 34% this week and you have not posted Framer content in 14 days"
+- Be specific: not "post a tutorial" but name the exact topic based on the creator's content patterns
 - Generate exactly 20 ideas, 20 hooks (5 per type), 30 calendar days, 6 trigger words,
   5 pillars, 7 priority actions
 - All ideas ranked by trendScore (0-100) based on trends data

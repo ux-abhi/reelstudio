@@ -19,12 +19,12 @@ const LANG_INSTRUCTION: Record<Language, string> = {
 }
 
 const FALLBACK_HOOKS = [
-  "I don't know how this Figma plugin is still free",
-  "Every Indian designer posting 'AI will replace you' — let's talk",
-  "Your portfolio isn't landing interviews and it's not because your work is bad",
-  "I built this at 2am and it saved me 4 hours the next morning",
-  "Main ye soch raha tha ki ye kaise kaam karta hai — phir maine banaya",
-  "Stop putting Figma under Technical Skills in your portfolio",
+  "I can't believe this tool is still free",
+  "Nobody talks about this part of the process honestly",
+  "Your content isn't landing and it's not what you think",
+  "I built this at 2am and it saved me 4 hours the next day",
+  "The one thing nobody tells you when you're starting out",
+  "Stop doing this if you want people to watch past 3 seconds",
 ]
 
 function StudioContent() {
@@ -49,7 +49,20 @@ function StudioContent() {
   const displayHooks = hooks.length > 0 ? hooks.map(h => h.text) : FALLBACK_HOOKS
   const trendingKeywords = scan?.trendPulse?.filter(t => t.direction === 'rising' || t.breakout).map(t => t.keyword).slice(0, 5).join(', ') ?? ''
   const recentPosts = scan?.posts?.slice(0, 5).map(p => p.topic).join(', ') ?? ''
-  const triggerWords = scan?.triggerWords?.map(t => t.word).join(', ') ?? 'FRAMER, TOOLS, PORTFOLIO'
+  const triggerWords = scan?.triggerWords?.map(t => t.word).join(', ') ?? 'TOOLS, TEMPLATE, RESOURCE'
+
+  // Dynamic user identity — never hardcoded
+  const userHandle = scan?.instagramProfile?.handle ?? scan?.handle ?? ''
+  const userBio = scan?.instagramProfile?.bio ?? ''
+  const userNiche = (typeof window !== 'undefined' ? localStorage.getItem('ss:niche') : null)
+    ?? scan?.pillars?.slice(0, 2).map(p => p.name).join(', ')
+    ?? 'content creator'
+  const hashtags = [
+    ...(scan?.hashtagClusters?.toolTutorials ?? []),
+    ...(scan?.hashtagClusters?.educationStudent ?? []),
+    ...(scan?.hashtagClusters?.opinionIndia ?? []),
+  ].slice(0, 20).map(h => `#${h}`).join(' ')
+  const who = userHandle ? `@${userHandle} — ${userNiche}` : userNiche
 
   async function callGroq(promptType: 'full' | 'hooks' | 'caption') {
     if (!idea.trim()) return
@@ -58,13 +71,14 @@ function StudioContent() {
     try {
       let prompt = ''
       if (promptType === 'full') {
-        prompt = `You are writing an Instagram script for a UX designer and content creator.
+        prompt = `You are writing an Instagram script for: ${who}
+${userBio ? `Bio: ${userBio}` : ''}
 LANGUAGE: ${langInstruction}
 TONE: ${tone} — never stiff, never a brand voice.
 FORMAT: ${format}
-CURRENTLY TRENDING: ${trendingKeywords || 'figma, framer, ai design tools'}
+CURRENTLY TRENDING: ${trendingKeywords || 'content creation, social media tools'}
 RECENT POSTS (don't repeat): ${recentPosts}
-VIRAL FORMULA: Result shown first → practical shortcut revealed → comment trigger or save CTA.
+VIRAL FORMULA: Result or hook shown first → practical value revealed → comment trigger or save CTA.
 RAW IDEA: ${idea}
 Write the complete script:
 [HOOK] — scroll-stopping first line, no "Hey guys", no slow intro
@@ -72,21 +86,24 @@ Write the complete script:
 [CTA] — comment trigger ("Comment 'X' and I'll DM you") OR save prompt
 Return script only. No explanation.`
       } else if (promptType === 'hooks') {
-        prompt = `Write 3 Instagram hooks for a UX designer (Figma, Framer, AI tools, design education).
+        prompt = `Write 3 Instagram hooks for: ${who}
 LANGUAGE: ${langInstruction}
-Trending: ${trendingKeywords || 'figma, framer, ai tools'}
+Trending: ${trendingKeywords || 'content creation, social media tools'}
 Topic: ${idea}
 [CURIOSITY] — creates open loop
 [RELATABLE] — calls out a pain they've felt
 [HOT-TAKE] — controversial claim
 Each hook works in 2 seconds. No greetings.`
       } else {
-        prompt = `Write an Instagram caption for a UX designer.
+        const hashtagLine = hashtags
+          ? `Use these hashtags (pick 7-10): ${hashtags}`
+          : 'Use 7-10 relevant hashtags for this creator\'s niche'
+        prompt = `Write an Instagram caption for: ${who}
 LANGUAGE: ${langInstruction}
 Format: ${format}. Trending: ${trendingKeywords}. Triggers: ${triggerWords}.
 Topic: ${idea}
 Opens punchy (no greeting). Includes comment trigger if relevant. Ends with SAVE prompt or question.
-7-10 hashtags from: #figmatips #figmadesign #framerwebsite #uxtools #designtools #uxstudent #uxportfolio #indiandesigner #designineurope #uxcareer
+${hashtagLine}
 Return only the caption.`
       }
       const res = await fetch('/api/groq', {

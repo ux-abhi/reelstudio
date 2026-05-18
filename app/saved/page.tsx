@@ -42,7 +42,8 @@ export default function SavedPage() {
     ).join('\n\n')
     const blob = new Blob([text], { type: 'text/plain' })
     const url = URL.createObjectURL(blob)
-    const a = document.createElement('a'); a.href = url; a.download = 'uxabhi-scripts.txt'; a.click()
+    const handle = localStorage.getItem('ss:handle') ?? 'scripts'
+    const a = document.createElement('a'); a.href = url; a.download = `${handle}-scripts.txt`; a.click()
     URL.revokeObjectURL(url)
   }
 
