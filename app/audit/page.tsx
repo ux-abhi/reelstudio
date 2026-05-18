@@ -121,9 +121,9 @@ export default function AuditPage() {
           <p className="section-label" style={{ marginBottom: 16 }}>Hashtag Clusters</p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {[
-              { label: 'Tool Tutorials',     tags: hashtagClusters.toolTutorials },
-              { label: 'Education / Student', tags: hashtagClusters.educationStudent },
-              { label: 'Opinion / India',     tags: hashtagClusters.opinionIndia },
+              { label: 'Primary',   tags: hashtagClusters.primary },
+              { label: 'Secondary', tags: hashtagClusters.secondary },
+              { label: 'Niche',     tags: hashtagClusters.niche },
             ].map(cluster => (
               <div key={cluster.label} className="card">
                 <p style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)', marginBottom: 12 }}>{cluster.label}</p>

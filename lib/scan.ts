@@ -40,9 +40,9 @@ export function buildScanSchema(): string {
     "expectedComments":"string","basedOn":"string","captionTemplate":"string" }],
   "bioFix": { "current":"string","issues":["string"],"recommended":"string" },
   "hashtagClusters": {
-    "toolTutorials":["string"],
-    "educationStudent":["string"],
-    "opinionIndia":["string"]
+    "primary":["string"],
+    "secondary":["string"],
+    "niche":["string"]
   },
   "competitors": {
     "fromStrategy":["string"],

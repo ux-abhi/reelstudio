@@ -58,9 +58,9 @@ function StudioContent() {
     ?? scan?.pillars?.slice(0, 2).map(p => p.name).join(', ')
     ?? 'content creator'
   const hashtags = [
-    ...(scan?.hashtagClusters?.toolTutorials ?? []),
-    ...(scan?.hashtagClusters?.educationStudent ?? []),
-    ...(scan?.hashtagClusters?.opinionIndia ?? []),
+    ...(scan?.hashtagClusters?.primary ?? []),
+    ...(scan?.hashtagClusters?.secondary ?? []),
+    ...(scan?.hashtagClusters?.niche ?? []),
   ].slice(0, 20).map(h => `#${h}`).join(' ')
   const who = userHandle ? `@${userHandle} — ${userNiche}` : userNiche
 

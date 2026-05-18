@@ -72,6 +72,8 @@ export async function POST(req: NextRequest) {
             postCount: (raw.postsCount as number) ?? 0,
             isVerified: (raw.verified as boolean) ?? false,
             profilePicUrl: (raw.profilePicUrl as string) ?? undefined,
+            category: (raw.businessCategoryName as string) ?? (raw.category as string) ?? undefined,
+            website: (raw.externalUrl as string) ?? (raw.website as string) ?? undefined,
           }
           profileData = JSON.stringify(instagramProfile)
           await setApifyCache(`apify:profile:${cleanHandle}`, instagramProfile, APIFY_TTL)
@@ -83,13 +85,18 @@ export async function POST(req: NextRequest) {
         const rawPosts = items.map((p: Record<string, unknown>) => ({
           id: (p.id as string) ?? (p.shortCode as string) ?? '',
           timestamp: p.timestamp,
-          caption: (p.caption as string)?.slice(0, 300) ?? '',
+          caption: (p.caption as string)?.slice(0, 500) ?? '',
           likesCount: p.likesCount,
           commentsCount: p.commentsCount,
           type: p.type,
           url: p.url,
           hashtags: (p.hashtags as string[]) ?? [],
-          videoViewCount: p.videoViewCount,
+          videoViewCount: (p.videoViewCount as number) ?? undefined,
+          videoPlayCount: (p.videoPlayCount as number) ?? undefined,
+          location: (p.locationName as string) ?? (p.location as string) ?? undefined,
+          topComments: (p.latestComments as Array<{text: string; ownerUsername: string; likesCount: number}>)
+            ?.slice(0, 3)
+            .map(c => `"${c.text}" — @${c.ownerUsername} (${c.likesCount ?? 0} likes)`) ?? [],
         }))
         postsData = JSON.stringify(rawPosts)
         await setApifyCache(`apify:posts:${cleanHandle}`, items, APIFY_TTL)

@@ -33,6 +33,8 @@ export interface InstagramProfile {
   postCount: number
   isVerified: boolean
   profilePicUrl?: string
+  category?: string
+  website?: string
 }
 
 /** Manual input (onboarding form / backward compat) */
@@ -181,9 +183,9 @@ export interface BioFix {
 }
 
 export interface HashtagClusters {
-  toolTutorials: string[]
-  educationStudent: string[]
-  opinionIndia: string[]
+  primary: string[]
+  secondary: string[]
+  niche: string[]
 }
 
 /* ─── Competitors ────────────────────────────────── */

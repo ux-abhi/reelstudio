@@ -61,6 +61,8 @@ export async function getScanResult(userId: string): Promise<ScanResult | null> 
       postCount: profile.post_count,
       isVerified: profile.is_verified,
       profilePicUrl: profile.profile_pic_url ?? undefined,
+      category: profile.category ?? undefined,
+      website: profile.website_url ?? undefined,
     } : undefined,
     accountHealth: {
       engagementRate: health?.engagement_rate ?? '0',
@@ -165,9 +167,9 @@ export async function getScanResult(userId: string): Promise<ScanResult | null> 
       recommended: bioFix?.recommended ?? '',
     },
     hashtagClusters: {
-      toolTutorials: hashtagClusters?.tool_tutorials ?? [],
-      educationStudent: hashtagClusters?.education_student ?? [],
-      opinionIndia: hashtagClusters?.opinion_india ?? [],
+      primary: hashtagClusters?.primary_tags ?? [],
+      secondary: hashtagClusters?.secondary_tags ?? [],
+      niche: hashtagClusters?.niche_tags ?? [],
     },
     competitorSuggestions: scan.competitor_suggestions ?? [],
   }
@@ -211,6 +213,8 @@ export async function setScanResult(userId: string, result: ScanResult): Promise
       post_count: result.instagramProfile.postCount,
       is_verified: result.instagramProfile.isVerified,
       profile_pic_url: result.instagramProfile.profilePicUrl ?? null,
+      category: result.instagramProfile.category ?? null,
+      website_url: result.instagramProfile.website ?? null,
     }),
 
     result.accountHealth && supabase.from('account_health').insert({
@@ -236,9 +240,9 @@ export async function setScanResult(userId: string, result: ScanResult): Promise
 
     result.hashtagClusters && supabase.from('hashtag_clusters').insert({
       scan_id: sid, user_id: userId,
-      tool_tutorials: result.hashtagClusters.toolTutorials ?? [],
-      education_student: result.hashtagClusters.educationStudent ?? [],
-      opinion_india: result.hashtagClusters.opinionIndia ?? [],
+      primary_tags: result.hashtagClusters.primary ?? [],
+      secondary_tags: result.hashtagClusters.secondary ?? [],
+      niche_tags: result.hashtagClusters.niche ?? [],
     }),
 
     result.posts?.length && supabase.from('analyzed_posts').insert(
