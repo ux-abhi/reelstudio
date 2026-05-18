@@ -192,20 +192,37 @@ Return ONLY this JSON (no markdown):
               <p style={{ fontSize: 12, color: 'var(--text-tertiary)', padding: '4px 0' }}>None yet</p>
             ) : (
               competitors.map((c, i) => (
-                <button
-                  key={i}
-                  onClick={() => { setSelected(c); setPipelineIdeas([]) }}
-                  className={`chip-filter${selected?.handle === c.handle ? ' active' : ''}`}
-                  style={{ fontSize: 12 }}
-                >
-                  {c.handle}
-                  <span className="chip-count" style={{
-                    background: c.threatLevel === 'high' ? 'var(--red-subtle)' : 'var(--bg-elevated)',
-                    color: c.threatLevel === 'high' ? 'var(--red)' : 'var(--text-tertiary)',
-                  }}>
-                    {c.threatLevel}
-                  </span>
-                </button>
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <button
+                    onClick={() => { setSelected(c); setPipelineIdeas([]) }}
+                    className={`chip-filter${selected?.handle === c.handle ? ' active' : ''}`}
+                    style={{ fontSize: 12, flex: 1, minWidth: 0 }}
+                  >
+                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.handle}</span>
+                    <span className="chip-count" style={{
+                      background: c.threatLevel === 'high' ? 'var(--red-subtle)' : 'var(--bg-elevated)',
+                      color: c.threatLevel === 'high' ? 'var(--red)' : 'var(--text-tertiary)',
+                      flexShrink: 0,
+                    }}>
+                      {c.threatLevel}
+                    </span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      const updated = competitors.filter((_, idx) => idx !== i)
+                      saveCompetitors(updated)
+                      if (selected?.handle === c.handle) {
+                        setSelected(updated[0] ?? null)
+                        setPipelineIdeas([])
+                      }
+                    }}
+                    className="btn-ghost"
+                    style={{ width: 22, height: 22, fontSize: 10, flexShrink: 0, color: 'var(--text-tertiary)' }}
+                    title={`Remove ${c.handle}`}
+                  >
+                    ✕
+                  </button>
+                </div>
               ))
             )}
           </div>

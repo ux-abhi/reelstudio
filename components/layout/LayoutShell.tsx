@@ -16,7 +16,7 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
     <>
       <Sidebar />
       <main className="app-main">
-        <div className="max-w-[1080px] mx-auto px-5 py-8 md:px-10 md:py-10">
+        <div style={{ maxWidth: 1080, margin: '0 auto', padding: '40px 48px 56px' }}>
           {children}
         </div>
       </main>

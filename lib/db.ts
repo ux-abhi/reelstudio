@@ -414,6 +414,19 @@ export async function deleteScript(userId: string, id: string): Promise<void> {
   await supabase.from('saved_scripts').delete().eq('user_id', userId).eq('id', id)
 }
 
+export async function updateScript(
+  userId: string,
+  id: string,
+  updates: { output?: string; hookLine?: string }
+): Promise<void> {
+  const supabase = await createClient()
+  const patch: Record<string, string> = {}
+  if (updates.output   !== undefined) patch.output    = updates.output
+  if (updates.hookLine !== undefined) patch.hook_line = updates.hookLine
+  if (Object.keys(patch).length === 0) return
+  await supabase.from('saved_scripts').update(patch).eq('user_id', userId).eq('id', id)
+}
+
 // ─── Trends cache ─────────────────────────────────────
 
 export async function getTrendsCache(): Promise<TrendResult[] | null> {

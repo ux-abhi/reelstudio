@@ -8,9 +8,7 @@ import { createClient } from '@/lib/supabase/client'
 
 const CREATE_NAV = [
   { href: '/studio',   label: 'Script Studio' },
-  { href: '/saved',    label: 'Save Board' },
-  { href: '/ideas',    label: 'Ideas Bank' },
-  { href: '/hooks',    label: 'Hooks Library' },
+  { href: '/ideas',    label: 'Content Library' },
   { href: '/triggers', label: 'Trigger Words' },
 ]
 
@@ -28,11 +26,11 @@ const ACCOUNT_NAV = [
 ]
 
 const MOBILE_NAV = [
-  { href: '/studio',    label: 'Studio',    icon: '✦' },
-  { href: '/ideas',     label: 'Ideas',     icon: '◉' },
-  { href: '/dashboard', label: 'Dashboard', icon: '⊙' },
-  { href: '/calendar',  label: 'Calendar',  icon: '▦' },
-  { href: '/actions',   label: 'Actions',   icon: '◈' },
+  { href: '/studio',    label: 'Studio',   icon: '✦' },
+  { href: '/ideas',     label: 'Library',  icon: '◉' },
+  { href: '/dashboard', label: 'Dashboard',icon: '⊙' },
+  { href: '/calendar',  label: 'Calendar', icon: '▦' },
+  { href: '/actions',   label: 'Actions',  icon: '◈' },
 ]
 
 export function Sidebar() {

@@ -662,6 +662,7 @@ select.input {
   width: 232px;
   overflow-y: auto;
   z-index: 40;
+  box-shadow: 1px 0 0 var(--border-strong);
 }
 @media (min-width: 768px) {
   .sidebar-wrap {
