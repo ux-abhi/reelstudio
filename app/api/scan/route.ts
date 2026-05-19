@@ -21,11 +21,12 @@ export async function POST(req: NextRequest) {
   const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
   try {
     const body = await req.json()
-    const { handle, profileInput, forceRefresh = false, postingGoal } = body as {
+    const { handle, profileInput, forceRefresh = false, postingGoal, niche } = body as {
       handle?: string
       profileInput?: ProfileInput
       forceRefresh?: boolean
       postingGoal?: string
+      niche?: string
     }
 
     if (!forceRefresh) {
@@ -123,7 +124,7 @@ export async function POST(req: NextRequest) {
       try { trendsData = JSON.stringify(await fetchTrends()) } catch (e) { console.error('[Trends] fetch failed:', e) }
     }
 
-    const prompt = buildMasterScanPrompt(profileData, postsData, trendsData, tomorrowDate, schema, userContext?.masterDocSummary, postingGoal)
+    const prompt = buildMasterScanPrompt(profileData, postsData, trendsData, tomorrowDate, schema, userContext?.masterDocSummary, postingGoal, niche)
 
     const completion = await groq.chat.completions.create({
       model: GROQ_MODEL,

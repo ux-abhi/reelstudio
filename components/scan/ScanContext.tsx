@@ -92,17 +92,21 @@ export function ScanProvider({ children }: { children: ReactNode }) {
     try {
       let body: Record<string, unknown>
       let postingGoal: string | undefined
-      try { postingGoal = localStorage.getItem('ss:posting-goal') ?? undefined } catch {}
+      let niche: string | undefined
+      try {
+        postingGoal = localStorage.getItem('ss:posting-goal') ?? undefined
+        niche = localStorage.getItem('ss:niche') ?? undefined
+      } catch {}
 
       if (typeof handleOrProfile === 'string') {
         const cleanHandle = handleOrProfile.replace('@', '').toLowerCase()
         localStorage.setItem('ss:handle', cleanHandle)
         localStorage.removeItem('ss:profile')
-        body = { handle: cleanHandle, forceRefresh: force, postingGoal }
+        body = { handle: cleanHandle, forceRefresh: force, postingGoal, niche }
       } else {
         localStorage.setItem('ss:profile', JSON.stringify(handleOrProfile))
         localStorage.removeItem('ss:handle')
-        body = { profileInput: handleOrProfile, forceRefresh: force, postingGoal }
+        body = { profileInput: handleOrProfile, forceRefresh: force, postingGoal, niche }
       }
 
       setHasProfile(true)

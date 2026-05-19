@@ -14,7 +14,8 @@ export function buildMasterScanPrompt(
   tomorrowDate: string,
   schema: string,
   masterDoc?: MasterDocSummary,
-  postingGoal?: string
+  postingGoal?: string,
+  niche?: string
 ): string {
   const docSection = masterDoc ? `
 CREATOR'S BRAND DOCUMENT (uploaded by user — use this to calibrate ALL recommendations):
@@ -26,11 +27,15 @@ Unique Angles: ${masterDoc.uniqueAngles?.join(' | ')}
 Goals: ${masterDoc.contentGoals?.join(', ')}
 ` : ''
 
+  const nicheSection = !masterDoc && niche ? `
+CREATOR'S DECLARED NICHE: ${niche}
+` : ''
+
   const goal = postingGoal ?? '3×/week'
   const calendarCount = CALENDAR_COUNT[goal] ?? '12–14'
 
   return `You are an Instagram growth strategist performing a comprehensive account analysis.
-${docSection}
+${docSection}${nicheSection}
 LIVE ACCOUNT PROFILE:
 ${profileData}
 Fields: handle, name, bio, followers, following, postCount, isVerified, category (Creator/Business/Personal), website
@@ -49,7 +54,12 @@ Calendar starts from tomorrow: ${tomorrowDate}
 
 Rules:
 - Base ALL recommendations on the actual account data above
-${masterDoc ? '- The Brand Document overrides any inferences — if niche/tone/audience is specified there, use it exactly' : '- Infer the creator\'s niche, tone, and audience from their actual bio, posts, captions, and top comments'}
+${masterDoc
+  ? '- The Brand Document overrides any inferences — if niche/tone/audience is specified there, use it exactly'
+  : niche
+    ? `- The creator's declared niche is "${niche}" — use this as the primary lens. Validate and enrich it against their actual posts, bio, and captions`
+    : '- Infer the creator\'s niche, tone, and audience from their actual bio, posts, captions, and top comments'
+}
 - Use videoViewCount/videoPlayCount to assess reel performance separately from image/carousel performance
 - Use topComments to understand what topics drive conversation and what questions the audience asks
 - Use location data to identify local vs global content angles where relevant
@@ -64,9 +74,9 @@ ${masterDoc ? '- The Brand Document overrides any inferences — if niche/tone/a
 - For posts analysis: tier 1 = top 20% by (likes + comments), tier 2 = middle 60%, tier 3 = bottom 20%
 - For reels/videos: factor in videoViewCount when determining tier (views matter more than likes for reach)
 - Detect post format from type field: video→Reel, carousel/Sidecar→Carousel, image→Image
-- hashtagClusters.primary: 8–10 core niche hashtags (100K–1M posts) specific to this creator's content
+- hashtagClusters.primary: 8–10 core niche hashtags (100K–1M posts) specific to this creator's content${niche ? ` — must reflect the "${niche}" niche` : ''}
 - hashtagClusters.secondary: 8–10 broader topic hashtags (1M–5M posts) for reach
-- hashtagClusters.niche: 8–10 long-tail micro hashtags (<100K posts) for targeted reach
+- hashtagClusters.niche: 8–10 long-tail micro hashtags (<100K posts) for targeted reach${niche ? ` — hyper-specific to "${niche}"` : ''}
 - Return ONLY valid JSON matching this schema. No explanation. No markdown.
 
 SCHEMA:
