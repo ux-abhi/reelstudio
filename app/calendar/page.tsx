@@ -43,6 +43,7 @@ export default function CalendarPage() {
   const [scripts, setScripts]       = useState<SavedScript[]>([])
   const [scriptsLoading, setScriptsLoading] = useState(false)
   const [viewScript, setViewScript] = useState<AttachedScript | null>(null)
+  const [postingGoal, setPostingGoal] = useState('3×/week')
 
   useEffect(() => {
     try {
@@ -50,6 +51,8 @@ export default function CalendarPage() {
       if (e) setEdits(JSON.parse(e))
       const s = localStorage.getItem(LS_SCRIPTS)
       if (s) setAttached(JSON.parse(s))
+      const g = localStorage.getItem('ss:posting-goal')
+      if (g) setPostingGoal(g)
     } catch {}
   }, [])
 
@@ -104,7 +107,12 @@ export default function CalendarPage() {
 
   return (
     <div className="page-enter" style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
-      <PageHeader title="30-Day Calendar" subtitle="Real dates. AI-generated hooks. Click any row to edit." />
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+        <PageHeader title="30-Day Calendar" subtitle="Real dates. AI-generated hooks. Click any row to edit." />
+        <span className="badge" style={{ background: 'var(--accent-subtle)', color: 'var(--accent-hover)', borderColor: 'var(--accent-border)', flexShrink: 0, marginTop: 4 }}>
+          Target: {postingGoal}
+        </span>
+      </div>
 
       {weeks.map((week, wi) =>
         week.length === 0 ? null : (

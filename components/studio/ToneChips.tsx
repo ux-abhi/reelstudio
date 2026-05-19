@@ -1,6 +1,6 @@
 'use client'
 
-const TONES = ['Casual', 'Educational', 'Story', 'Hot Take', 'Hinglish']
+const TONES = ['Casual', 'Educational', 'Story', 'Hot Take', 'Voice Note']
 
 export function ToneChips({ selected, onChange }: { selected: string; onChange: (t: string) => void }) {
   return (

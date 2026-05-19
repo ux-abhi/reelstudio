@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
     }
 
     const client = new ApifyClient({ token: process.env.APIFY_TOKEN })
-    const run = await client.actor('apify/instagram-post-scraper').call({
+    const run = await client.actor('apify/instagram-scraper').call({
       directUrls: [`https://www.instagram.com/${cleanHandle}/`],
       resultsType: 'posts',
       resultsLimit: 30,

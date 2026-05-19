@@ -45,6 +45,8 @@ export async function POST(req: NextRequest) {
       postCount: (raw.postsCount as number) ?? 0,
       isVerified: (raw.verified as boolean) ?? false,
       profilePicUrl: (raw.profilePicUrl as string) ?? undefined,
+      category: (raw.businessCategoryName as string) ?? (raw.category as string) ?? undefined,
+      website: (raw.externalUrl as string) ?? (raw.website as string) ?? undefined,
     }
 
     await setApifyCache(cacheKey, profile, APIFY_TTL)

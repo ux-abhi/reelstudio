@@ -6,8 +6,7 @@ import { SkeletonCard } from '@/components/shared/SkeletonCard'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { PriorityAction } from '@/types/scan'
 
-const MONTHLY_NON_NEG = [
-  'Post consistently — cadence is the #1 growth blocker at every follower count.',
+const BASE_NON_NEG = [
   'Every post needs a comment trigger OR a save CTA. No exceptions.',
   'Reply to every comment within 60 minutes of posting. The algorithm window closes after 3 hours.',
   'Pick one weekly recurring series format — trains your audience to come back every week.',
@@ -17,11 +16,14 @@ const MONTHLY_NON_NEG = [
 export default function ActionsPage() {
   const { scan, isScanning, isInitialLoad } = useScan()
   const [checked, setChecked] = useState<Record<string, boolean>>({})
+  const [postingGoal, setPostingGoal] = useState('3×/week')
 
   useEffect(() => {
     try {
       const stored = localStorage.getItem('ss:actions:checked')
       if (stored) setChecked(JSON.parse(stored))
+      const g = localStorage.getItem('ss:posting-goal')
+      if (g) setPostingGoal(g)
     } catch {}
   }, [])
 
@@ -108,14 +110,14 @@ export default function ActionsPage() {
       <section>
         <p className="section-label" style={{ marginBottom: 12 }}>Monthly Non-Negotiables</p>
         <div style={{ background: 'var(--bg-card)', borderRadius: 10, border: '1px solid var(--border)', overflow: 'hidden' }}>
-          {MONTHLY_NON_NEG.map((item, i) => (
+          {[`Hit your ${postingGoal} target — posting cadence is the #1 growth blocker at every follower count.`, ...BASE_NON_NEG].map((item, i) => (
             <div
               key={i}
               style={{
                 display: 'flex',
                 gap: 12,
                 padding: '12px 16px',
-                borderBottom: i < MONTHLY_NON_NEG.length - 1 ? '1px solid var(--border-subtle)' : 'none',
+                borderBottom: i < BASE_NON_NEG.length ? '1px solid var(--border-subtle)' : 'none',
               }}
             >
               <span style={{ fontSize: 13, color: 'var(--accent)', fontWeight: 600, flexShrink: 0, lineHeight: 1.5 }}>{i + 1}</span>

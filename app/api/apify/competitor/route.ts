@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
     const client = new ApifyClient({ token: process.env.APIFY_TOKEN })
     const [profileRun, postsRun] = await Promise.all([
       client.actor('apify/instagram-profile-scraper').call({ usernames: [cleanHandle] }),
-      client.actor('apify/instagram-post-scraper').call({
+      client.actor('apify/instagram-scraper').call({
         directUrls: [`https://www.instagram.com/${cleanHandle}/`],
         resultsType: 'posts',
         resultsLimit: 20,

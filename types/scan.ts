@@ -20,6 +20,7 @@ export interface ScanResult {
   bioFix: BioFix
   hashtagClusters: HashtagClusters
   competitorSuggestions: string[]
+  competitors?: { fromStrategy: string[]; trendingInNiche: string[] }
 }
 
 /* ─── Profile types ──────────────────────────────── */

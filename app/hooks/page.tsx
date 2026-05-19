@@ -6,18 +6,18 @@ import { PageHeader } from '@/components/shared/PageHeader'
 import { Hook } from '@/types/scan'
 
 const FALLBACK_HOOKS: Hook[] = [
-  { text: "I don't know how this tool is still free", type: 'curiosity', basedOn: 'Tool reveal format — high engagement in creator niches', trendRelevant: true },
-  { text: "Everyone talking about [trend] is missing the most important part", type: 'hot-take', basedOn: 'Contrarian take format — drives comments', trendRelevant: true },
-  { text: "This is what I wish someone told me when I started", type: 'story', basedOn: 'Hindsight advice format — high save rate', trendRelevant: false },
-  { text: "I built this at 2am and it saved me 4 hours the next morning", type: 'story', basedOn: 'Late-night build story — relatable to creators', trendRelevant: false },
-  { text: "Stop doing this — it's the reason your content isn't growing", type: 'hot-take', basedOn: 'Mistake callout format — high share rate', trendRelevant: false },
-  { text: "The tool I use that nobody in my niche is talking about", type: 'curiosity', basedOn: 'Hidden gem format — saves + DMs', trendRelevant: true },
-  { text: "I tested 5 different approaches so you don't have to", type: 'curiosity', basedOn: 'Comparison/test format — drives saves', trendRelevant: false },
-  { text: "Honest take: most advice about [topic] is wrong", type: 'hot-take', basedOn: 'Myth-busting format — strong comment driver', trendRelevant: true },
-  { text: "I spent 3 months figuring this out — here's the shortcut", type: 'story', basedOn: 'Hard-won insight format — high engagement', trendRelevant: false },
+  { text: "I can't believe this is still free", type: 'curiosity', basedOn: 'Resource reveal — high engagement across niches', trendRelevant: true },
+  { text: "Everyone talking about [trend] is missing the most important part", type: 'hot-take', basedOn: 'Contrarian take — drives comments', trendRelevant: true },
+  { text: "This is what I wish someone told me when I started", type: 'story', basedOn: 'Hindsight advice — high save rate', trendRelevant: false },
+  { text: "I figured this out the hard way so you don't have to", type: 'story', basedOn: 'Hard-won insight — high engagement', trendRelevant: false },
+  { text: "Stop doing this — it's the reason you're not growing", type: 'hot-take', basedOn: 'Mistake callout — high share rate', trendRelevant: false },
+  { text: "The approach nobody in this space is talking about", type: 'curiosity', basedOn: 'Hidden gem — saves + DMs', trendRelevant: true },
+  { text: "I tested 5 different methods so you don't have to", type: 'curiosity', basedOn: 'Comparison/test — drives saves', trendRelevant: false },
+  { text: "Honest take: most advice about [topic] is wrong", type: 'hot-take', basedOn: 'Myth-busting — strong comment driver', trendRelevant: true },
+  { text: "I spent 3 months on this — here's the shortcut", type: 'story', basedOn: 'Hard-won shortcut — saves heavily', trendRelevant: false },
   { text: "POV: You're trying to fix a problem at 11pm with a deadline at 9am", type: 'story', basedOn: 'POV relatable story — saves + shares', trendRelevant: false },
-  { text: "Comment 'TOOLS' and I'll DM you everything I actually use", type: 'curiosity', basedOn: 'Comment trigger format — proven DM driver', trendRelevant: false },
-  { text: "The thing nobody tells you about growing in this niche", type: 'curiosity', basedOn: 'Insider knowledge format — saves heavily', trendRelevant: false },
+  { text: "The thing nobody tells you when you're starting out", type: 'curiosity', basedOn: 'Insider knowledge — high save rate', trendRelevant: false },
+  { text: "This one change made everything easier", type: 'curiosity', basedOn: 'Single insight reveal — strong scroll-stopper', trendRelevant: false },
 ]
 
 const TYPE_CONFIG: Record<string, { label: string; accent: string; bg: string }> = {

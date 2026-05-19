@@ -5,19 +5,13 @@ import { SkeletonCard } from '@/components/shared/SkeletonCard'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { TriggerWord } from '@/types/scan'
 
-const COMPETITOR_SWIPE = [
-  { account: '@ayzz.thedesigner',     trigger: 'COLOR',     offer: '4-step color system resource',              comments: '521'   },
-  { account: '@uthinhpham',           trigger: 'ANIMATION', offer: 'All Framer components used in portfolio',   comments: '4,700' },
-  { account: '@uthinhpham',           trigger: 'FRIDAY',    offer: 'Google Doc of free fonts (updated weekly)', comments: '691'   },
-  { account: '@vaibhavshukla.design', trigger: 'DESIGN',    offer: 'AI design hiring system mini-course',       comments: '2,400' },
-]
 
 const GENERIC_TRIGGERS: TriggerWord[] = [
   {
     word: 'TOOLS',
     offer: 'Your current toolkit as a shareable doc or sheet',
     expectedComments: '200–800',
-    basedOn: 'Tool roundups are consistently high-engagement in creator niches',
+    basedOn: 'Tool roundups consistently drive high engagement',
     captionTemplate: 'I use these tools in every single project.\n\nComment "TOOLS" and I\'ll DM you the full list.\n\nSAVE this so you can find it later.',
   },
   {
@@ -130,32 +124,55 @@ export default function TriggersPage() {
         </div>
       </section>
 
-      {/* Competitor swipe file */}
+      {/* Competitor research */}
       <section>
-        <p className="section-label" style={{ marginBottom: 4 }}>Competitor Swipe File</p>
-        <p style={{ fontSize: 12, color: 'var(--text-tertiary)', marginBottom: 16 }}>Real triggers that have worked in creator niches</p>
-        <div style={{ background: 'var(--bg-card)', borderRadius: 10, border: '1px solid var(--border)', overflow: 'hidden' }}>
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Account</th>
-                <th>Trigger</th>
-                <th>Offer</th>
-                <th>Comments</th>
-              </tr>
-            </thead>
-            <tbody>
-              {COMPETITOR_SWIPE.map((row, i) => (
-                <tr key={i}>
-                  <td style={{ fontSize: 12 }}>{row.account}</td>
-                  <td><span style={{ fontWeight: 700, color: 'var(--accent)', fontSize: 12 }}>&ldquo;{row.trigger}&rdquo;</span></td>
-                  <td style={{ fontSize: 12 }}>{row.offer}</td>
-                  <td className="primary">{row.comments}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <p className="section-label" style={{ marginBottom: 4 }}>Accounts to Study</p>
+        <p style={{ fontSize: 12, color: 'var(--text-tertiary)', marginBottom: 16 }}>
+          {isFromScan ? 'From your scan — study how these accounts gate content with comment triggers' : 'Run a scan to get accounts matched to your niche'}
+        </p>
+        {isFromScan && (() => {
+          const fromStrategy = scan?.competitors?.fromStrategy ?? []
+          const trending     = scan?.competitors?.trendingInNiche ?? []
+          if (!fromStrategy.length && !trending.length) return (
+            <p style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>No competitor data in this scan — try re-scanning.</p>
+          )
+          return (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {fromStrategy.length > 0 && (
+                <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <p style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-tertiary)', letterSpacing: '0.05em', textTransform: 'uppercase' as const }}>Aligned with your strategy</p>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    {fromStrategy.map((handle: string) => (
+                      <span key={handle} style={{ fontSize: 12, fontWeight: 500, padding: '4px 10px', borderRadius: 6, background: 'var(--bg-elevated)', border: '1px solid var(--border)', color: 'var(--accent-hover)' }}>
+                        @{handle.replace('@', '')}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {trending.length > 0 && (
+                <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <p style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-tertiary)', letterSpacing: '0.05em', textTransform: 'uppercase' as const }}>Trending in your niche</p>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    {trending.map((handle: string) => (
+                      <span key={handle} style={{ fontSize: 12, fontWeight: 500, padding: '4px 10px', borderRadius: 6, background: 'var(--bg-elevated)', border: '1px solid var(--border)', color: 'var(--text-secondary)' }}>
+                        @{handle.replace('@', '')}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <p style={{ fontSize: 12, color: 'var(--text-tertiary)', lineHeight: 1.6 }}>
+                Visit these accounts and note which trigger words they use in CTAs. Adapt the pattern — not the exact word — for your own audience.
+              </p>
+            </div>
+          )
+        })()}
+        {!isFromScan && (
+          <div className="card" style={{ textAlign: 'center', padding: '32px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+            <p style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Run a scan to get competitor accounts matched to your niche and content pillars.</p>
+          </div>
+        )}
       </section>
     </div>
   )

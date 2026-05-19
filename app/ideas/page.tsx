@@ -42,14 +42,14 @@ function uid() { return Math.random().toString(36).slice(2, 10) }
 // ── Fallbacks ──────────────────────────────────────────────────────────────────
 
 const FALLBACK_HOOKS: UserHook[] = [
-  { id: 'fh1', text: "I don't know how this tool is still free", type: 'curiosity', basedOn: 'Tool reveal format — high engagement in creator niches', trendRelevant: true },
-  { id: 'fh2', text: "Everyone posting about [trend] is missing the most important part", type: 'hot-take', basedOn: 'Contrarian take format — drives comments', trendRelevant: true },
-  { id: 'fh3', text: "This is what I wish someone told me when I started", type: 'curiosity', basedOn: 'Hindsight advice format — high save rate', trendRelevant: false },
-  { id: 'fh4', text: "I built this at 2am and it saved me 4 hours the next morning", type: 'story', basedOn: 'Late-night build story — relatable to creators', trendRelevant: false },
-  { id: 'fh5', text: "Stop doing this — it's the reason your content isn't growing", type: 'hot-take', basedOn: 'Mistake callout format — high share rate', trendRelevant: false },
-  { id: 'fh6', text: "The tool I use that nobody in my niche is talking about", type: 'curiosity', basedOn: 'Hidden gem format — saves + DMs', trendRelevant: true },
-  { id: 'fh7', text: "I tested 5 different approaches so you don't have to", type: 'curiosity', basedOn: 'Comparison/test format — drives saves', trendRelevant: false },
-  { id: 'fh8', text: "I spent 3 months figuring this out — here's the shortcut", type: 'story', basedOn: 'Hard-won insight format — high engagement', trendRelevant: false },
+  { id: 'fh1', text: "I can't believe this is still free", type: 'curiosity', basedOn: 'Resource reveal — high engagement across niches', trendRelevant: true },
+  { id: 'fh2', text: "Everyone talking about [trend] is missing the most important part", type: 'hot-take', basedOn: 'Contrarian take — drives comments', trendRelevant: true },
+  { id: 'fh3', text: "This is what I wish someone told me when I started", type: 'curiosity', basedOn: 'Hindsight advice — high save rate', trendRelevant: false },
+  { id: 'fh4', text: "I figured this out the hard way so you don't have to", type: 'story', basedOn: 'Hard-won insight — relatable and shareable', trendRelevant: false },
+  { id: 'fh5', text: "Stop doing this — it's the reason you're not growing", type: 'hot-take', basedOn: 'Mistake callout — high share rate', trendRelevant: false },
+  { id: 'fh6', text: "The approach nobody in this space is talking about", type: 'curiosity', basedOn: 'Hidden gem — saves + DMs', trendRelevant: true },
+  { id: 'fh7', text: "I tested 5 different methods so you don't have to", type: 'curiosity', basedOn: 'Comparison/test — drives saves', trendRelevant: false },
+  { id: 'fh8', text: "I spent 3 months on this — here's the shortcut", type: 'story', basedOn: 'Hard-won shortcut — saves heavily', trendRelevant: false },
 ]
 
 // ── Hook type config ───────────────────────────────────────────────────────────
@@ -130,7 +130,7 @@ export default function IdeasPage() {
     } else {
       // Default: derive from scan pillars or bio
       const pillars = scan?.pillars?.slice(0, 2).map(p => p.name).join(', ')
-      setNiche(pillars || 'Instagram content creator')
+      setNiche(pillars || '')
     }
   }, [scan])
 
@@ -241,7 +241,7 @@ function ScriptsTab({ niche }: { niche: string }) {
 NICHE: ${niche}
 FORMAT: ${script.format}
 TONE: ${script.tone}
-TRENDING: ${trending || 'latest tools, AI, career tips'}
+TRENDING: ${trending || 'use your knowledge of current trends in this creator\'s niche'}
 VIRAL FORMULA: Result shown first → practical shortcut revealed → comment trigger.
 RAW IDEA: ${script.input}
 [HOOK] — scroll-stopping first line, no "Hey guys"
@@ -268,7 +268,7 @@ Return script only. No explanation.`
 NICHE: ${niche}
 FORMAT: ${newFormat}
 TONE: ${newTone}
-TRENDING: ${trending || 'latest tools, AI, career tips'}
+TRENDING: ${trending || 'use your knowledge of current trends in this creator\'s niche'}
 VIRAL FORMULA: Result shown first → practical shortcut → comment trigger.
 RAW IDEA: ${newIdea}
 [HOOK] — scroll-stopping first line
@@ -730,7 +730,7 @@ function IdeasTab({ niche }: { niche: string }) {
     if (!newTitle.trim()) return
     const idea: UserIdea = {
       id: uid(), title: newTitle.trim(),
-      pillar: newPillar || (scan?.pillars?.[0]?.name ?? 'Toolbox'),
+      pillar: newPillar || (scan?.pillars?.[0]?.name ?? 'General'),
       trendScore: 50, trendDirection: 'stable',
       hookSuggestion: '', urgency: newUrgency, whyNow: newWhyNow.trim(),
     }
@@ -745,7 +745,7 @@ function IdeasTab({ niche }: { niche: string }) {
       const prompt = `Generate a fresh Instagram content idea for a ${niche} content creator.
 Pillar: ${idea.pillar}
 The original idea was "${idea.title}" — create something distinctly different for the same pillar.
-Trending: ${trending || 'latest tools, AI, career content'}
+Trending: ${trending || 'use your knowledge of current trends in this creator\'s niche'}
 Return ONLY JSON (no markdown): { "title": "...", "whyNow": "...", "hookSuggestion": "...", "urgency": "post this week|post this month|evergreen", "triggerWord": "..." }`
       const res  = await fetch('/api/groq', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt, maxTokens: 300 }) })
       const data = await res.json()
@@ -765,7 +765,7 @@ Return ONLY JSON (no markdown): { "title": "...", "whyNow": "...", "hookSuggesti
       const prompt = `Generate 5 Instagram content ideas for a ${niche} content creator.
 ${aiPillar ? `Content pillar / category: ${aiPillar}` : ''}
 Topic or theme: ${aiTopic}
-Trending now: ${trending || 'AI tools, career tips, behind-the-scenes'}
+Trending now: ${trending || 'use your knowledge of current trends in this creator\'s niche'}
 
 Return ONLY a JSON array (no markdown):
 [

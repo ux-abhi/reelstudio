@@ -7,6 +7,7 @@ import { ToneChips } from '@/components/studio/ToneChips'
 import { TrendHint } from '@/components/studio/TrendHint'
 import { ScriptOutput } from '@/components/studio/ScriptOutput'
 import { PageHeader } from '@/components/shared/PageHeader'
+import { parseScript } from '@/lib/scriptUtils'
 
 type Language = 'English' | 'Hinglish' | 'Hindi'
 
@@ -42,6 +43,10 @@ function StudioContent() {
   const [isSaving, setIsSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [masterDoc, setMasterDoc] = useState<DocSummary | null>(null)
+  const [history, setHistory] = useState<string[]>([])
+  const [sectionLoading, setSectionLoading] = useState<'hook' | 'body' | 'cta' | null>(null)
+  const [variants, setVariants] = useState<string[]>([])
+  const [variantsLoading, setVariantsLoading] = useState(false)
 
   useEffect(() => {
     const param = searchParams.get('idea')
@@ -77,8 +82,14 @@ function StudioContent() {
     ? `Brand context: niche=${masterDoc.niche}, tone=${masterDoc.tone}, audience=${masterDoc.targetAudience}, topics=${masterDoc.keyTopics?.join(', ')}`
     : ''
 
+  function pushToHistory(text: string) {
+    if (!text) return
+    setHistory(prev => [text, ...prev].slice(0, 5))
+  }
+
   async function callGroq(promptType: 'full' | 'hooks' | 'caption') {
     if (!idea.trim()) return
+    if (output) pushToHistory(output)
     setLoading(true); setError(null); setOutput(''); setSaved(false)
     const langInstruction = LANG_INSTRUCTION[language]
     try {
@@ -137,6 +148,80 @@ Return only the caption.`
     }
   }
 
+  async function regenSection(section: 'hook' | 'body' | 'cta') {
+    setSectionLoading(section)
+    const parts = parseScript(output)
+    const sectionText = parts[section]
+    const prompts: Record<string, string> = {
+      hook: `Rewrite ONLY the hook for this Instagram script.
+Format: ${format}, Tone: ${tone}, Language: ${LANG_INSTRUCTION[language]}
+${docContext}
+Current hook: "${sectionText}"
+Topic: ${idea}
+Write a stronger, more scroll-stopping hook. Return only the hook text — no labels, no explanation.`,
+      body: `Rewrite ONLY the body for this Instagram script.
+Format: ${format}, Tone: ${tone}, Language: ${LANG_INSTRUCTION[language]}
+${docContext}
+Current body: "${sectionText}"
+Topic: ${idea}
+Write a more engaging, better-paced body. Return only the body text — no labels, no explanation.`,
+      cta: `Rewrite ONLY the CTA for this Instagram script.
+Format: ${format}, Tone: ${tone}, Language: ${LANG_INSTRUCTION[language]}
+${docContext}
+Current CTA: "${sectionText}"
+Topic: ${idea}
+Write a stronger, more action-driving CTA. Return only the CTA text — no labels, no explanation.`,
+    }
+    try {
+      const res = await fetch('/api/groq', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: prompts[section], maxTokens: 400 }),
+      })
+      const data = await res.json()
+      if (data.error) throw new Error(data.error)
+      const newText = data.text.trim()
+      pushToHistory(output)
+      const rebuilt = [
+        '[HOOK]', section === 'hook' ? newText : parts.hook,
+        '[BODY]', section === 'body' ? newText : parts.body,
+        '[CTA]',  section === 'cta'  ? newText : parts.cta,
+      ].join('\n')
+      setOutput(rebuilt)
+    } catch {
+      // silent — output unchanged
+    } finally {
+      setSectionLoading(null)
+    }
+  }
+
+  async function generateVariants() {
+    if (!idea.trim()) return
+    setVariantsLoading(true)
+    setVariants([])
+    try {
+      const prompt = `Write exactly 3 short Instagram hooks for: ${who}
+${docContext}
+Topic: ${idea}
+Format: ${format}, Tone: ${tone}
+Number them 1. 2. 3.
+Each hook is a single punchy line — no greeting, no label. Return only the 3 numbered hooks.`
+      const res = await fetch('/api/groq', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt, maxTokens: 300 }),
+      })
+      const data = await res.json()
+      if (data.error) throw new Error(data.error)
+      const lines = (data.text as string).split('\n').filter(l => /^\d+\./.test(l.trim()))
+      setVariants(lines.map(l => l.replace(/^\d+\.\s*/, '').trim()).filter(Boolean))
+    } catch {
+      // silent
+    } finally {
+      setVariantsLoading(false)
+    }
+  }
+
   async function handleSave() {
     if (!output) return
     setIsSaving(true)
@@ -152,6 +237,12 @@ Return only the caption.`
     } finally {
       setIsSaving(false)
     }
+  }
+
+  function selectHistory(text: string) {
+    pushToHistory(output)
+    setOutput(text)
+    setHistory(prev => prev.filter(h => h !== text))
   }
 
   return (
@@ -199,6 +290,69 @@ Return only the caption.`
             <div style={{ marginTop: 8 }}><TrendHint idea={idea} /></div>
           </div>
 
+          {/* Action buttons */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <button
+              onClick={() => callGroq('full')}
+              disabled={loading || !idea.trim()}
+              className="btn-primary"
+              style={{ width: '100%' }}
+            >
+              {loading ? 'Writing...' : `Rewrite & Hook It in ${language}`}
+            </button>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+              <button onClick={() => callGroq('hooks')} disabled={loading || !idea.trim()} className="btn-secondary" style={{ fontSize: 12 }}>
+                3 Hooks Only
+              </button>
+              <button onClick={() => callGroq('caption')} disabled={loading || !idea.trim()} className="btn-secondary" style={{ fontSize: 12 }}>
+                Write Caption
+              </button>
+            </div>
+            <button
+              onClick={generateVariants}
+              disabled={variantsLoading || loading || !idea.trim()}
+              className="btn-secondary"
+              style={{ fontSize: 12, width: '100%' }}
+            >
+              {variantsLoading ? 'Generating variants...' : 'A/B Hooks — 3 variants'}
+            </button>
+          </div>
+
+          {/* A/B hook variants */}
+          {variants.length > 0 && (
+            <div>
+              <FieldLabel>Hook Variants</FieldLabel>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {variants.map((v, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: 10,
+                      padding: '9px 12px',
+                      borderRadius: 7,
+                      border: '1px solid var(--border)',
+                      background: 'var(--bg-input)',
+                    }}
+                  >
+                    <span style={{ fontSize: 11, color: 'var(--text-tertiary)', fontWeight: 600, lineHeight: '20px', flexShrink: 0 }}>
+                      {i + 1}
+                    </span>
+                    <span style={{ fontSize: 12, color: 'var(--text-primary)', flex: 1, lineHeight: 1.6 }}>{v}</span>
+                    <button
+                      onClick={() => setIdea(v)}
+                      className="btn-secondary"
+                      style={{ fontSize: 11, padding: '2px 10px', flexShrink: 0 }}
+                    >
+                      Use
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Quick inject */}
           <div>
             <FieldLabel>Quick inject</FieldLabel>
@@ -234,26 +388,6 @@ Return only the caption.`
                   {hook}
                 </button>
               ))}
-            </div>
-          </div>
-
-          {/* Action buttons */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <button
-              onClick={() => callGroq('full')}
-              disabled={loading || !idea.trim()}
-              className="btn-primary"
-              style={{ width: '100%' }}
-            >
-              {loading ? 'Writing...' : `Rewrite & Hook It in ${language}`}
-            </button>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-              <button onClick={() => callGroq('hooks')} disabled={loading || !idea.trim()} className="btn-secondary" style={{ fontSize: 12 }}>
-                3 Hooks Only
-              </button>
-              <button onClick={() => callGroq('caption')} disabled={loading || !idea.trim()} className="btn-secondary" style={{ fontSize: 12 }}>
-                Write Caption
-              </button>
             </div>
           </div>
         </div>
@@ -293,10 +427,15 @@ Return only the caption.`
           {!loading && !error && output && (
             <ScriptOutput
               output={output}
+              format={format}
               onOutputChange={setOutput}
               onSave={handleSave}
               isSaving={isSaving}
               saved={saved}
+              onRegenerateSection={regenSection}
+              sectionLoading={sectionLoading}
+              history={history}
+              onSelectHistory={selectHistory}
             />
           )}
         </div>

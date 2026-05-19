@@ -4,11 +4,13 @@ import { ScanResult, ProfileInput } from '@/types/scan'
 
 interface ScanContextType {
   scan: ScanResult | null
-  isScanning: boolean       // running a new forced scan (shows full-screen progress overlay)
-  isInitialLoad: boolean    // loading cached scan from Supabase on mount (show inline skeletons)
+  isScanning: boolean
+  isInitialLoad: boolean
   scanProgress: string[]
   error: string | null
-  runScan: (handleOrProfile: string | ProfileInput, force?: boolean) => Promise<void>
+  scanError: string | null
+  clearScanError: () => void
+  runScan: (handleOrProfile: string | ProfileInput, force?: boolean) => Promise<boolean>
   hasProfile: boolean
 }
 
@@ -18,7 +20,9 @@ const ScanContext = createContext<ScanContextType>({
   isInitialLoad: false,
   scanProgress: [],
   error: null,
-  runScan: async () => {},
+  scanError: null,
+  clearScanError: () => {},
+  runScan: async () => false,
   hasProfile: false,
 })
 
@@ -27,7 +31,7 @@ const SCAN_STEPS = [
   'Fetching your recent posts...',
   'Pulling Google Trends for your niche...',
   'Groq is analysing everything...',
-  'Building your 30-day content calendar...',
+  'Building your content calendar...',
 ]
 
 export function ScanProvider({ children }: { children: ReactNode }) {
@@ -36,9 +40,11 @@ export function ScanProvider({ children }: { children: ReactNode }) {
   const [isInitialLoad, setIsInitialLoad] = useState(false)
   const [scanProgress, setScanProgress] = useState<string[]>([])
   const [error, setError] = useState<string | null>(null)
+  const [scanError, setScanError] = useState<string | null>(null)
   const [hasProfile, setHasProfile] = useState(false)
 
-  // On mount: load cached scan from Supabase (or trigger fresh scan if expired)
+  const clearScanError = useCallback(() => setScanError(null), [])
+
   useEffect(() => {
     const storedHandle = localStorage.getItem('ss:handle')
     const storedProfile = localStorage.getItem('ss:profile')
@@ -61,21 +67,18 @@ export function ScanProvider({ children }: { children: ReactNode }) {
       .then(data => {
         if (data.error) {
           console.warn('[ScanContext] initial load error:', data.error)
-          setError(data.error)
         } else {
           setScan(data)
         }
       })
-      .catch(e => {
-        console.warn('[ScanContext] initial load failed:', e)
-        setError(e instanceof Error ? e.message : 'Failed to load scan')
-      })
+      .catch(e => console.warn('[ScanContext] initial load failed:', e))
       .finally(() => setIsInitialLoad(false))
   }, [])
 
-  const runScan = useCallback(async (handleOrProfile: string | ProfileInput, force = false) => {
+  const runScan = useCallback(async (handleOrProfile: string | ProfileInput, force = false): Promise<boolean> => {
     setIsScanning(true)
     setError(null)
+    setScanError(null)
     setScanProgress([])
 
     let stepIndex = 0
@@ -88,16 +91,18 @@ export function ScanProvider({ children }: { children: ReactNode }) {
 
     try {
       let body: Record<string, unknown>
+      let postingGoal: string | undefined
+      try { postingGoal = localStorage.getItem('ss:posting-goal') ?? undefined } catch {}
 
       if (typeof handleOrProfile === 'string') {
         const cleanHandle = handleOrProfile.replace('@', '').toLowerCase()
         localStorage.setItem('ss:handle', cleanHandle)
         localStorage.removeItem('ss:profile')
-        body = { handle: cleanHandle, forceRefresh: force }
+        body = { handle: cleanHandle, forceRefresh: force, postingGoal }
       } else {
         localStorage.setItem('ss:profile', JSON.stringify(handleOrProfile))
         localStorage.removeItem('ss:handle')
-        body = { profileInput: handleOrProfile, forceRefresh: force }
+        body = { profileInput: handleOrProfile, forceRefresh: force, postingGoal }
       }
 
       setHasProfile(true)
@@ -111,8 +116,12 @@ export function ScanProvider({ children }: { children: ReactNode }) {
       const data = await res.json()
       if (data.error) throw new Error(data.error)
       setScan(data)
+      return true
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Scan failed')
+      const msg = e instanceof Error ? e.message : 'Scan failed'
+      setError(msg)
+      setScanError(msg)
+      return false
     } finally {
       clearInterval(stepInterval)
       setIsScanning(false)
@@ -121,7 +130,7 @@ export function ScanProvider({ children }: { children: ReactNode }) {
   }, [])
 
   return (
-    <ScanContext.Provider value={{ scan, isScanning, isInitialLoad, scanProgress, error, runScan, hasProfile }}>
+    <ScanContext.Provider value={{ scan, isScanning, isInitialLoad, scanProgress, error, scanError, clearScanError, runScan, hasProfile }}>
       {children}
     </ScanContext.Provider>
   )

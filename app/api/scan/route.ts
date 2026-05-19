@@ -21,10 +21,11 @@ export async function POST(req: NextRequest) {
   const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
   try {
     const body = await req.json()
-    const { handle, profileInput, forceRefresh = false } = body as {
+    const { handle, profileInput, forceRefresh = false, postingGoal } = body as {
       handle?: string
       profileInput?: ProfileInput
       forceRefresh?: boolean
+      postingGoal?: string
     }
 
     if (!forceRefresh) {
@@ -107,6 +108,13 @@ export async function POST(req: NextRequest) {
         trendsData = JSON.stringify(trendsResult.value)
       }
 
+      // Both scrapers returned nothing — account is likely private or doesn't exist
+      if (!profileData && !postsData) {
+        return NextResponse.json({
+          error: `Couldn't find @${cleanHandle}. Make sure the account is public and has at least a few posts.`,
+        }, { status: 422 })
+      }
+
       if (!profileData) profileData = handle ? `{ "handle": "${handle}" }` : '{}'
       if (!postsData) postsData = '[]'
     } else {
@@ -115,7 +123,7 @@ export async function POST(req: NextRequest) {
       try { trendsData = JSON.stringify(await fetchTrends()) } catch (e) { console.error('[Trends] fetch failed:', e) }
     }
 
-    const prompt = buildMasterScanPrompt(profileData, postsData, trendsData, tomorrowDate, schema, userContext?.masterDocSummary)
+    const prompt = buildMasterScanPrompt(profileData, postsData, trendsData, tomorrowDate, schema, userContext?.masterDocSummary, postingGoal)
 
     const completion = await groq.chat.completions.create({
       model: GROQ_MODEL,
@@ -134,6 +142,12 @@ export async function POST(req: NextRequest) {
     scanResult.handle = handle ?? profileInput?.handle ?? ''
     if (instagramProfile) scanResult.instagramProfile = instagramProfile
     if (profileInput) scanResult.profileInput = profileInput
+
+    // Flatten structured competitors into the persisted flat array
+    if (scanResult.competitors) {
+      const c = scanResult.competitors
+      scanResult.competitorSuggestions = [...(c.fromStrategy ?? []), ...(c.trendingInNiche ?? [])]
+    }
 
     await setScanResult(user.id, scanResult)
     return NextResponse.json(scanResult)

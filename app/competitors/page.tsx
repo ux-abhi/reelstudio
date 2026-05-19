@@ -20,7 +20,6 @@ interface CompetitorIdea {
   format: string
 }
 
-const NICHE_TAGS = ['content creator', 'instagram growth', 'personal brand', 'social media tips', 'creator economy', 'short form video', 'instagram reels', 'content strategy', 'audience growth', 'digital marketing', 'creator tools', 'viral content']
 
 export default function CompetitorsPage() {
   const { scan } = useScan()
@@ -62,7 +61,7 @@ export default function CompetitorsPage() {
         ? `Content pillars: ${scan.pillars.slice(0, 3).map(p => p.name).join(', ')}`
         : '',
     ].filter(Boolean)
-    return lines.length > 0 ? lines.join('\n') : 'Instagram content creator in design/UX niche'
+    return lines.length > 0 ? lines.join('\n') : 'Instagram content creator'
   }
 
   async function analyzeCompetitor() {
@@ -175,16 +174,27 @@ Return ONLY this JSON (no markdown):
       <PageHeader title="Competitors" subtitle="Paste any Instagram link or handle to analyse" />
 
       <div style={{ display: 'flex', gap: 0, minHeight: '60vh' }}>
-        {/* Left — niche tags + tracked */}
+        {/* Left — scan suggestions + tracked */}
         <div style={{ width: 200, flexShrink: 0, borderRight: '1px solid var(--border)', paddingRight: 16, display: 'flex', flexDirection: 'column' }}>
-          <p className="section-label" style={{ padding: '0 0 12px' }}>Niche</p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 1, marginBottom: 24 }}>
-            {NICHE_TAGS.slice(0, 8).map(tag => (
-              <button key={tag} className="chip-filter" style={{ fontSize: 11 }} onClick={() => setInput(tag)}>
-                {tag}
-              </button>
-            ))}
-          </div>
+          {(() => {
+            const suggestions = [
+              ...(scan?.competitors?.fromStrategy ?? []),
+              ...(scan?.competitors?.trendingInNiche ?? []),
+            ].filter(h => !competitors.some(c => c.handle.replace('@','') === h.replace('@','')))
+            if (!suggestions.length) return null
+            return (
+              <>
+                <p className="section-label" style={{ padding: '0 0 8px' }}>Suggested</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 1, marginBottom: 24 }}>
+                  {suggestions.slice(0, 8).map(handle => (
+                    <button key={handle} className="chip-filter" style={{ fontSize: 11 }} onClick={() => setInput(handle.replace('@',''))}>
+                      @{handle.replace('@','')}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )
+          })()}
 
           <p className="section-label" style={{ padding: '0 0 8px' }}>Tracked</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
