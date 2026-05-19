@@ -18,6 +18,7 @@ export default function SettingsPage() {
   const { scan, runScan, isScanning } = useScan()
   const [name, setName] = useState('')
   const [handleInput, setHandleInput] = useState('')
+  const [niche, setNiche] = useState('')
   const [userEmail, setUserEmail] = useState('')
   const [saved, setSaved] = useState(false)
   const [scanning, setScanning] = useState(false)
@@ -36,6 +37,7 @@ export default function SettingsPage() {
     try {
       setName(localStorage.getItem('ss:name') ?? '')
       setHandleInput(localStorage.getItem('ss:handle') ?? '')
+      setNiche(localStorage.getItem('ss:niche') ?? '')
     } catch {}
 
     createClient().auth.getUser().then(({ data }) => {
@@ -60,6 +62,8 @@ export default function SettingsPage() {
     try {
       localStorage.setItem('ss:name', name.trim())
       localStorage.setItem('ss:handle', handle)
+      if (niche.trim()) localStorage.setItem('ss:niche', niche.trim())
+      else localStorage.removeItem('ss:niche')
     } catch {}
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
@@ -153,6 +157,20 @@ export default function SettingsPage() {
               placeholder="@yourhandle or instagram.com/yourhandle"
               autoComplete="off"
               spellCheck={false}
+            />
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: 11, fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'var(--text-tertiary)', marginBottom: 6 }}>
+              Content niche
+              <span style={{ marginLeft: 6, fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>— used to personalise all AI outputs</span>
+            </label>
+            <input
+              className="input"
+              value={niche}
+              onChange={e => setNiche(e.target.value)}
+              placeholder="e.g. UX design, fitness coaching, personal finance..."
+              autoComplete="off"
             />
           </div>
 

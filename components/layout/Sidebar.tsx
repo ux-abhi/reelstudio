@@ -1,7 +1,6 @@
 'use client'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { useScan } from '@/components/scan/ScanContext'
 import { useTheme } from './ThemeProvider'
 import { ScanStatus } from './ScanStatus'
 import { createClient } from '@/lib/supabase/client'
@@ -35,7 +34,6 @@ const MOBILE_NAV = [
 
 export function Sidebar() {
   const pathname = usePathname()
-  const { scan } = useScan()
   const { theme, toggle } = useTheme()
   const router = useRouter()
 
@@ -67,15 +65,8 @@ export function Sidebar() {
           }}
         >
           <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', letterSpacing: '-0.01em' }}>
-            {scan?.instagramProfile?.handle ?? scan?.handle
-              ? `@${scan.instagramProfile?.handle ?? scan.handle} Studio`
-              : 'Script Studio'}
+            Script Studio
           </p>
-          {scan && (
-            <p style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2 }}>
-              {(scan.instagramProfile?.followers ?? scan.profileInput?.followers)?.toLocaleString()} followers
-            </p>
-          )}
         </div>
 
         {/* Create */}
@@ -103,99 +94,28 @@ export function Sidebar() {
         </NavSection>
 
         {/* Bottom */}
-        <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 8, paddingTop: 16 }}>
+        <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 6, paddingTop: 16 }}>
           <ScanStatus />
 
-          {/* Sign out */}
-          <button
-            onClick={handleSignOut}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              padding: '7px 8px',
-              borderRadius: 7,
-              fontSize: 12,
-              fontWeight: 400,
-              color: 'var(--text-tertiary)',
-              background: 'transparent',
-              border: '1px solid transparent',
-              cursor: 'pointer',
-              transition: 'all 140ms ease',
-              width: '100%',
-              textAlign: 'left',
-              fontFamily: 'inherit',
-            }}
-            onMouseEnter={e => {
-              const el = e.currentTarget
-              el.style.background = 'var(--red-subtle)'
-              el.style.color = 'var(--red)'
-            }}
-            onMouseLeave={e => {
-              const el = e.currentTarget
-              el.style.background = 'transparent'
-              el.style.color = 'var(--text-tertiary)'
-            }}
-          >
-            <span style={{ fontSize: 13, flexShrink: 0 }}>↩</span>
-            <span>Sign out</span>
-          </button>
-
-          {/* Theme toggle */}
-          <button
-            onClick={toggle}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              padding: '7px 8px',
-              borderRadius: 7,
-              fontSize: 12,
-              fontWeight: 400,
-              color: 'var(--text-tertiary)',
-              background: 'transparent',
-              border: '1px solid transparent',
-              cursor: 'pointer',
-              transition: 'all 140ms ease',
-              width: '100%',
-              textAlign: 'left',
-              fontFamily: 'inherit',
-            }}
-            onMouseEnter={e => {
-              const el = e.currentTarget
-              el.style.background = 'var(--bg-elevated)'
-              el.style.color = 'var(--text-primary)'
-            }}
-            onMouseLeave={e => {
-              const el = e.currentTarget
-              el.style.background = 'transparent'
-              el.style.color = 'var(--text-tertiary)'
-            }}
-          >
-            <span style={{ fontSize: 14, flexShrink: 0 }}>
-              {theme === 'dark' ? '☀' : '☽'}
-            </span>
-            <span>{theme === 'dark' ? 'Light mode' : 'Dark mode'}</span>
-          </button>
-
-          {/* Profile pill */}
-          {scan && (
-            <div
-              style={{
-                padding: '10px',
-                borderRadius: 8,
-                border: '1px solid var(--border)',
-                background: 'var(--bg-elevated)',
-              }}
+          {/* Theme + sign out row */}
+          <div style={{ display: 'flex', gap: 4 }}>
+            <button
+              onClick={toggle}
+              className="btn-ghost"
+              style={{ flex: 1, height: 30, fontSize: 14, color: 'var(--text-tertiary)' }}
+              title={theme === 'dark' ? 'Light mode' : 'Dark mode'}
             >
-              <p style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>
-                @{scan.instagramProfile?.handle ?? scan.profileInput?.handle ?? scan.handle}
-              </p>
-              <p style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2 }}>
-                {(scan.instagramProfile?.followers ?? scan.profileInput?.followers)?.toLocaleString()} followers
-              </p>
-            </div>
-          )}
+              {theme === 'dark' ? '☀' : '☽'}
+            </button>
+            <button
+              onClick={handleSignOut}
+              className="btn-ghost"
+              style={{ flex: 1, height: 30, fontSize: 12, color: 'var(--text-tertiary)' }}
+              title="Sign out"
+            >
+              ↩
+            </button>
+          </div>
         </div>
       </aside>
 

@@ -16,7 +16,7 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
     <>
       <Sidebar />
       <main className="app-main">
-        <div style={{ maxWidth: 1080, margin: '0 auto', padding: '40px 48px 56px' }}>
+        <div className="app-content">
           {children}
         </div>
       </main>

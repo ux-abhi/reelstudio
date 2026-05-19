@@ -682,6 +682,18 @@ select.input {
   }
 }
 
+/* Page content wrapper — responsive padding */
+.app-content {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 24px 16px 80px;
+}
+@media (min-width: 768px) {
+  .app-content {
+    padding: 40px 48px 56px;
+  }
+}
+
 /* Mobile bottom nav */
 .mobile-nav-bar {
   display: flex;

@@ -1,16 +1,23 @@
+'use client'
 import Link from 'next/link'
+import { useScan } from '@/components/scan/ScanContext'
 
 export function EmptyState({
   title,
   description,
-  actionLabel = 'Run scan',
-  actionHref = '/onboarding',
+  actionLabel,
+  actionHref,
 }: {
   title: string
   description?: string
   actionLabel?: string
   actionHref?: string
 }) {
+  const { hasProfile } = useScan()
+
+  const href = actionHref ?? (hasProfile ? '/settings' : '/onboarding')
+  const label = actionLabel ?? (hasProfile ? 'Re-scan account' : 'Run scan')
+
   return (
     <div
       style={{
@@ -47,8 +54,8 @@ export function EmptyState({
           {description}
         </p>
       )}
-      <Link href={actionHref} className="btn-primary">
-        {actionLabel}
+      <Link href={href} className="btn-primary">
+        {label}
       </Link>
     </div>
   )
