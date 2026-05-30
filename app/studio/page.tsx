@@ -8,6 +8,14 @@ import { TrendHint } from '@/components/studio/TrendHint'
 import { ScriptOutput } from '@/components/studio/ScriptOutput'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { parseScript } from '@/lib/scriptUtils'
+import {
+  buildInstagramScriptPrompt,
+  buildInstagramHooksPrompt,
+  buildInstagramCaptionPrompt,
+  buildInstagramSectionRegenPrompt,
+  buildInstagramVariantsPrompt,
+  instagramGroqPayload,
+} from '@/lib/prompts/contentWriter'
 
 type Language = 'English' | 'Hinglish' | 'Hindi'
 
@@ -93,50 +101,28 @@ function StudioContent() {
     setLoading(true); setError(null); setOutput(''); setSaved(false)
     const langInstruction = LANG_INSTRUCTION[language]
     try {
-      let prompt = ''
+      let payload: { prompt: string; systemPrompt: string; maxTokens: number }
+      const baseCtx = {
+        who, bio: userBio, brandContext: docContext,
+        trendingKeywords: trendingKeywords || undefined,
+        recentPostTopics: recentPosts || undefined,
+        topHooks: scan?.hooks?.slice(0, 4).map(h => h.text),
+        triggerWords: triggerWords || undefined,
+        hashtags: hashtags || undefined,
+        language: langInstruction,
+        tone, format, idea,
+      }
       if (promptType === 'full') {
-        prompt = `You are writing an Instagram script for: ${who}
-${userBio ? `Bio: ${userBio}` : ''}
-${docContext}
-LANGUAGE: ${langInstruction}
-TONE: ${tone} — never stiff, never a brand voice.
-FORMAT: ${format}
-CURRENTLY TRENDING: ${trendingKeywords || 'content creation, social media tools'}
-RECENT POSTS (don't repeat): ${recentPosts}
-VIRAL FORMULA: Result or hook shown first → practical value revealed → comment trigger or save CTA.
-RAW IDEA: ${idea}
-Write the complete script:
-[HOOK] — scroll-stopping first line, no "Hey guys", no slow intro
-[BODY] — punchy, natural pacing, every sentence earns its place
-[CTA] — comment trigger ("Comment 'X' and I'll DM you") OR save prompt
-Return script only. No explanation.`
+        payload = instagramGroqPayload(buildInstagramScriptPrompt(baseCtx), 1600)
       } else if (promptType === 'hooks') {
-        prompt = `Write 3 Instagram hooks for: ${who}
-${docContext}
-LANGUAGE: ${langInstruction}
-Trending: ${trendingKeywords || 'content creation, social media tools'}
-Topic: ${idea}
-[CURIOSITY] — creates open loop
-[RELATABLE] — calls out a pain they've felt
-[HOT-TAKE] — controversial claim
-Each hook works in 2 seconds. No greetings.`
+        payload = instagramGroqPayload(buildInstagramHooksPrompt(baseCtx), 600)
       } else {
-        const hashtagLine = hashtags
-          ? `Use these hashtags (pick 7-10): ${hashtags}`
-          : `Use 7-10 relevant hashtags for this creator's niche`
-        prompt = `Write an Instagram caption for: ${who}
-${docContext}
-LANGUAGE: ${langInstruction}
-Format: ${format}. Trending: ${trendingKeywords}. Triggers: ${triggerWords}.
-Topic: ${idea}
-Opens punchy (no greeting). Includes comment trigger if relevant. Ends with SAVE prompt or question.
-${hashtagLine}
-Return only the caption.`
+        payload = instagramGroqPayload(buildInstagramCaptionPrompt(baseCtx), 800)
       }
       const res = await fetch('/api/groq', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt, maxTokens: 1500 }),
+        body: JSON.stringify(payload),
       })
       const data = await res.json()
       if (data.error) throw new Error(data.error)
@@ -152,31 +138,14 @@ Return only the caption.`
     setSectionLoading(section)
     const parts = parseScript(output)
     const sectionText = parts[section]
-    const prompts: Record<string, string> = {
-      hook: `Rewrite ONLY the hook for this Instagram script.
-Format: ${format}, Tone: ${tone}, Language: ${LANG_INSTRUCTION[language]}
-${docContext}
-Current hook: "${sectionText}"
-Topic: ${idea}
-Write a stronger, more scroll-stopping hook. Return only the hook text — no labels, no explanation.`,
-      body: `Rewrite ONLY the body for this Instagram script.
-Format: ${format}, Tone: ${tone}, Language: ${LANG_INSTRUCTION[language]}
-${docContext}
-Current body: "${sectionText}"
-Topic: ${idea}
-Write a more engaging, better-paced body. Return only the body text — no labels, no explanation.`,
-      cta: `Rewrite ONLY the CTA for this Instagram script.
-Format: ${format}, Tone: ${tone}, Language: ${LANG_INSTRUCTION[language]}
-${docContext}
-Current CTA: "${sectionText}"
-Topic: ${idea}
-Write a stronger, more action-driving CTA. Return only the CTA text — no labels, no explanation.`,
-    }
+    const regenPrompt = buildInstagramSectionRegenPrompt(
+      section, sectionText, idea, format, tone, LANG_INSTRUCTION[language], who, docContext
+    )
     try {
       const res = await fetch('/api/groq', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: prompts[section], maxTokens: 400 }),
+        body: JSON.stringify(instagramGroqPayload(regenPrompt, 400)),
       })
       const data = await res.json()
       if (data.error) throw new Error(data.error)
@@ -200,16 +169,11 @@ Write a stronger, more action-driving CTA. Return only the CTA text — no label
     setVariantsLoading(true)
     setVariants([])
     try {
-      const prompt = `Write exactly 3 short Instagram hooks for: ${who}
-${docContext}
-Topic: ${idea}
-Format: ${format}, Tone: ${tone}
-Number them 1. 2. 3.
-Each hook is a single punchy line — no greeting, no label. Return only the 3 numbered hooks.`
+      const variantsPrompt = buildInstagramVariantsPrompt(idea, format, tone, who, docContext, trendingKeywords)
       const res = await fetch('/api/groq', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt, maxTokens: 300 }),
+        body: JSON.stringify(instagramGroqPayload(variantsPrompt, 350)),
       })
       const data = await res.json()
       if (data.error) throw new Error(data.error)
