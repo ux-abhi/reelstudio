@@ -137,6 +137,37 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {/* Life Log widget */}
+      <section>
+        <div
+          onClick={() => router.push('/log')}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 16,
+            padding: '14px 20px',
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border)',
+            borderRadius: 10,
+            cursor: 'pointer',
+            transition: 'border-color 140ms ease',
+          }}
+          onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--accent-border)')}
+          onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--border)')}
+        >
+          <div>
+            <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 2 }}>
+              What happened today?
+            </p>
+            <p style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>
+              Turn real events into Instagram scripts + LinkedIn posts
+            </p>
+          </div>
+          <span style={{ fontSize: 18, color: 'var(--accent)', flexShrink: 0 }}>→</span>
+        </div>
+      </section>
+
       {/* Trend Pulse strip */}
       {allTrends.length > 0 && (
         <section>

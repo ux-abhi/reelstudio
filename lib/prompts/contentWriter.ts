@@ -273,6 +273,46 @@ Return ONLY the image prompt. No explanation. No meta-commentary.`
 }
 
 
+// ─── Life Log → Instagram prompt ─────────────────────────────────────────────
+
+export interface LifeLogInstagramContext {
+  rawInput: string
+  timeframe: 'day' | 'week'
+  who: string
+  brandContext?: string
+  niche?: string
+  trendingKeywords?: string
+}
+
+export function buildLifeLogInstagramPrompt(ctx: LifeLogInstagramContext): string {
+  const { rawInput, timeframe, who, brandContext, niche, trendingKeywords } = ctx
+  const timeNote = timeframe === 'week'
+    ? 'This covers a full week — extract the 1 most scroll-worthy moment or insight from it.'
+    : 'This is from today — find the one thing worth turning into content.'
+
+  return `Creator: ${who}${niche ? ` | Niche: ${niche}` : ''}
+${brandContext ? `Brand: ${brandContext.slice(0, 120)}\n` : ''}${trendingKeywords ? `Trending: ${trendingKeywords}\n` : ''}
+WHAT HAPPENED (raw, real life):
+${rawInput}
+
+${timeNote}
+
+Generate ${timeframe === 'week' ? '3' : '1'} Instagram post concept(s) based on this. For each, pick the best format (Reel/Carousel/Talking Head).
+
+Return ONLY this JSON array (no markdown):
+[
+  {
+    "format": "Reel | Carousel | Talking Head",
+    "title": "specific post title",
+    "hook": "scroll-stopping first line — no greeting, no 'I', lands in <3s",
+    "body": "2-4 sentence script outline or carousel slide plan",
+    "cta": "specific comment trigger or save prompt",
+    "caption": "first 2 lines of caption (before see more)",
+    "basedOn": "which part of the input this came from (1 sentence)"
+  }
+]`
+}
+
 // ─── Groq call helper ─────────────────────────────────────────────────────────
 // Convenience wrapper: pass this to /api/groq as { prompt, systemPrompt, maxTokens }
 

@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase/client'
 // ── Nav structure ────────────────────────────────────────────────────────────
 
 const CREATE_NAV = [
+  { href: '/log',      label: 'Life Log',         icon: 'log'       },
   { href: '/studio',   label: 'Script Studio',    icon: 'studio'    },
   { href: '/ideas',    label: 'Content Library',  icon: 'library'   },
   { href: '/triggers', label: 'Trigger Words',    icon: 'triggers'  },
@@ -39,6 +40,14 @@ const MOBILE_NAV = [
 function Icon({ name, size = 13 }: { name: string; size?: number }) {
   const s = { width: size, height: size, display: 'block', flexShrink: 0 as const }
   switch (name) {
+    case 'log':
+      return (
+        <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" style={s}>
+          <path d="M2 4h10M2 7h7M2 10h5" />
+          <circle cx="11.5" cy="10" r="1.8" />
+          <path d="M11.5 9v1.5" strokeWidth="1.1" />
+        </svg>
+      )
     case 'studio':
       return (
         <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" style={s}>
