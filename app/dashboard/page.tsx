@@ -9,15 +9,25 @@ import { PillarTag } from '@/components/shared/PillarTag'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { PriorityAction, TrendKeyword } from '@/types/scan'
 
+function getGreeting(): string {
+  const hour = new Date().getHours()
+  if (hour < 12) return 'Good morning'
+  if (hour < 17) return 'Good afternoon'
+  return 'Good evening'
+}
+
 export default function DashboardPage() {
   const { scan, isScanning, isInitialLoad } = useScan()
   const router = useRouter()
   const [checked, setChecked] = useState<Record<string, boolean>>({})
+  const [name, setName] = useState('')
 
   useEffect(() => {
     try {
       const stored = localStorage.getItem('ss:actions:checked')
       if (stored) setChecked(JSON.parse(stored))
+      const n = localStorage.getItem('ss:name')
+      if (n) setName(n)
     } catch {}
   }, [])
 
@@ -30,7 +40,7 @@ export default function DashboardPage() {
   if (isScanning || isInitialLoad) {
     return (
       <div className="page-enter" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-        <PageHeader title="Dashboard" subtitle="Your AI-generated Instagram command centre" />
+        <PageHeader label="Overview" title="Dashboard" subtitle="Your AI-generated Instagram command centre" />
         <SkeletonCard lines={2} />
         <div className="stats-row">
           <SkeletonCard lines={2} />
@@ -57,10 +67,75 @@ export default function DashboardPage() {
   const top3Actions = scan.priorityActions?.slice(0, 3) ?? []
   const allTrends = scan.trendPulse ?? []
   const breakoutTrends = allTrends.filter(t => t.breakout).slice(0, 3)
+  const handle = scan.instagramProfile?.handle ?? scan.handle ?? null
+  const niche = typeof window !== 'undefined' ? (localStorage.getItem('ss:niche') ?? '') : ''
 
   return (
     <div className="page-enter" style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
-      <PageHeader title="Dashboard" subtitle="Your AI-generated Instagram command centre" />
+
+      {/* ── Greeting hero ── */}
+      <div style={{
+        background: 'var(--bg-card)',
+        border: '1px solid var(--border)',
+        borderRadius: 12,
+        padding: '20px 24px',
+        position: 'relative',
+        overflow: 'hidden',
+      }}>
+        {/* accent glow stripe */}
+        <div style={{
+          position: 'absolute',
+          left: 0, top: 0, bottom: 0,
+          width: 3,
+          background: 'var(--accent)',
+          borderRadius: '3px 0 0 3px',
+        }} />
+        <div style={{ paddingLeft: 4 }}>
+          <p style={{
+            fontSize: 11,
+            fontWeight: 600,
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+            color: 'var(--accent)',
+            marginBottom: 6,
+          }}>
+            Overview
+          </p>
+          <h1 style={{
+            fontSize: 22,
+            fontWeight: 700,
+            color: 'var(--text-primary)',
+            letterSpacing: '-0.03em',
+            lineHeight: 1.2,
+            marginBottom: 4,
+          }}>
+            {getGreeting()}{name ? `, ${name}` : ''} —
+            {' '}<span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>here&apos;s your strategy for today</span>
+          </h1>
+          <div style={{ display: 'flex', gap: 16, marginTop: 10, flexWrap: 'wrap' }}>
+            {handle && (
+              <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>
+                <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>@{handle}</span>
+              </span>
+            )}
+            {niche && (
+              <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>
+                {niche}
+              </span>
+            )}
+            {scan.accountHealth?.engagementRate && (
+              <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>
+                {String(scan.accountHealth.engagementRate)} engagement
+              </span>
+            )}
+            {scan.posts && scan.posts.length > 0 && (
+              <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>
+                {scan.posts.length} posts analysed
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
 
       {/* Trend Pulse strip */}
       {allTrends.length > 0 && (
@@ -91,6 +166,18 @@ export default function DashboardPage() {
                 <TrendBadge score={t.interest} direction={t.direction} breakout={t.breakout} />
               </button>
             ))}
+          </div>
+        </section>
+      )}
+
+      {/* Account health */}
+      {scan.accountHealth && (
+        <section>
+          <p className="section-label" style={{ marginBottom: 12 }}>Account Health</p>
+          <div className="stats-row">
+            <StatCard label="Engagement Rate" value={String(scan.accountHealth.engagementRate)} sub={scan.accountHealth.engagementVerdict} />
+            <StatCard label="Posting Cadence" value={scan.accountHealth.postingCadence} sub="Consistency is the #1 growth lever" />
+            <StatCard label="Top Format" value={scan.accountHealth.topPerformingFormat} sub={`Weakest: ${scan.accountHealth.weakestFormat}`} />
           </div>
         </section>
       )}
@@ -137,18 +224,6 @@ export default function DashboardPage() {
         </section>
       )}
 
-      {/* Account health */}
-      {scan.accountHealth && (
-        <section>
-          <p className="section-label" style={{ marginBottom: 12 }}>Account Health</p>
-          <div className="stats-row">
-            <StatCard label="Engagement Rate" value={String(scan.accountHealth.engagementRate)} sub={scan.accountHealth.engagementVerdict} />
-            <StatCard label="Posting Cadence" value={scan.accountHealth.postingCadence} sub="Consistency is the #1 growth lever" />
-            <StatCard label="Top Format" value={scan.accountHealth.topPerformingFormat} sub={`Weakest: ${scan.accountHealth.weakestFormat}`} />
-          </div>
-        </section>
-      )}
-
       {/* This week's actions */}
       {top3Actions.length > 0 && (
         <section>
@@ -168,7 +243,6 @@ export default function DashboardPage() {
                   gap: 12,
                   padding: '12px 16px',
                   borderBottom: i < top3Actions.length - 1 ? '1px solid var(--border-subtle)' : 'none',
-                  transition: 'background 100ms ease',
                 }}
               >
                 <button

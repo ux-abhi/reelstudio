@@ -39,6 +39,7 @@ export default function HooksPage() {
   return (
     <div className="page-enter" style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
       <PageHeader
+        label="Create"
         title="Hooks Library"
         subtitle={scan ? 'Generated from your account data' : 'Fallback hooks — run scan for personalised hooks'}
       />

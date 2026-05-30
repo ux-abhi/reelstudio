@@ -69,7 +69,7 @@ ${masterDoc
 - Every content idea must reference SPECIFIC trending keywords from the trends data
 - Be specific: name exact topics based on the creator's actual content history
 - The creator's posting goal is ${goal} — generate exactly ${calendarCount} calendar entries spread across the 30-day window, evenly spaced to match this cadence
-- Generate exactly 20 ideas, 20 hooks (5 per type), 6 trigger words, 5 pillars, 7 priority actions
+- Generate exactly 15 ideas, 12 hooks (3 per type), 6 trigger words, 5 pillars, 7 priority actions
 - All ideas ranked by trendScore (0–100) based on trends data
 - For posts analysis: tier 1 = top 20% by (likes + comments), tier 2 = middle 60%, tier 3 = bottom 20%
 - For reels/videos: factor in videoViewCount when determining tier (views matter more than likes for reach)

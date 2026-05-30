@@ -41,7 +41,7 @@ export default function PillarsPage() {
 
   return (
     <div className="page-enter" style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
-      <PageHeader title="Content Pillars" subtitle="Inferred by Groq from your actual post history" />
+      <PageHeader label="Strategy" title="Content Pillars" subtitle="Inferred by Groq from your actual post history" />
 
       {/* Pillars */}
       <section>

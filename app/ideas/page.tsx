@@ -144,7 +144,7 @@ export default function IdeasPage() {
   return (
     <div className="page-enter" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
-        <PageHeader title="Content Library" subtitle="All your scripts, hooks, and ideas in one place" />
+        <PageHeader label="Library" title="Content Library" subtitle="All your scripts, hooks, and ideas in one place" />
         <div style={{ paddingTop: 4 }}>
           <NicheSelector niche={niche} onChange={setNiche} />
         </div>

@@ -27,7 +27,7 @@ export default function AuditPage() {
 
   return (
     <div className="page-enter" style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
-      <PageHeader title="Account Audit" subtitle="Your real account health, analysed by Groq" />
+      <PageHeader label="Analysis" title="Account Audit" subtitle="Your real account health, analysed by Groq" />
 
       {/* Health metrics */}
       {accountHealth && (

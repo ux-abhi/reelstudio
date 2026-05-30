@@ -67,11 +67,15 @@ export function ScanProvider({ children }: { children: ReactNode }) {
       .then(data => {
         if (data.error) {
           console.warn('[ScanContext] initial load error:', data.error)
+          setScanError(data.error)
         } else {
           setScan(data)
         }
       })
-      .catch(e => console.warn('[ScanContext] initial load failed:', e))
+      .catch(e => {
+        console.warn('[ScanContext] initial load failed:', e)
+        setScanError('Failed to load scan data')
+      })
       .finally(() => setIsInitialLoad(false))
   }, [])
 

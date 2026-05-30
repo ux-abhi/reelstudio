@@ -75,6 +75,7 @@ export default function TriggersPage() {
   return (
     <div className="page-enter" style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
       <PageHeader
+        label="Engagement"
         title="Trigger Words"
         subtitle={isFromScan ? 'Comment triggers generated from your account scan' : 'Proven comment-trigger formats — run a scan for personalised triggers'}
       />

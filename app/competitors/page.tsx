@@ -42,7 +42,7 @@ export default function CompetitorsPage() {
         setCompetitors(list)
         if (list.length > 0) setSelected(list[0])
       }
-    } catch {}
+    } catch { }
   }, [])
 
   function saveCompetitors(list: CompetitorAnalysis[]) {
@@ -171,7 +171,7 @@ Return ONLY this JSON (no markdown):
 
   return (
     <div className="page-enter" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-      <PageHeader title="Competitors" subtitle="Paste any Instagram link or handle to analyse" />
+      <PageHeader label="Research" title="Competitors" subtitle="Paste any Instagram link or handle to analyse" />
 
       <div style={{ display: 'flex', gap: 0, minHeight: '60vh' }}>
         {/* Left — scan suggestions + tracked */}
@@ -180,15 +180,15 @@ Return ONLY this JSON (no markdown):
             const suggestions = [
               ...(scan?.competitors?.fromStrategy ?? []),
               ...(scan?.competitors?.trendingInNiche ?? []),
-            ].filter(h => !competitors.some(c => c.handle.replace('@','') === h.replace('@','')))
+            ].filter(h => !competitors.some(c => c.handle.replace('@', '') === h.replace('@', '')))
             if (!suggestions.length) return null
             return (
               <>
                 <p className="section-label" style={{ padding: '0 0 8px' }}>Suggested</p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 1, marginBottom: 24 }}>
                   {suggestions.slice(0, 8).map(handle => (
-                    <button key={handle} className="chip-filter" style={{ fontSize: 11 }} onClick={() => setInput(handle.replace('@',''))}>
-                      @{handle.replace('@','')}
+                    <button key={handle} className="chip-filter" style={{ fontSize: 11 }} onClick={() => setInput(handle.replace('@', ''))}>
+                      @{handle.replace('@', '')}
                     </button>
                   ))}
                 </div>

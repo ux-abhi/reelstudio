@@ -85,10 +85,16 @@ export async function POST(req: NextRequest) {
 
       if (postsRun.status === 'fulfilled') {
         const { items } = await client.dataset(postsRun.value.defaultDatasetId).listItems()
-        const rawPosts = items.map((p: Record<string, unknown>) => ({
+        // Sort by engagement, keep top 20 to stay within Groq token budget
+        const sorted = [...items].sort((a, b) => {
+          const engA = ((a.likesCount as number) ?? 0) + ((a.commentsCount as number) ?? 0)
+          const engB = ((b.likesCount as number) ?? 0) + ((b.commentsCount as number) ?? 0)
+          return engB - engA
+        })
+        const rawPosts = sorted.slice(0, 20).map((p: Record<string, unknown>) => ({
           id: (p.id as string) ?? (p.shortCode as string) ?? '',
           timestamp: p.timestamp,
-          caption: (p.caption as string)?.slice(0, 500) ?? '',
+          caption: (p.caption as string)?.slice(0, 200) ?? '',
           likesCount: p.likesCount,
           commentsCount: p.commentsCount,
           type: p.type,
@@ -98,8 +104,8 @@ export async function POST(req: NextRequest) {
           videoPlayCount: (p.videoPlayCount as number) ?? undefined,
           location: (p.locationName as string) ?? (p.location as string) ?? undefined,
           topComments: (p.latestComments as Array<{text: string; ownerUsername: string; likesCount: number}>)
-            ?.slice(0, 3)
-            .map(c => `"${c.text}" — @${c.ownerUsername} (${c.likesCount ?? 0} likes)`) ?? [],
+            ?.slice(0, 2)
+            .map(c => `"${c.text.slice(0, 100)}" — @${c.ownerUsername}`) ?? [],
         }))
         postsData = JSON.stringify(rawPosts)
         await setApifyCache(`apify:posts:${cleanHandle}`, items, APIFY_TTL)
@@ -129,10 +135,14 @@ export async function POST(req: NextRequest) {
     const completion = await groq.chat.completions.create({
       model: GROQ_MODEL,
       messages: [{ role: 'user', content: prompt }],
-      max_tokens: 8000,
+      max_tokens: 16000,
     })
 
-    const raw = completion.choices[0]?.message?.content ?? '{}'
+    const choice = completion.choices[0]
+    if (choice?.finish_reason === 'length') {
+      throw new Error('Groq output was truncated — try again or reduce account complexity')
+    }
+    const raw = choice?.message?.content ?? '{}'
     const scanResult = parseGroqJson<ScanResult>(raw)
 
     if (!validateScanResult(scanResult)) {

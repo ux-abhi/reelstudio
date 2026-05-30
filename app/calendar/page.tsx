@@ -108,7 +108,7 @@ export default function CalendarPage() {
   return (
     <div className="page-enter" style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-        <PageHeader title="30-Day Calendar" subtitle="Real dates. AI-generated hooks. Click any row to edit." />
+        <PageHeader label="Schedule" title="30-Day Calendar" subtitle="Real dates. AI-generated hooks. Click any row to edit." />
         <span className="badge" style={{ background: 'var(--accent-subtle)', color: 'var(--accent-hover)', borderColor: 'var(--accent-border)', flexShrink: 0, marginTop: 4 }}>
           Target: {postingGoal}
         </span>

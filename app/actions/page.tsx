@@ -54,6 +54,7 @@ export default function ActionsPage() {
   return (
     <div className="page-enter" style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
       <PageHeader
+        label="Actions"
         title="Priority Actions"
         subtitle={`${doneCount}/${sorted.length} completed`}
       />
