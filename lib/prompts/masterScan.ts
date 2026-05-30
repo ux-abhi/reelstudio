@@ -1,10 +1,10 @@
 import type { MasterDocSummary } from '@/lib/db'
 
 const CALENDAR_COUNT: Record<string, string> = {
-  '1×/week': '4–5',
-  '3×/week': '12–14',
-  '5×/week': '20–22',
-  'Daily':   '28–30',
+  '1×/week': '4',
+  '3×/week': '8',
+  '5×/week': '10',
+  'Daily':   '12',
 }
 
 export function buildMasterScanPrompt(
@@ -69,14 +69,14 @@ ${masterDoc
 - Every content idea must reference SPECIFIC trending keywords from the trends data
 - Be specific: name exact topics based on the creator's actual content history
 - The creator's posting goal is ${goal} — generate exactly ${calendarCount} calendar entries spread across the 30-day window, evenly spaced to match this cadence
-- Generate exactly 15 ideas, 12 hooks (3 per type), 6 trigger words, 5 pillars, 7 priority actions
+- Generate exactly 10 ideas, 8 hooks (2 per type), 4 trigger words, 5 pillars, 5 priority actions
 - All ideas ranked by trendScore (0–100) based on trends data
 - For posts analysis: tier 1 = top 20% by (likes + comments), tier 2 = middle 60%, tier 3 = bottom 20%
 - For reels/videos: factor in videoViewCount when determining tier (views matter more than likes for reach)
 - Detect post format from type field: video→Reel, carousel/Sidecar→Carousel, image→Image
-- hashtagClusters.primary: 8–10 core niche hashtags (100K–1M posts) specific to this creator's content${niche ? ` — must reflect the "${niche}" niche` : ''}
-- hashtagClusters.secondary: 8–10 broader topic hashtags (1M–5M posts) for reach
-- hashtagClusters.niche: 8–10 long-tail micro hashtags (<100K posts) for targeted reach${niche ? ` — hyper-specific to "${niche}"` : ''}
+- hashtagClusters.primary: 5 core niche hashtags (100K–1M posts)${niche ? ` for "${niche}"` : ''}
+- hashtagClusters.secondary: 5 broader reach hashtags (1M–5M posts)
+- hashtagClusters.niche: 5 micro hashtags (<100K posts)${niche ? ` hyper-specific to "${niche}"` : ''}
 - Return ONLY valid JSON matching this schema. No explanation. No markdown.
 
 SCHEMA:
