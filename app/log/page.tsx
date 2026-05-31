@@ -39,6 +39,8 @@ export default function LogPage() {
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<LogResult | null>(null)
   const [copied, setCopied] = useState<string | null>(null)
+  const [saved, setSaved] = useState<Record<string, boolean>>({})
+  const [saving, setSaving] = useState<string | null>(null)
   const [expandedImg, setExpandedImg] = useState<number | null>(null)
 
   const [who, setWho] = useState('')
@@ -95,6 +97,25 @@ export default function LogPage() {
       setCopied(id)
       setTimeout(() => setCopied(null), 2000)
     })
+  }
+
+  async function saveScript(id: string, payload: {
+    format: string; tone: string; output: string; hookLine: string
+  }) {
+    if (saved[id] || saving === id) return
+    setSaving(id)
+    try {
+      await fetch('/api/scripts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...payload, input: input.slice(0, 300), pillar: '' }),
+      })
+      setSaved(s => ({ ...s, [id]: true }))
+    } catch {
+      // silent — user can retry
+    } finally {
+      setSaving(null)
+    }
   }
 
   const instagramPosts = result?.instagram ?? []
@@ -253,7 +274,15 @@ export default function LogPage() {
                   post={post}
                   onWriteThis={() => router.push(`/studio?idea=${encodeURIComponent(post.hook)}`)}
                   onCopy={() => copyText(`[HOOK]\n${post.hook}\n\n[BODY]\n${post.body}\n\n[CTA]\n${post.cta}`, `ig-${i}`)}
+                  onSave={() => saveScript(`ig-${i}`, {
+                    format: post.format,
+                    tone: 'Casual',
+                    output: `[HOOK]\n${post.hook}\n\n[BODY]\n${post.body}\n\n[CTA]\n${post.cta}`,
+                    hookLine: post.hook,
+                  })}
                   copied={copied === `ig-${i}`}
+                  saved={saved[`ig-${i}`] ?? false}
+                  saving={saving === `ig-${i}`}
                 />
               ))}
             </div>
@@ -273,8 +302,16 @@ export default function LogPage() {
                   onToggleImg={() => setExpandedImg(expandedImg === i ? null : i)}
                   onCopyPost={() => copyText(`${post.hook}\n\n${post.body}\n\n${post.cta}\n\n${post.hashtags.join(' ')}`, `li-${i}`)}
                   onCopyImg={() => copyText(post.imagePrompt.prompt, `li-img-${i}`)}
+                  onSave={() => saveScript(`li-${i}`, {
+                    format: 'LinkedIn Post',
+                    tone: 'Professional',
+                    output: `${post.hook}\n\n${post.body}\n\n${post.cta}\n\n${post.hashtags.join(' ')}`,
+                    hookLine: post.hook,
+                  })}
                   copiedPost={copied === `li-${i}`}
                   copiedImg={copied === `li-img-${i}`}
+                  saved={saved[`li-${i}`] ?? false}
+                  saving={saving === `li-${i}`}
                 />
               ))}
             </div>
@@ -287,11 +324,14 @@ export default function LogPage() {
 
 // ── Instagram card ─────────────────────────────────────────────────────────────
 
-function InstagramCard({ post, onWriteThis, onCopy, copied }: {
+function InstagramCard({ post, onWriteThis, onCopy, onSave, copied, saved, saving }: {
   post: InstagramLogPost
   onWriteThis: () => void
   onCopy: () => void
+  onSave: () => void
   copied: boolean
+  saved: boolean
+  saving: boolean
 }) {
   const fmtColor = FORMAT_COLOR[post.format] ?? 'var(--text-tertiary)'
   return (
@@ -332,6 +372,14 @@ function InstagramCard({ post, onWriteThis, onCopy, copied }: {
         <button onClick={onCopy} className="btn-secondary" style={{ fontSize: 12, padding: '6px 14px' }}>
           {copied ? 'Copied ✓' : 'Copy script'}
         </button>
+        <button
+          onClick={onSave}
+          disabled={saved || saving}
+          className="btn-secondary"
+          style={{ fontSize: 12, padding: '6px 14px', marginLeft: 'auto', color: saved ? 'var(--green)' : undefined, borderColor: saved ? 'rgba(48,164,108,0.3)' : undefined }}
+        >
+          {saving ? 'Saving...' : saved ? 'Saved ✓' : 'Save'}
+        </button>
       </div>
     </div>
   )
@@ -339,14 +387,17 @@ function InstagramCard({ post, onWriteThis, onCopy, copied }: {
 
 // ── LinkedIn card ──────────────────────────────────────────────────────────────
 
-function LinkedInCard({ post, imgExpanded, onToggleImg, onCopyPost, onCopyImg, copiedPost, copiedImg }: {
+function LinkedInCard({ post, imgExpanded, onToggleImg, onCopyPost, onCopyImg, onSave, copiedPost, copiedImg, saved, saving }: {
   post: LinkedInLogPost
   imgExpanded: boolean
   onToggleImg: () => void
   onCopyPost: () => void
   onCopyImg: () => void
+  onSave: () => void
   copiedPost: boolean
   copiedImg: boolean
+  saved: boolean
+  saving: boolean
 }) {
   const typeColor = LI_TYPE_COLOR[post.type] ?? 'var(--text-tertiary)'
   return (
@@ -435,6 +486,14 @@ function LinkedInCard({ post, imgExpanded, onToggleImg, onCopyPost, onCopyImg, c
       <div style={{ display: 'flex', gap: 8 }}>
         <button onClick={onCopyPost} className="btn-primary" style={{ fontSize: 12, padding: '6px 14px' }}>
           {copiedPost ? 'Copied ✓' : 'Copy post'}
+        </button>
+        <button
+          onClick={onSave}
+          disabled={saved || saving}
+          className="btn-secondary"
+          style={{ fontSize: 12, padding: '6px 14px', color: saved ? 'var(--green)' : undefined, borderColor: saved ? 'rgba(48,164,108,0.3)' : undefined }}
+        >
+          {saving ? 'Saving...' : saved ? 'Saved ✓' : 'Save to board'}
         </button>
       </div>
     </div>
