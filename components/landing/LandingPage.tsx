@@ -233,7 +233,7 @@ export function LandingPage() {
           textTransform: 'uppercase',
           color: C.black,
         }}>
-          ReelStudio
+          Draftr
         </span>
 
         {/* Nav right */}
@@ -304,7 +304,7 @@ export function LandingPage() {
               alignItems: 'end',
             }}>
               <p style={{ ...T.body, fontSize: '1.0625rem', margin: 0 }}>
-                ReelStudio scans your actual Instagram account, analyses what&apos;s working,
+                Draftr scans your actual Instagram account, analyses what&apos;s working,
                 and turns real things that happened to you this week into scripts for
                 Instagram Reels and LinkedIn posts — in your voice, not AI voice.
               </p>
@@ -345,11 +345,11 @@ export function LandingPage() {
               <FeatureCard
                 index="02"
                 title="Life Log"
-                desc="Dump what happened today or this week in plain text. ReelStudio extracts the most content-worthy moments and generates Instagram Reels scripts and LinkedIn posts from your real experiences — not made-up AI ideas."
+                desc="Dump what happened today or this week in plain text. Draftr extracts the most content-worthy moments and generates Instagram Reels scripts and LinkedIn posts from your real experiences — not made-up AI ideas."
               />
               <FeatureCard
                 index="03"
-                title="Script Studio"
+                title="Studio"
                 desc="Write, rewrite, and hook any content idea. Format selector (Reel / Carousel / Talking Head), tone controls, section-level regen. Every output is calibrated to your content pillars and proven formats."
               />
             </div>
@@ -431,7 +431,7 @@ export function LandingPage() {
           <SidebarLabel>Everything</SidebarLabel>
           <Content>
             <h2 style={{ ...T.section, color: C.black, marginBottom: '2.5rem' }}>
-              INSIDE<br />REELSTUDIO.
+              INSIDE<br />DRAFTR.
             </h2>
             <div style={{
               display: 'grid',
@@ -506,7 +506,7 @@ export function LandingPage() {
         alignItems: 'center',
         justifyContent: 'space-between',
       }}>
-        <span style={{ ...T.label, color: C.muted }}>ReelStudio — by @uxabhi_</span>
+        <span style={{ ...T.label, color: C.muted }}>Draftr — by @uxabhi_</span>
         <div style={{ display: 'flex', gap: '2rem' }}>
           <Link href="/login" style={{ ...T.label, color: C.muted, textDecoration: 'none' }}>Sign in</Link>
           <Link href="/onboarding" style={{ ...T.label, color: C.black, textDecoration: 'none' }}>Get Started</Link>

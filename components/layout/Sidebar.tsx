@@ -9,7 +9,7 @@ import { createClient } from '@/lib/supabase/client'
 
 const CREATE_NAV = [
   { href: '/log',      label: 'Life Log',         icon: 'log'       },
-  { href: '/studio',   label: 'Script Studio',    icon: 'studio'    },
+  { href: '/studio',   label: 'Studio',           icon: 'studio'    },
   { href: '/ideas',    label: 'Content Library',  icon: 'library'   },
   { href: '/triggers', label: 'Trigger Words',    icon: 'triggers'  },
 ]
@@ -259,8 +259,8 @@ export function Sidebar() {
             </svg>
           </div>
           <div>
-            <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', letterSpacing: '-0.01em', lineHeight: 1.2 }}>
-              Script Studio
+            <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.01em', lineHeight: 1.2 }}>
+              Draftr
             </p>
             <p style={{ fontSize: 10, color: 'var(--text-tertiary)', letterSpacing: '0.01em', lineHeight: 1 }}>
               by @uxabhi_

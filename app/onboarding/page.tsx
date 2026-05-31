@@ -87,7 +87,7 @@ export default function OnboardingPage() {
           {/* Header */}
           <div style={{ textAlign: 'center' }}>
             <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 12 }}>
-              Script Studio
+              Draftr
             </p>
             <h1 style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.04em', lineHeight: 1.2, marginBottom: 8 }}>
               {step === 1 ? "Let's set up your workspace" : step === 2 ? `Welcome, ${name}` : 'One last thing'}

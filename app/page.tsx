@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import { LandingPage } from '@/components/landing/LandingPage'
 
 export const metadata = {
-  title: 'ReelStudio — Real Life. Real Content.',
+  title: 'Draftr — Real Life. Real Drafts.',
   description: 'Turn your real work into Instagram scripts and LinkedIn posts. Built on your actual account data, not generic AI templates.',
 }
 

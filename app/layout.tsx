@@ -12,8 +12,8 @@ const geist = Geist({
 })
 
 export const metadata: Metadata = {
-  title: 'ReelStudio',
-  description: 'Turn real life into Instagram and LinkedIn content — built on your actual account data.',
+  title: 'Draftr',
+  description: 'Turn real life into drafts — Instagram scripts and LinkedIn posts, built on your actual account data.',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

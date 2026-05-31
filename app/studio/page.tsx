@@ -224,7 +224,7 @@ function StudioContent() {
 
   return (
     <div className="page-enter" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-      <PageHeader label="Create" title="Script Studio" subtitle="Write, rewrite, and hook any content idea" />
+      <PageHeader label="Create" title="Studio" subtitle="Write, rewrite, and hook any content idea" />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
         {/* Left — Input */}

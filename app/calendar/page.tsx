@@ -292,7 +292,7 @@ export default function CalendarPage() {
                 <p style={{ fontSize: 13, color: 'var(--text-tertiary)', padding: 16, textAlign: 'center' }}>Loading scripts...</p>
               )}
               {!scriptsLoading && scripts.length === 0 && (
-                <p style={{ fontSize: 13, color: 'var(--text-tertiary)', padding: 16, textAlign: 'center' }}>No saved scripts yet. Write one in Script Studio first.</p>
+                <p style={{ fontSize: 13, color: 'var(--text-tertiary)', padding: 16, textAlign: 'center' }}>No saved scripts yet. Write one in Studio first.</p>
               )}
               {scripts.map(s => (
                 <button
