@@ -11,7 +11,9 @@ const CREATE_NAV = [
   { href: '/log',      label: 'Life Log',         icon: 'log'       },
   { href: '/studio',   label: 'Studio',           icon: 'studio'    },
   { href: '/ideas',    label: 'Content Library',  icon: 'library'   },
+  { href: '/hooks',    label: 'Hooks Library',    icon: 'hookicon'  },
   { href: '/triggers', label: 'Trigger Words',    icon: 'triggers'  },
+  { href: '/saved',    label: 'Save Board',       icon: 'saved'     },
 ]
 
 const STRATEGY_NAV = [
@@ -28,11 +30,11 @@ const ACCOUNT_NAV = [
 ]
 
 const MOBILE_NAV = [
+  { href: '/log',       label: 'Log',       icon: 'log'       },
   { href: '/studio',    label: 'Studio',    icon: 'studio'    },
-  { href: '/ideas',     label: 'Library',   icon: 'library'   },
   { href: '/dashboard', label: 'Home',      icon: 'dashboard' },
+  { href: '/ideas',     label: 'Library',   icon: 'library'   },
   { href: '/calendar',  label: 'Calendar',  icon: 'calendar'  },
-  { href: '/actions',   label: 'Actions',   icon: 'actions'   },
 ]
 
 // ── Icon component ────────────────────────────────────────────────────────────
@@ -66,6 +68,19 @@ function Icon({ name, size = 13 }: { name: string; size?: number }) {
       return (
         <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" style={s}>
           <path d="M8 1.5L4.5 7.5H7L5.5 12.5L11 5.5H8L9.5 1.5H8z" />
+        </svg>
+      )
+    case 'hookicon':
+      return (
+        <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" style={s}>
+          <path d="M2 3h10M2 6h7M2 9h4" />
+          <path d="M9.5 8l2 2-2 2" />
+        </svg>
+      )
+    case 'saved':
+      return (
+        <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" style={s}>
+          <path d="M3 2h8a1 1 0 011 1v9l-4.5-2L3 12V3a1 1 0 011-1z" />
         </svg>
       )
     case 'dashboard':

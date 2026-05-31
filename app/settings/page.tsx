@@ -315,11 +315,11 @@ export default function SettingsPage() {
         <p className="section-label" style={{ marginBottom: 16 }}>Account</p>
         <div className="card" style={{ maxWidth: 480 }}>
           <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 4 }}>Sign out</p>
-          <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 16 }}>You&apos;ll be redirected to the login page.</p>
+          <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 16 }}>You&apos;ll be returned to the Draftr home page.</p>
           <button
             onClick={async () => {
               await createClient().auth.signOut()
-              router.push('/login')
+              router.push('/')
             }}
             className="btn-secondary"
             style={{ borderColor: 'rgba(229,72,77,0.25)', color: 'var(--red)' }}
