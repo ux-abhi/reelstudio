@@ -113,6 +113,12 @@ export function ScanProvider({ children }: { children: ReactNode }) {
         body = { profileInput: handleOrProfile, forceRefresh: force, postingGoal, niche }
       }
 
+      // Clear calendar edits on force-rescan so stale overrides don't mask new AI content.
+      // Script attachments (ss:calendar:scripts) are kept — user explicitly scheduled those.
+      if (force) {
+        try { localStorage.removeItem('ss:calendar:edits') } catch {}
+      }
+
       setHasProfile(true)
 
       const res = await fetch('/api/scan', {
