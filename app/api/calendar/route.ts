@@ -2,6 +2,43 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getUser } from '@/lib/supabase/server'
 import { createClient } from '@/lib/supabase/server'
 
+export async function GET() {
+  const user = await getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const supabase = await createClient()
+
+  const { data: scan } = await supabase
+    .from('scans')
+    .select('id')
+    .eq('user_id', user.id)
+    .gt('expires_at', new Date().toISOString())
+    .order('scanned_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (!scan) return NextResponse.json([])
+
+  const { data: days } = await supabase
+    .from('content_calendar')
+    .select('day_number, date, day_name, post_type, title, posting_time, pillar')
+    .eq('scan_id', scan.id)
+    .eq('user_id', user.id)
+    .order('day_number')
+
+  return NextResponse.json(
+    (days ?? []).map(d => ({
+      dayNumber:   d.day_number,
+      date:        d.date,
+      dayName:     d.day_name,
+      postType:    d.post_type,
+      title:       d.title,
+      postingTime: d.posting_time,
+      pillar:      d.pillar,
+    }))
+  )
+}
+
 export async function PATCH(req: NextRequest) {
   const user = await getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

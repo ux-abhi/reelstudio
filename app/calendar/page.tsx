@@ -96,13 +96,11 @@ export default function CalendarPage() {
 
   async function openPicker(dayNumber: number) {
     setPickerDay(dayNumber)
-    if (scripts.length === 0) {
-      setScriptsLoading(true)
-      try {
-        const data = await fetch('/api/scripts').then(r => r.json())
-        setScripts(Array.isArray(data) ? data : [])
-      } catch {} finally { setScriptsLoading(false) }
-    }
+    setScriptsLoading(true)
+    try {
+      const data = await fetch('/api/scripts').then(r => r.json())
+      setScripts(Array.isArray(data) ? data : [])
+    } catch {} finally { setScriptsLoading(false) }
   }
 
   function attachScript(dayNumber: number, script: SavedScript) {
@@ -199,7 +197,7 @@ export default function CalendarPage() {
                         {!isEditing && (
                           <>
                             <button
-                              onClick={() => router.push(`/studio?idea=${encodeURIComponent(day.title)}`)}
+                              onClick={() => router.push(`/studio?idea=${encodeURIComponent(day.title)}&calendarDay=${day.dayNumber}`)}
                               className="btn-secondary"
                               style={{ fontSize: 11, padding: '4px 10px' }}
                             >

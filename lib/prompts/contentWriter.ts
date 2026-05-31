@@ -323,3 +323,37 @@ export function instagramGroqPayload(prompt: string, maxTokens = 1500) {
 export function linkedInGroqPayload(prompt: string, maxTokens = 1200) {
   return { prompt, systemPrompt: LINKEDIN_SYSTEM, maxTokens }
 }
+
+
+// ─── Shot list prompt ─────────────────────────────────────────────────────────
+
+export interface ShotItem {
+  n: number
+  type: string
+  frame: string
+  vibe: string
+  sec: string
+}
+
+export function buildShotListPrompt(script: string, format: string, idea: string, who: string): string {
+  return `You are a video director creating a practical shot list for a social media ${format}.
+
+CREATOR: ${who}
+TOPIC: ${idea}
+
+SCRIPT:
+${script}
+
+Generate a concise, practical shot list (6–8 shots max) for filming this. Every shot must be specific to THIS content — no generic filler.
+
+Return ONLY this JSON array (no markdown, no explanation):
+[
+  {
+    "n": 1,
+    "type": "Talking head | B-roll | Close-up | POV | Text overlay | Transition | Wide shot",
+    "frame": "exactly what is in frame — specific, visual, 15 words max",
+    "vibe": "one reference: a creator handle (@aliabdaal), visual style, or genre",
+    "sec": "e.g. 3–5s"
+  }
+]`
+}

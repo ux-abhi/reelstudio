@@ -14,7 +14,9 @@ import {
   buildInstagramCaptionPrompt,
   buildInstagramSectionRegenPrompt,
   buildInstagramVariantsPrompt,
+  buildShotListPrompt,
   instagramGroqPayload,
+  type ShotItem,
 } from '@/lib/prompts/contentWriter'
 
 type Language = 'English' | 'Hinglish' | 'Hindi'
@@ -58,6 +60,10 @@ function StudioContent() {
   const [saveError, setSaveError] = useState<string | null>(null)
   const [variants, setVariants] = useState<string[]>([])
   const [variantsLoading, setVariantsLoading] = useState(false)
+  const [shotList, setShotList] = useState<ShotItem[]>([])
+  const [shotListLoading, setShotListLoading] = useState(false)
+  const [shotListError, setShotListError] = useState<string | null>(null)
+  const calendarDay = searchParams.get('calendarDay')
 
   useEffect(() => {
     const param = searchParams.get('idea')
@@ -101,7 +107,7 @@ function StudioContent() {
   async function callGroq(promptType: 'full' | 'hooks' | 'caption') {
     if (!idea.trim()) return
     if (output) pushToHistory(output)
-    setLoading(true); setError(null); setOutput(''); setSaved(false)
+    setLoading(true); setError(null); setOutput(''); setSaved(false); setShotList([]); setShotListError(null)
     const langInstruction = LANG_INSTRUCTION[language]
     try {
       let payload: { prompt: string; systemPrompt: string; maxTokens: number }
@@ -208,11 +214,46 @@ function StudioContent() {
         body: JSON.stringify({ format, tone, pillar: '', input: idea, output, hookLine }),
       })
       if (!res.ok) throw new Error('Failed to save — try again')
+      const savedScript = await res.json()
       setSaved(true)
+
+      // Auto-attach to calendar day if we came from the calendar "Write" button
+      if (calendarDay && savedScript?.id) {
+        try {
+          const dayNum = parseInt(calendarDay)
+          const existing = JSON.parse(localStorage.getItem('ss:calendar:scripts') ?? '{}')
+          existing[dayNum] = { id: savedScript.id, hookLine, output, format }
+          localStorage.setItem('ss:calendar:scripts', JSON.stringify(existing))
+        } catch {}
+      }
     } catch (e: unknown) {
       setSaveError(e instanceof Error ? e.message : 'Save failed')
     } finally {
       setIsSaving(false)
+    }
+  }
+
+  async function generateShotList() {
+    if (!output) return
+    setShotListLoading(true)
+    setShotListError(null)
+    setShotList([])
+    try {
+      const prompt = buildShotListPrompt(output, format, idea, who)
+      const res = await fetch('/api/groq', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt, systemPrompt: '', maxTokens: 600 }),
+      })
+      const data = await res.json()
+      if (data.error) throw new Error(data.error)
+      const raw = (data.text as string).replace(/```json\s*/g, '').replace(/```\s*/g, '').trim()
+      const parsed: ShotItem[] = JSON.parse(raw)
+      setShotList(Array.isArray(parsed) ? parsed : [])
+    } catch {
+      setShotListError('Could not generate shot list — try again')
+    } finally {
+      setShotListLoading(false)
     }
   }
 
@@ -380,7 +421,8 @@ function StudioContent() {
           </div>
         </div>
 
-        {/* Right — Output */}
+        {/* Right — Output + Shot List */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         <div
           style={{
             background: 'var(--bg-card)',
@@ -438,8 +480,61 @@ function StudioContent() {
                 history={history}
                 onSelectHistory={selectHistory}
               />
+              {/* Shot list trigger */}
+              <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                <button
+                  onClick={generateShotList}
+                  disabled={shotListLoading}
+                  className="btn-ghost"
+                  style={{ fontSize: 12, width: 'auto', padding: '5px 12px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 6 }}
+                >
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round">
+                    <rect x="1" y="1" width="4" height="4" rx="0.6"/><rect x="7" y="1" width="4" height="4" rx="0.6"/>
+                    <rect x="1" y="7" width="4" height="4" rx="0.6"/><circle cx="9" cy="9" r="2"/>
+                    <path d="M9 8v1l.7.7" strokeWidth="1.1"/>
+                  </svg>
+                  {shotListLoading ? 'Building shot list...' : 'Shot List →'}
+                </button>
+                {shotListError && <span style={{ fontSize: 11, color: 'var(--red)' }}>{shotListError}</span>}
+                {calendarDay && saved && (
+                  <span style={{ fontSize: 11, color: 'var(--green)', marginLeft: 'auto' }}>
+                    ✓ Pinned to Day {calendarDay} in calendar
+                  </span>
+                )}
+              </div>
             </>
           )}
+        </div>
+
+        {/* Shot list card */}
+        {shotList.length > 0 && (
+          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 10, padding: '16px 20px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+              <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-tertiary)' }}>Shot List</p>
+              <button onClick={() => setShotList([])} className="btn-ghost" style={{ fontSize: 12, width: 'auto', height: 'auto', padding: '2px 6px' }}>×</button>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {shotList.map(shot => (
+                <div key={shot.n} style={{ display: 'grid', gridTemplateColumns: '24px 1fr', gap: 10, padding: '10px 12px', background: 'var(--bg-elevated)', borderRadius: 7, border: '1px solid var(--border-subtle)' }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-tertiary)', paddingTop: 1 }}>
+                    {String(shot.n).padStart(2, '0')}
+                  </span>
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--accent)', background: 'var(--accent-subtle)', border: '1px solid var(--accent-border)', borderRadius: 4, padding: '1px 7px' }}>
+                        {shot.type}
+                      </span>
+                      <span style={{ fontSize: 10, color: 'var(--text-tertiary)' }}>{shot.sec}</span>
+                      <span style={{ fontSize: 10, color: 'var(--text-tertiary)', marginLeft: 'auto', fontStyle: 'italic' }}>ref: {shot.vibe}</span>
+                    </div>
+                    <p style={{ fontSize: 12, color: 'var(--text-primary)', lineHeight: 1.5 }}>{shot.frame}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         </div>
       </div>
     </div>
