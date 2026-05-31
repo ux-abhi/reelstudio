@@ -6,6 +6,10 @@ import { PageHeader } from '@/components/shared/PageHeader'
 import { PillarTag } from '@/components/shared/PillarTag'
 import { TrendBadge } from '@/components/shared/TrendBadge'
 import type { SavedScript } from '@/types/scan'
+import { parseShotList } from '@/lib/scriptUtils'
+
+const LS_STUDIO_DRAFT   = 'ss:studio:draft'
+const LS_CAL_SCRIPTS    = 'ss:calendar:scripts'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -207,9 +211,18 @@ function ScriptsTab({ niche }: { niche: string }) {
   const [newTone, setNewTone]       = useState('Casual')
   const [generating, setGenerating] = useState(false)
 
+  const [calPins, setCalPins] = useState<Record<string, number>>({}) // scriptId → dayNumber
+
   useEffect(() => {
     const raw = localStorage.getItem(LS_SCHEDULE)
     if (raw) setSchedule(JSON.parse(raw))
+    // Build a reverse map: scriptId → dayNumber for calendar-pinned scripts
+    try {
+      const pinMap = JSON.parse(localStorage.getItem(LS_CAL_SCRIPTS) ?? '{}') as Record<string, { id: string }>
+      const reverse: Record<string, number> = {}
+      Object.entries(pinMap).forEach(([day, v]) => { if (v?.id) reverse[v.id] = parseInt(day) })
+      setCalPins(reverse)
+    } catch {}
     fetch('/api/scripts')
       .then(r => r.json())
       .then(data => { setScripts(Array.isArray(data) ? data : []); setLoading(false) })
@@ -350,6 +363,7 @@ Return script only.`
                       {script.format && <span className="tag tag-default">{script.format}</span>}
                       {script.tone   && <span className="tag tag-default">{script.tone}</span>}
                       {schedDate && <span className="tag" style={{ background: 'var(--green-subtle)', color: 'var(--green)', borderColor: 'rgba(48,164,108,0.20)' }}>{new Date(schedDate + 'T00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span>}
+                      {calPins[script.id] && <span className="tag" style={{ background: 'var(--accent-subtle)', color: 'var(--accent)', borderColor: 'var(--accent-border)' }}>📅 Day {calPins[script.id]}</span>}
                       <span style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>{new Date(script.savedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
                     </div>
                   </div>
@@ -389,11 +403,46 @@ Return script only.`
                       </>
                     ) : (
                       <>
-                        <pre style={{ fontSize: 13, lineHeight: 1.7, whiteSpace: 'pre-wrap', color: 'var(--text-secondary)', fontFamily: 'inherit', background: 'var(--bg-elevated)', padding: '12px 14px', borderRadius: 7, border: '1px solid var(--border)' }}>{script.output}</pre>
+                        <pre style={{ fontSize: 13, lineHeight: 1.7, whiteSpace: 'pre-wrap', color: 'var(--text-secondary)', fontFamily: 'inherit', background: 'var(--bg-elevated)', padding: '12px 14px', borderRadius: 7, border: '1px solid var(--border)' }}>
+                          {script.output.includes('\n\n[SHOT LIST]') ? script.output.slice(0, script.output.indexOf('\n\n[SHOT LIST]')) : script.output}
+                        </pre>
+                        {(() => {
+                          const shots = parseShotList(script.output)
+                          if (!shots) return null
+                          return (
+                            <div style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: 7, padding: '12px 14px' }}>
+                              <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-tertiary)', marginBottom: 10 }}>Shot List — {shots.length} shots</p>
+                              {shots.map((shot, si) => (
+                                <div key={shot.n} style={{ display: 'grid', gridTemplateColumns: '20px auto 1fr auto', gap: 8, padding: '6px 0', borderBottom: si < shots.length - 1 ? '1px solid var(--border-subtle)' : 'none', alignItems: 'baseline' }}>
+                                  <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-tertiary)' }}>{String(shot.n).padStart(2,'0')}</span>
+                                  <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--accent)', background: 'var(--accent-subtle)', border: '1px solid var(--accent-border)', borderRadius: 3, padding: '1px 6px', whiteSpace: 'nowrap' }}>{shot.type}</span>
+                                  <span style={{ fontSize: 12, color: 'var(--text-primary)', lineHeight: 1.4 }}>{shot.frame}</span>
+                                  <span style={{ fontSize: 10, color: 'var(--text-tertiary)', fontStyle: 'italic', whiteSpace: 'nowrap' }}>ref: {shot.vibe} · {shot.sec}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )
+                        })()}
                         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
                           <button onClick={async () => { await navigator.clipboard.writeText(script.output); setCopied(script.id); setTimeout(() => setCopied(null), 2000) }} className="btn-secondary" style={{ fontSize: 12, color: copied === script.id ? 'var(--green)' : undefined }}>{copied === script.id ? '✓ Copied' : 'Copy'}</button>
                           <button onClick={() => { setEditingId(script.id); setEditOutput(script.output); setEditHook(script.hookLine) }} className="btn-secondary" style={{ fontSize: 12 }}>Edit</button>
-                          <button onClick={() => router.push(`/studio?idea=${encodeURIComponent(script.input)}`)} className="btn-secondary" style={{ fontSize: 12 }}>Load in Studio</button>
+                          <button
+                            onClick={() => {
+                              try {
+                                const splitIdx = script.output.indexOf('\n\n[SHOT LIST]')
+                                const cleanOutput = splitIdx !== -1 ? script.output.slice(0, splitIdx) : script.output
+                                const shots = parseShotList(script.output)
+                                localStorage.setItem(LS_STUDIO_DRAFT, JSON.stringify({
+                                  idea: script.input, format: script.format,
+                                  tone: script.tone || 'Casual', language: 'English',
+                                  output: cleanOutput, shotList: shots ?? undefined,
+                                }))
+                              } catch {}
+                              router.push('/studio')
+                            }}
+                            className="btn-secondary" style={{ fontSize: 12 }}>
+                            Load in Studio
+                          </button>
                           <button onClick={() => handleDelete(script.id)} className="btn-destructive" style={{ fontSize: 12, marginLeft: 'auto' }}>Delete</button>
                         </div>
                       </>
@@ -878,6 +927,13 @@ Return ONLY a JSON array (no markdown):
             {aiResults.length > 0 && <button onClick={() => { setAiResults([]); setSavedIdxs(new Set()) }} className="btn-ghost" style={{ fontSize: 12, width: 'auto', padding: '4px 8px' }}>Clear</button>}
           </div>
 
+          {aiError && (
+            <div style={{ padding: '8px 12px', background: 'var(--red-subtle)', border: '1px solid rgba(229,72,77,0.2)', borderRadius: 7, fontSize: 12, color: 'var(--red)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              {aiError}
+              <button onClick={() => setAiError(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--red)', fontSize: 14, padding: 0 }}>×</button>
+            </div>
+          )}
+
           {/* AI Results */}
           {aiResults.length > 0 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -1000,15 +1056,28 @@ Return ONLY a JSON array (no markdown):
 
 // ══ SCHEDULED TAB ══════════════════════════════════════════════════════════════
 
+interface CalDay { dayNumber: number; date: string; dayName: string; postType: string; title: string; postingTime: string }
+
 function ScheduledTab({ onSwitchTab }: { onSwitchTab: () => void }) {
   const router = useRouter()
-  const [scripts, setScripts]   = useState<SavedScript[]>([])
-  const [schedule, setSchedule] = useState<Record<string, string>>({})
-  const [loading, setLoading]   = useState(true)
+  const [scripts, setScripts]       = useState<SavedScript[]>([])
+  const [schedule, setSchedule]     = useState<Record<string, string>>({})
+  const [loading, setLoading]       = useState(true)
+  const [calDays, setCalDays]       = useState<CalDay[]>([])
+  const [calPinMap, setCalPinMap]   = useState<Record<number, { id: string; hookLine: string }>>({})
 
   useEffect(() => {
     const raw = localStorage.getItem(LS_SCHEDULE)
     setSchedule(raw ? JSON.parse(raw) : {})
+    try {
+      const pinned = JSON.parse(localStorage.getItem(LS_CAL_SCRIPTS) ?? '{}')
+      setCalPinMap(pinned)
+    } catch {}
+    // Fetch calendar days so we know the dates for pinned dayNumbers
+    fetch('/api/calendar')
+      .then(r => r.ok ? r.json() : [])
+      .then(days => setCalDays(Array.isArray(days) ? days : []))
+      .catch(() => {})
     fetch('/api/scripts')
       .then(r => r.json())
       .then(data => { setScripts(Array.isArray(data) ? data : []); setLoading(false) })
@@ -1021,9 +1090,28 @@ function ScheduledTab({ onSwitchTab }: { onSwitchTab: () => void }) {
     localStorage.setItem(LS_SCHEDULE, JSON.stringify(rest))
   }
 
-  const scheduled = scripts
+  // Merge date-picker scheduled scripts and calendar-pinned scripts into one list
+  const calPinnedIds = new Set(Object.values(calPinMap).map(v => v.id).filter(Boolean))
+
+  const scheduledByDate = scripts
     .filter(s => schedule[s.id])
-    .map(s => ({ ...s, scheduledDate: schedule[s.id] }))
+    .map(s => ({ ...s, scheduledDate: schedule[s.id], source: 'date' as const, dayNumber: undefined as number | undefined }))
+
+  const scheduledByCalendar = scripts
+    .filter(s => calPinnedIds.has(s.id) && !schedule[s.id]) // avoid duplicating if both scheduled
+    .map(s => {
+      const dayNum = parseInt(Object.entries(calPinMap).find(([, v]) => v.id === s.id)?.[0] ?? '0')
+      const calDay = calDays.find(d => d.dayNumber === dayNum)
+      return {
+        ...s,
+        scheduledDate: calDay?.date ?? '',
+        source: 'calendar' as const,
+        dayNumber: dayNum,
+      }
+    })
+    .filter(s => s.scheduledDate)
+
+  const scheduled = [...scheduledByDate, ...scheduledByCalendar]
     .sort((a, b) => a.scheduledDate.localeCompare(b.scheduledDate))
 
   if (loading) return <p style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>Loading...</p>
@@ -1062,14 +1150,35 @@ function ScheduledTab({ onSwitchTab }: { onSwitchTab: () => void }) {
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.4, marginBottom: 4 }}>{entry.hookLine || entry.input.slice(0, 80)}</p>
-                    <div style={{ display: 'flex', gap: 6 }}>
+                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                       {entry.format && <span className="tag tag-default" style={{ fontSize: 11 }}>{entry.format}</span>}
                       {entry.tone   && <span className="tag tag-default" style={{ fontSize: 11 }}>{entry.tone}</span>}
+                      {entry.source === 'calendar' && entry.dayNumber && (
+                        <span className="tag" style={{ fontSize: 11, background: 'var(--accent-subtle)', color: 'var(--accent)', borderColor: 'var(--accent-border)' }}>
+                          📅 Day {entry.dayNumber}
+                        </span>
+                      )}
                     </div>
                   </div>
                   <div style={{ display: 'flex', gap: 6, flexShrink: 0, alignItems: 'flex-start' }}>
-                    <button onClick={() => router.push(`/studio?idea=${encodeURIComponent(entry.input)}`)} className="btn-secondary" style={{ fontSize: 11, padding: '4px 10px' }}>Write</button>
-                    <button onClick={() => unschedule(entry.id)} className="btn-ghost" title="Remove from schedule" style={{ fontSize: 12 }}>✕</button>
+                    <button
+                      onClick={() => {
+                        try {
+                          localStorage.setItem(LS_STUDIO_DRAFT, JSON.stringify({ idea: entry.input, format: entry.format, tone: entry.tone || 'Casual', language: 'English', output: entry.output }))
+                        } catch {}
+                        router.push('/studio')
+                      }}
+                      className="btn-secondary" style={{ fontSize: 11, padding: '4px 10px' }}>
+                      Load in Studio
+                    </button>
+                    {entry.source !== 'calendar' && (
+                      <button onClick={() => unschedule(entry.id)} className="btn-ghost" title="Remove from schedule" style={{ fontSize: 12 }}>✕</button>
+                    )}
+                    {entry.source === 'calendar' && (
+                      <button onClick={() => router.push('/calendar')} className="btn-ghost" title="View in calendar" style={{ fontSize: 11, width: 'auto', padding: '4px 8px', color: 'var(--accent)' }}>
+                        Calendar →
+                      </button>
+                    )}
                   </div>
                 </div>
               )

@@ -28,6 +28,31 @@ export function countWords(text: string): number {
   return text.replace(/\[HOOK\]|\[BODY\]|\[CTA\]/g, '').trim().split(/\s+/).filter(Boolean).length
 }
 
+// ── Shot list parsing ─────────────────────────────────────────────────────────
+
+export interface ParsedShot {
+  n: number
+  type: string
+  frame: string
+  vibe: string
+  sec: string
+}
+
+/** Extract a shot list from a script output that contains a [SHOT LIST] section. */
+export function parseShotList(output: string): ParsedShot[] | null {
+  const idx = output.indexOf('\n\n[SHOT LIST]')
+  if (idx === -1) return null
+  const raw = output.slice(idx + 13).trim()
+  const shots = raw.split('\n')
+    .filter(l => l.includes(' | '))
+    .map((line, i) => {
+      const p = line.split(' | ')
+      return { n: i + 1, type: p[1]?.trim() ?? '', frame: p[2]?.trim() ?? '', vibe: p[3]?.replace('ref: ', '').trim() ?? '', sec: p[4]?.trim() ?? '' }
+    })
+    .filter(s => s.type)
+  return shots.length > 0 ? shots : null
+}
+
 export function wordCountColor(count: number, format: string): string {
   const range = FORMAT_WORDS[format]
   if (!range) return 'var(--text-tertiary)'

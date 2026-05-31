@@ -63,7 +63,9 @@ export default function DashboardPage() {
     )
   }
 
-  const today = scan.calendar?.[0]
+  // Find the calendar entry for today or the next upcoming one, not just index 0
+  const todayStr = new Date().toISOString().split('T')[0]
+  const today = scan.calendar?.find(d => d.date >= todayStr) ?? scan.calendar?.[0]
   const top3Actions = scan.priorityActions?.slice(0, 3) ?? []
   const allTrends = scan.trendPulse ?? []
   const breakoutTrends = allTrends.filter(t => t.breakout).slice(0, 3)
@@ -246,7 +248,7 @@ export default function DashboardPage() {
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8, flexShrink: 0 }}>
                 <p style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>{today.postingTime}</p>
-                <button className="btn-primary" onClick={() => router.push(`/studio?idea=${encodeURIComponent(today.title)}`)}>
+                <button className="btn-primary" onClick={() => router.push(`/studio?idea=${encodeURIComponent(today.title)}&calendarDay=${today.dayNumber}`)}>
                   Write this now
                 </button>
               </div>

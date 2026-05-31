@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { SavedScript } from '@/types/scan'
+import { parseShotList } from '@/lib/scriptUtils'
 
 interface CalendarDayMini {
   dayNumber: number
@@ -21,18 +22,6 @@ function getAttachedMap(): Record<string, { id: string; hookLine: string }> {
   try { return JSON.parse(localStorage.getItem(LS_CAL_SCRIPTS) ?? '{}') } catch { return {} }
 }
 
-interface ParsedShot { n: number; type: string; frame: string; vibe: string; sec: string }
-
-function parseShotList(output: string): ParsedShot[] | null {
-  const idx = output.indexOf('\n\n[SHOT LIST]')
-  if (idx === -1) return null
-  const raw = output.slice(idx + 13).trim()
-  const shots = raw.split('\n').filter(l => l.includes(' | ')).map((line, i) => {
-    const p = line.split(' | ')
-    return { n: i + 1, type: p[1]?.trim() ?? '', frame: p[2]?.trim() ?? '', vibe: p[3]?.replace('ref: ', '').trim() ?? '', sec: p[4]?.trim() ?? '' }
-  }).filter(s => s.type)
-  return shots.length > 0 ? shots : null
-}
 
 export default function SavedPage() {
   const router = useRouter()
