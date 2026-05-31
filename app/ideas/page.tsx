@@ -238,6 +238,27 @@ function ScriptsTab({ niche }: { niche: string }) {
     await fetch('/api/scripts', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) })
     setScripts(s => s.filter(sc => sc.id !== id))
     if (expanded === id) setExpanded(null)
+    // Clear any calendar pin for this script
+    const dayNum = calPins[id]
+    if (dayNum !== undefined) {
+      try {
+        const pinMap = JSON.parse(localStorage.getItem(LS_CAL_SCRIPTS) ?? '{}')
+        delete pinMap[dayNum]
+        localStorage.setItem(LS_CAL_SCRIPTS, JSON.stringify(pinMap))
+        setCalPins(prev => { const next = { ...prev }; delete next[id]; return next })
+      } catch {}
+    }
+  }
+
+  function removeFromCalendar(id: string) {
+    const dayNum = calPins[id]
+    if (dayNum === undefined) return
+    try {
+      const pinMap = JSON.parse(localStorage.getItem(LS_CAL_SCRIPTS) ?? '{}')
+      delete pinMap[dayNum]
+      localStorage.setItem(LS_CAL_SCRIPTS, JSON.stringify(pinMap))
+      setCalPins(prev => { const next = { ...prev }; delete next[id]; return next })
+    } catch {}
   }
 
   async function handleSaveEdit(id: string) {
@@ -443,6 +464,11 @@ Return script only.`
                             className="btn-secondary" style={{ fontSize: 12 }}>
                             Load in Studio
                           </button>
+                          {calPins[script.id] !== undefined && (
+                            <button onClick={() => removeFromCalendar(script.id)} className="btn-ghost" style={{ fontSize: 11, width: 'auto', padding: '4px 10px', color: 'var(--text-tertiary)' }}>
+                              Remove from calendar
+                            </button>
+                          )}
                           <button onClick={() => handleDelete(script.id)} className="btn-destructive" style={{ fontSize: 12, marginLeft: 'auto' }}>Delete</button>
                         </div>
                       </>
@@ -567,7 +593,11 @@ Return ONLY a JSON array of 3 strings:
     setSavedIdxs(prev => new Set(prev).add(idx))
   }
 
-  const filtered = filterType === 'All' ? hooks : hooks.filter(h => h.type === filterType)
+  const [showHiddenHooks, setShowHiddenHooks] = useState(false)
+  const hiddenCount = hooks.filter(h => h.hidden).length
+  const filtered = hooks
+    .filter(h => showHiddenHooks || !h.hidden)
+    .filter(h => filterType === 'All' || h.type === filterType)
   const grouped  = visibleTypes.map(type => ({ type, items: filtered.filter(h => h.type === type) })).filter(g => g.items.length > 0)
 
   return (
@@ -581,7 +611,12 @@ Return ONLY a JSON array of 3 strings:
             </button>
           ))}
         </div>
-        <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+        <div style={{ display: 'flex', gap: 8, flexShrink: 0, alignItems: 'center' }}>
+          {hiddenCount > 0 && (
+            <button onClick={() => setShowHiddenHooks(v => !v)} className="btn-ghost" style={{ fontSize: 11, width: 'auto', padding: '4px 10px', color: 'var(--text-tertiary)' }}>
+              {showHiddenHooks ? 'Hide dismissed' : `+${hiddenCount} hidden`}
+            </button>
+          )}
           <button onClick={() => { setShowAIGen(v => !v); setShowManual(false) }} className={showAIGen ? 'btn-primary' : 'btn-secondary'} style={{ fontSize: 12, padding: '6px 14px' }}>
             Generate with AI ✦
           </button>
