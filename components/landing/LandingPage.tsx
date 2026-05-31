@@ -251,7 +251,7 @@ export function LandingPage() {
           >
             Sign in
           </Link>
-          <PosterButton href="/onboarding" variant="blue" style={{ padding: '10px 22px', fontSize: '0.75rem' }}>
+          <PosterButton href="/login" variant="blue" style={{ padding: '10px 22px', fontSize: '0.75rem' }}>
             Get Started
           </PosterButton>
         </div>
@@ -309,7 +309,7 @@ export function LandingPage() {
                 Instagram Reels and LinkedIn posts — in your voice, not AI voice.
               </p>
               <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
-                <PosterButton href="/onboarding" variant="blue">
+                <PosterButton href="/login" variant="blue">
                   Get Started Free →
                 </PosterButton>
                 <Link href="/login" style={{
@@ -486,7 +486,7 @@ export function LandingPage() {
               </p>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
-              <PosterButton href="/onboarding" variant="black" style={{ padding: '18px 40px', fontSize: '0.875rem' }}>
+              <PosterButton href="/login" variant="black" style={{ padding: '18px 40px', fontSize: '0.875rem' }}>
                 Get Started Free →
               </PosterButton>
               <div>
@@ -509,7 +509,7 @@ export function LandingPage() {
         <span style={{ ...T.label, color: C.muted }}>Draftr — by @uxabhi_</span>
         <div style={{ display: 'flex', gap: '2rem' }}>
           <Link href="/login" style={{ ...T.label, color: C.muted, textDecoration: 'none' }}>Sign in</Link>
-          <Link href="/onboarding" style={{ ...T.label, color: C.black, textDecoration: 'none' }}>Get Started</Link>
+          <Link href="/login" style={{ ...T.label, color: C.black, textDecoration: 'none' }}>Get Started</Link>
         </div>
       </footer>
     </div>
