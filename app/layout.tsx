@@ -12,17 +12,17 @@ const geist = Geist({
 })
 
 export const metadata: Metadata = {
-  title: 'Script Studio',
-  description: 'AI-powered Instagram content command centre',
+  title: 'ReelStudio',
+  description: 'Turn real life into Instagram and LinkedIn content — built on your actual account data.',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={geist.variable} data-theme="dark" suppressHydrationWarning>
+    <html lang="en" className={geist.variable} data-theme="light" suppressHydrationWarning>
       <body>
         <script
           dangerouslySetInnerHTML={{
-            __html: `try{var t=localStorage.getItem('ss:theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t)}catch(e){}`,
+            __html: `try{var t=localStorage.getItem('ss:theme');if(t==='light'||t==='dark'){document.documentElement.setAttribute('data-theme',t)}else{document.documentElement.setAttribute('data-theme','light')}}catch(e){}`,
           }}
         />
         <ThemeProvider>
