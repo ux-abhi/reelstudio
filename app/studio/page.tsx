@@ -63,6 +63,11 @@ function StudioContent() {
   const [shotList, setShotList] = useState<ShotItem[]>([])
   const [shotListLoading, setShotListLoading] = useState(false)
   const [shotListError, setShotListError] = useState<string | null>(null)
+  const [savedScriptData, setSavedScriptData] = useState<{ id: string; hookLine: string } | null>(null)
+  const [calPickerOpen, setCalPickerOpen] = useState(false)
+  const [calDays, setCalDays] = useState<{ dayNumber: number; date: string; dayName: string; postType: string; title: string; postingTime: string }[]>([])
+  const [calDaysLoading, setCalDaysLoading] = useState(false)
+  const [scheduledDay, setScheduledDay] = useState<number | null>(null)
   const calendarDay = searchParams.get('calendarDay')
 
   useEffect(() => {
@@ -216,15 +221,10 @@ function StudioContent() {
       if (!res.ok) throw new Error('Failed to save — try again')
       const savedScript = await res.json()
       setSaved(true)
-
-      // Auto-attach to calendar day if we came from the calendar "Write" button
-      if (calendarDay && savedScript?.id) {
-        try {
-          const dayNum = parseInt(calendarDay)
-          const existing = JSON.parse(localStorage.getItem('ss:calendar:scripts') ?? '{}')
-          existing[dayNum] = { id: savedScript.id, hookLine, output, format }
-          localStorage.setItem('ss:calendar:scripts', JSON.stringify(existing))
-        } catch {}
+      if (savedScript?.id) {
+        setSavedScriptData({ id: savedScript.id, hookLine })
+        // Pre-select the day if we came from the calendar Write button
+        if (calendarDay) setScheduledDay(parseInt(calendarDay))
       }
     } catch (e: unknown) {
       setSaveError(e instanceof Error ? e.message : 'Save failed')
@@ -255,6 +255,26 @@ function StudioContent() {
     } finally {
       setShotListLoading(false)
     }
+  }
+
+  async function openCalPicker() {
+    setCalPickerOpen(true)
+    setCalDaysLoading(true)
+    try {
+      const data = await fetch('/api/calendar').then(r => r.json())
+      setCalDays(Array.isArray(data) ? data : [])
+    } catch {} finally { setCalDaysLoading(false) }
+  }
+
+  function scheduleToDay(dayNum: number) {
+    if (!savedScriptData) return
+    try {
+      const existing = JSON.parse(localStorage.getItem('ss:calendar:scripts') ?? '{}')
+      existing[dayNum] = { id: savedScriptData.id, hookLine: savedScriptData.hookLine, output, format }
+      localStorage.setItem('ss:calendar:scripts', JSON.stringify(existing))
+    } catch {}
+    setScheduledDay(dayNum)
+    setCalPickerOpen(false)
   }
 
   function selectHistory(text: string) {
@@ -480,26 +500,36 @@ function StudioContent() {
                 history={history}
                 onSelectHistory={selectHistory}
               />
-              {/* Shot list trigger */}
-              <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', gap: 8 }}>
+              {/* Bottom action row: shot list + pin to calendar */}
+              <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                 <button
                   onClick={generateShotList}
                   disabled={shotListLoading}
                   className="btn-ghost"
                   style={{ fontSize: 12, width: 'auto', padding: '5px 12px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 6 }}
                 >
-                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round">
-                    <rect x="1" y="1" width="4" height="4" rx="0.6"/><rect x="7" y="1" width="4" height="4" rx="0.6"/>
-                    <rect x="1" y="7" width="4" height="4" rx="0.6"/><circle cx="9" cy="9" r="2"/>
-                    <path d="M9 8v1l.7.7" strokeWidth="1.1"/>
-                  </svg>
-                  {shotListLoading ? 'Building shot list...' : 'Shot List →'}
+                  {shotListLoading ? 'Building...' : 'Shot List →'}
                 </button>
                 {shotListError && <span style={{ fontSize: 11, color: 'var(--red)' }}>{shotListError}</span>}
-                {calendarDay && saved && (
-                  <span style={{ fontSize: 11, color: 'var(--green)', marginLeft: 'auto' }}>
-                    ✓ Pinned to Day {calendarDay} in calendar
-                  </span>
+                {savedScriptData && (
+                  <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
+                    {scheduledDay ? (
+                      <span
+                        onClick={openCalPicker}
+                        style={{ fontSize: 11, color: 'var(--green)', cursor: 'pointer', borderBottom: '1px dotted var(--green)' }}
+                      >
+                        ✓ Pinned Day {scheduledDay} · change
+                      </span>
+                    ) : (
+                      <button
+                        onClick={openCalPicker}
+                        className="btn-secondary"
+                        style={{ fontSize: 11, padding: '4px 10px' }}
+                      >
+                        Pin to Calendar →
+                      </button>
+                    )}
+                  </div>
                 )}
               </div>
             </>
@@ -537,6 +567,62 @@ function StudioContent() {
 
         </div>
       </div>
+
+      {/* Calendar day picker modal */}
+      {calPickerOpen && (
+        <div
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
+          onClick={() => setCalPickerOpen(false)}
+        >
+          <div
+            style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-strong)', borderRadius: 12, width: '100%', maxWidth: 440, maxHeight: '72vh', display: 'flex', flexDirection: 'column' }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid var(--border)' }}>
+              <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>Pin to a calendar day</p>
+              <button onClick={() => setCalPickerOpen(false)} className="btn-ghost">×</button>
+            </div>
+            <div style={{ overflowY: 'auto', flex: 1, padding: 12, display: 'flex', flexDirection: 'column', gap: 4 }}>
+              {calDaysLoading && <p style={{ fontSize: 13, color: 'var(--text-tertiary)', padding: 16, textAlign: 'center' }}>Loading calendar...</p>}
+              {!calDaysLoading && calDays.length === 0 && (
+                <p style={{ fontSize: 13, color: 'var(--text-tertiary)', padding: 16, textAlign: 'center' }}>No calendar yet — run your scan first.</p>
+              )}
+              {calDays.map(day => {
+                const isPinned = scheduledDay === day.dayNumber
+                return (
+                  <button
+                    key={day.dayNumber}
+                    onClick={() => scheduleToDay(day.dayNumber)}
+                    style={{
+                      textAlign: 'left',
+                      background: isPinned ? 'var(--accent-subtle)' : 'var(--bg-card)',
+                      border: `1px solid ${isPinned ? 'var(--accent-border)' : 'var(--border)'}`,
+                      borderRadius: 8, padding: '10px 14px', cursor: 'pointer', transition: 'all 120ms ease',
+                    }}
+                    onMouseEnter={e => { if (!isPinned) e.currentTarget.style.borderColor = 'var(--accent)' }}
+                    onMouseLeave={e => { if (!isPinned) e.currentTarget.style.borderColor = 'var(--border)' }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <div style={{ width: 36, flexShrink: 0, textAlign: 'center' }}>
+                        <p style={{ fontSize: 9, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{day.dayName}</p>
+                        <p style={{ fontSize: 15, fontWeight: 700, color: isPinned ? 'var(--accent)' : 'var(--text-secondary)', lineHeight: 1 }}>
+                          {day.date?.split('-')[2] ?? day.dayNumber}
+                        </p>
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ fontSize: 12, fontWeight: 500, color: isPinned ? 'var(--accent)' : 'var(--text-primary)', lineHeight: 1.4 }}>
+                          {isPinned ? '✓ Pinned' : day.title}
+                        </p>
+                        <p style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>{day.postType} · {day.postingTime}</p>
+                      </div>
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

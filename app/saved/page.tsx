@@ -190,19 +190,36 @@ export default function SavedPage() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                       {script.format && <span className="tag tag-default">{script.format}</span>}
                       {script.tone && <span className="tag tag-default">{script.tone}</span>}
-                      {pinnedDay !== null && (
-                        <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--green)', background: 'var(--green-subtle)', border: '1px solid rgba(48,164,108,0.2)', borderRadius: 4, padding: '1px 7px' }}>
-                          📅 Day {pinnedDay}
-                        </span>
-                      )}
                       <span style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>
                         {new Date(script.savedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
                       </span>
                     </div>
                   </div>
-                  <button className="btn-ghost" style={{ fontSize: 16, flexShrink: 0 }}>
-                    {expanded === script.id ? '−' : '+'}
-                  </button>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                    {/* Calendar pin badge — visible at card level */}
+                    {pinnedDay !== null ? (
+                      <button
+                        onClick={e => { e.stopPropagation(); openScheduler(script) }}
+                        style={{ fontSize: 10, fontWeight: 600, color: 'var(--green)', background: 'var(--green-subtle)', border: '1px solid rgba(48,164,108,0.25)', borderRadius: 5, padding: '2px 8px', cursor: 'pointer', fontFamily: 'inherit' }}
+                        title="Click to change or remove"
+                      >
+                        Day {pinnedDay} ✓
+                      </button>
+                    ) : (
+                      <button
+                        onClick={e => { e.stopPropagation(); openScheduler(script) }}
+                        style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-tertiary)', background: 'transparent', border: '1px solid var(--border)', borderRadius: 5, padding: '2px 8px', cursor: 'pointer', fontFamily: 'inherit', transition: 'all 120ms ease' }}
+                        onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.color = 'var(--accent)' }}
+                        onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-tertiary)' }}
+                        title="Schedule to calendar"
+                      >
+                        + Calendar
+                      </button>
+                    )}
+                    <button className="btn-ghost" style={{ fontSize: 16 }}>
+                      {expanded === script.id ? '−' : '+'}
+                    </button>
+                  </div>
                 </div>
 
                 {expanded === script.id && (
@@ -228,10 +245,25 @@ export default function SavedPage() {
                       <button
                         onClick={e => { e.stopPropagation(); openScheduler(script) }}
                         className="btn-secondary"
-                        style={{ fontSize: 12, color: pinnedDay !== null ? 'var(--green)' : undefined, borderColor: pinnedDay !== null ? 'rgba(48,164,108,0.3)' : undefined }}
+                        style={{ fontSize: 12 }}
                       >
-                        {pinnedDay !== null ? `✓ Day ${pinnedDay}` : 'Schedule →'}
+                        {pinnedDay !== null ? `Day ${pinnedDay} — change` : 'Schedule →'}
                       </button>
+                      {pinnedDay !== null && (
+                        <button
+                          onClick={e => {
+                            e.stopPropagation()
+                            const next = { ...getAttachedMap() }
+                            delete next[pinnedDay]
+                            localStorage.setItem(LS_CAL_SCRIPTS, JSON.stringify(next))
+                            setAttached(next)
+                          }}
+                          className="btn-ghost"
+                          style={{ fontSize: 11, width: 'auto', padding: '3px 10px', color: 'var(--text-tertiary)' }}
+                        >
+                          Remove from calendar
+                        </button>
+                      )}
                       <button
                         onClick={() => handleDelete(script.id)}
                         className="btn-destructive"

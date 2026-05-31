@@ -1,6 +1,5 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
-import Link from 'next/link'
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 
@@ -76,7 +75,7 @@ function Label({ children, color }: { children: React.ReactNode; color?: string 
 function Btn({ href, children, dark }: { href: string; children: React.ReactNode; dark?: boolean }) {
   const [hov, setHov] = useState(false)
   return (
-    <Link href={href}
+    <a href={href}
       onMouseEnter={() => setHov(true)}
       onMouseLeave={() => setHov(false)}
       style={{
@@ -91,7 +90,7 @@ function Btn({ href, children, dark }: { href: string; children: React.ReactNode
       }}
     >
       {children}
-    </Link>
+    </a>
   )
 }
 
@@ -345,10 +344,10 @@ export function LandingPage() {
               onMouseEnter={e => (e.currentTarget.style.color = C.black)}
               onMouseLeave={e => (e.currentTarget.style.color = C.muted)}
             >Features</a>
-            <Link href="/login" className="nav-link" style={{ fontSize: '0.8125rem', fontWeight: 600, color: C.black, textDecoration: 'none', transition: 'color 0.2s' }}
+            <a href="/login" className="nav-link" style={{ fontSize: '0.8125rem', fontWeight: 600, color: C.black, textDecoration: 'none', transition: 'color 0.2s' }}
               onMouseEnter={e => (e.currentTarget.style.color = C.blue)}
               onMouseLeave={e => (e.currentTarget.style.color = C.black)}
-            >Sign in</Link>
+            >Sign in</a>
           </div>
         </div>
       </nav>
@@ -582,14 +581,14 @@ export function LandingPage() {
               onMouseEnter={e => (e.currentTarget.style.color = C.black)}
               onMouseLeave={e => (e.currentTarget.style.color = C.muted)}
             >Features</a>
-            <Link href="/login" className="nav-link" style={{ fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: C.muted, textDecoration: 'none', transition: 'color 0.2s' }}
+            <a href="/login" className="nav-link" style={{ fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: C.muted, textDecoration: 'none', transition: 'color 0.2s' }}
               onMouseEnter={e => (e.currentTarget.style.color = C.black)}
               onMouseLeave={e => (e.currentTarget.style.color = C.muted)}
-            >Sign in</Link>
-            <Link href="/login" className="nav-link" style={{ fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: C.black, textDecoration: 'none', transition: 'color 0.2s' }}
+            >Sign in</a>
+            <a href="/login" className="nav-link" style={{ fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: C.black, textDecoration: 'none', transition: 'color 0.2s' }}
               onMouseEnter={e => (e.currentTarget.style.color = C.blue)}
               onMouseLeave={e => (e.currentTarget.style.color = C.black)}
-            >Get Started</Link>
+            >Get Started</a>
           </div>
         </div>
       </footer>
