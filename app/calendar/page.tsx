@@ -8,6 +8,20 @@ import { PillarTag } from '@/components/shared/PillarTag'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { CalendarDay } from '@/types/scan'
 import type { SavedScript } from '@/types/scan'
+import { parseScript } from '@/lib/scriptUtils'
+
+// Maps Studio format labels → calendar post types
+const FORMAT_TO_POST_TYPE: Partial<Record<string, CalendarDay['postType']>> = {
+  'Reel 30–45s':      'Reel',
+  'Reel 60–75s':      'Reel',
+  'Reel 60–90s':      'Reel',
+  'Screen Rec VO':    'Reel',
+  'Talking Head':     'Talking Head',
+  'Talking Head Long':'Talking Head',
+  'POV Rant':         'Talking Head',
+  'Carousel Caption': 'Carousel',
+  'Carousel':         'Carousel',
+}
 
 const WEEK_THEMES = [
   'Foundation — algorithm reset, reach spike',
@@ -145,20 +159,64 @@ export default function CalendarPage() {
   }, [])
 
   function attachScript(dayNumber: number, script: SavedScript) {
-    const next = {
+    // 1. Save the attachment reference
+    const nextAttached = {
       ...attached,
       [dayNumber]: { id: script.id, hookLine: script.hookLine, output: script.output, format: script.format },
     }
-    setAttached(next)
-    localStorage.setItem(LS_SCRIPTS, JSON.stringify(next))
+    setAttached(nextAttached)
+    localStorage.setItem(LS_SCRIPTS, JSON.stringify(nextAttached))
+
+    // 2. Promote script content into the day's edits so the calendar slot
+    //    shows the user's actual script (not the Groq-generated idea).
+    const parts      = parseScript(script.output)
+    const scriptHook = parts.hook?.split('\n')[0]?.trim() || script.hookLine
+    const postType   = FORMAT_TO_POST_TYPE[script.format]
+
+    const contentEdit: Partial<CalendarDay> = {
+      title: script.hookLine,
+      hook:  scriptHook,
+      ...(postType ? { postType } : {}),
+    }
+    const nextEdits = {
+      ...edits,
+      [dayNumber]: { ...(edits[dayNumber] ?? {}), ...contentEdit },
+    }
+    setEdits(nextEdits)
+    localStorage.setItem(LS_EDITS, JSON.stringify(nextEdits))
+
+    // 3. Persist content changes to DB (best-effort)
+    fetch('/api/calendar', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ dayNumber, edits: contentEdit }),
+    }).catch(() => {})
+
     setPickerDay(null)
   }
 
   function detachScript(dayNumber: number) {
-    const next = { ...attached }
-    delete next[dayNumber]
-    setAttached(next)
-    localStorage.setItem(LS_SCRIPTS, JSON.stringify(next))
+    // Remove attachment reference
+    const nextAttached = { ...attached }
+    delete nextAttached[dayNumber]
+    setAttached(nextAttached)
+    localStorage.setItem(LS_SCRIPTS, JSON.stringify(nextAttached))
+
+    // Remove only the content fields that were set by the script,
+    // preserving any other manual edits (posting time, trigger word, etc.)
+    const dayEdit = edits[dayNumber]
+    if (dayEdit) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { title, hook, postType, ...rest } = dayEdit
+      const nextEdits = { ...edits }
+      if (Object.keys(rest).length > 0) {
+        nextEdits[dayNumber] = rest as Partial<CalendarDay>
+      } else {
+        delete nextEdits[dayNumber]
+      }
+      setEdits(nextEdits)
+      localStorage.setItem(LS_EDITS, JSON.stringify(nextEdits))
+    }
   }
 
   function copyHook(text: string, dayNumber: number) {
@@ -267,14 +325,13 @@ export default function CalendarPage() {
                           )}
                         </div>
 
-                        {/* Attached script strip */}
+                        {/* Attached script strip — confirms the full script is ready */}
                         {script && !isEditing && (
-                          <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px', background: 'var(--accent-subtle)', borderRadius: 6, border: '1px solid var(--accent-border)' }}>
-                            <span style={{ fontSize: 11, color: 'var(--accent)', flexShrink: 0 }}>✦ Script</span>
-                            <span style={{ fontSize: 11, color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
-                              {script.hookLine}
-                            </span>
-                            <button onClick={() => setViewScript(script)} className="btn-ghost" style={{ fontSize: 11, width: 'auto', height: 'auto', padding: '2px 8px' }}>
+                          <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8, padding: '5px 10px', background: 'var(--green-subtle)', borderRadius: 6, border: '1px solid rgba(48,164,108,0.25)' }}>
+                            <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--green)', flexShrink: 0, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Script ready</span>
+                            <span style={{ fontSize: 11, color: 'var(--text-secondary)', flexShrink: 0 }}>{script.format}</span>
+                            <div style={{ flex: 1 }} />
+                            <button onClick={() => setViewScript(script)} className="btn-ghost" style={{ fontSize: 11, width: 'auto', height: 'auto', padding: '2px 8px', color: 'var(--green)' }}>
                               View
                             </button>
                             <button onClick={() => detachScript(day.dayNumber)} className="btn-ghost" style={{ fontSize: 13, width: 20, height: 20, padding: 0, color: 'var(--text-tertiary)' }} title="Remove script">
@@ -420,10 +477,14 @@ export default function CalendarPage() {
           >
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid var(--border)' }}>
               <div>
-                <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>Attach a saved script</p>
-                {attached[pickerDay] && (
-                  <p style={{ fontSize: 11, color: 'var(--accent)', marginTop: 2 }}>Currently attached — pick another to replace</p>
-                )}
+                <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>
+                  Pick a script for Day {pickerDay}
+                </p>
+                <p style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2 }}>
+                  {attached[pickerDay]
+                    ? 'Script already attached — pick another to replace'
+                    : 'The script you pick will become this day\'s content in the calendar'}
+                </p>
               </div>
               <button onClick={() => setPickerDay(null)} className="btn-ghost">×</button>
             </div>
