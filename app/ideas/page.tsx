@@ -21,6 +21,8 @@ interface UserHook {
   type: 'curiosity' | 'story' | 'hot-take' | 'hinglish'
   basedOn: string
   trendRelevant: boolean
+  hidden?: boolean
+  isCustom?: boolean
 }
 
 interface UserIdea {
