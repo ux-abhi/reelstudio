@@ -47,6 +47,7 @@ export default function LogPage() {
   const [niche, setNiche] = useState('')
   const [brandContext, setBrandContext] = useState('')
 
+  // Restore draft and identity on mount / scan change
   useEffect(() => {
     try {
       const n = localStorage.getItem('ss:niche') ?? ''
@@ -55,7 +56,6 @@ export default function LogPage() {
       setNiche(n)
       setWho(handle ? `@${handle}${n ? ` — ${n}` : ''}` : n || name || 'content creator')
     } catch {}
-    // Pull brand context from master doc if available
     fetch('/api/user-context')
       .then(r => r.json())
       .then(d => {
@@ -66,6 +66,25 @@ export default function LogPage() {
       })
       .catch(() => {})
   }, [scan])
+
+  // Restore log draft on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('ss:log:draft')
+      if (saved) setInput(saved)
+    } catch {}
+  }, [])
+
+  // Auto-save draft as user types
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      try {
+        if (input) localStorage.setItem('ss:log:draft', input)
+        else localStorage.removeItem('ss:log:draft')
+      } catch {}
+    }, 800)
+    return () => clearTimeout(timer)
+  }, [input])
 
   async function generate() {
     if (!input.trim()) { setError('Tell me what happened first'); return }
@@ -85,6 +104,7 @@ export default function LogPage() {
       const data = await res.json()
       if (data.error) throw new Error(data.error)
       setResult(data as LogResult)
+      try { localStorage.removeItem('ss:log:draft') } catch {} // Clear saved draft — it's been used
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Generation failed')
     } finally {

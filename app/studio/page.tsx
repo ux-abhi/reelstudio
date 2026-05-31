@@ -8,6 +8,7 @@ import { TrendHint } from '@/components/studio/TrendHint'
 import { ScriptOutput } from '@/components/studio/ScriptOutput'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { parseScript } from '@/lib/scriptUtils'
+import type { SavedScript } from '@/types/scan'
 import {
   buildInstagramScriptPrompt,
   buildInstagramHooksPrompt,
@@ -63,16 +64,36 @@ function StudioContent() {
   const [shotList, setShotList] = useState<ShotItem[]>([])
   const [shotListLoading, setShotListLoading] = useState(false)
   const [shotListError, setShotListError] = useState<string | null>(null)
+  const [shotCopied, setShotCopied] = useState<number | null>(null)
+  const [shotListCopied, setShotListCopied] = useState(false)
   const [savedScriptData, setSavedScriptData] = useState<{ id: string; hookLine: string } | null>(null)
   const [calPickerOpen, setCalPickerOpen] = useState(false)
   const [calDays, setCalDays] = useState<{ dayNumber: number; date: string; dayName: string; postType: string; title: string; postingTime: string }[]>([])
   const [calDaysLoading, setCalDaysLoading] = useState(false)
   const [scheduledDay, setScheduledDay] = useState<number | null>(null)
+  const [sessionRestored, setSessionRestored] = useState(false)
+  const [recentScripts, setRecentScripts] = useState<SavedScript[]>([])
   const calendarDay = searchParams.get('calendarDay')
 
+  // Handle URL param or restore last session
   useEffect(() => {
-    const param = searchParams.get('idea')
-    if (param) setIdea(decodeURIComponent(param))
+    const urlIdea = searchParams.get('idea')
+    if (urlIdea) {
+      setIdea(decodeURIComponent(urlIdea))
+      return // Coming from a link with pre-filled idea — don't restore session
+    }
+    try {
+      const draft = localStorage.getItem('ss:studio:draft')
+      if (!draft) return
+      const d = JSON.parse(draft)
+      if (!d.output) return // Only restore when there was actual output
+      if (d.idea) setIdea(d.idea)
+      if (d.format) setFormat(d.format)
+      if (d.tone) setTone(d.tone)
+      if (d.language && LANGUAGES.includes(d.language as Language)) setLanguage(d.language as Language)
+      setOutput(d.output)
+      setSessionRestored(true)
+    } catch {}
   }, [searchParams])
 
   useEffect(() => {
@@ -81,6 +102,25 @@ function StudioContent() {
       .then(data => { if (data.masterDocSummary) setMasterDoc(data.masterDocSummary) })
       .catch(() => {})
   }, [])
+
+  // Load recent saved scripts for the "Previous scripts" panel
+  useEffect(() => {
+    fetch('/api/scripts')
+      .then(r => r.ok ? r.json() : [])
+      .then(data => setRecentScripts(Array.isArray(data) ? data.slice(0, 5) : []))
+      .catch(() => {})
+  }, [])
+
+  // Auto-save session so user can pick up where they left off after navigating away
+  useEffect(() => {
+    if (!idea && !output) return
+    const timer = setTimeout(() => {
+      try {
+        localStorage.setItem('ss:studio:draft', JSON.stringify({ idea, format, tone, language, output }))
+      } catch {}
+    }, 800)
+    return () => clearTimeout(timer)
+  }, [idea, format, tone, language, output])
 
   const hooks = scan?.hooks?.slice(0, 6) ?? []
   const displayHooks = hooks.length > 0 ? hooks.map(h => h.text) : FALLBACK_HOOKS
@@ -112,7 +152,7 @@ function StudioContent() {
   async function callGroq(promptType: 'full' | 'hooks' | 'caption') {
     if (!idea.trim()) return
     if (output) pushToHistory(output)
-    setLoading(true); setError(null); setOutput(''); setSaved(false); setShotList([]); setShotListError(null)
+    setLoading(true); setError(null); setOutput(''); setSaved(false); setShotList([]); setShotListError(null); setSessionRestored(false)
     const langInstruction = LANG_INSTRUCTION[language]
     try {
       let payload: { prompt: string; systemPrompt: string; maxTokens: number }
@@ -268,13 +308,51 @@ function StudioContent() {
 
   function scheduleToDay(dayNum: number) {
     if (!savedScriptData) return
+    // 1. Save attachment reference
     try {
-      const existing = JSON.parse(localStorage.getItem('ss:calendar:scripts') ?? '{}')
-      existing[dayNum] = { id: savedScriptData.id, hookLine: savedScriptData.hookLine, output, format }
-      localStorage.setItem('ss:calendar:scripts', JSON.stringify(existing))
+      const scripts = JSON.parse(localStorage.getItem('ss:calendar:scripts') ?? '{}')
+      scripts[dayNum] = { id: savedScriptData.id, hookLine: savedScriptData.hookLine, output, format }
+      localStorage.setItem('ss:calendar:scripts', JSON.stringify(scripts))
+    } catch {}
+    // 2. Update the calendar day's content so it shows this script, not the Groq idea
+    try {
+      const hookMatch = output.match(/\[HOOK\]([\s\S]*?)(?=\[BODY\]|$)/)
+      const scriptHook = hookMatch?.[1]?.trim().split('\n')[0] || savedScriptData.hookLine
+      const calEdits = JSON.parse(localStorage.getItem('ss:calendar:edits') ?? '{}')
+      calEdits[dayNum] = { ...(calEdits[dayNum] ?? {}), title: savedScriptData.hookLine, hook: scriptHook }
+      localStorage.setItem('ss:calendar:edits', JSON.stringify(calEdits))
     } catch {}
     setScheduledDay(dayNum)
     setCalPickerOpen(false)
+  }
+
+  function clearSession() {
+    setIdea(''); setOutput(''); setShotList([]); setHistory([])
+    setSaved(false); setSavedScriptData(null); setScheduledDay(null); setSessionRestored(false)
+    try { localStorage.removeItem('ss:studio:draft') } catch {}
+  }
+
+  function loadFromSaved(script: SavedScript) {
+    if (output) pushToHistory(output)
+    setIdea(script.input)
+    setOutput(script.output)
+    setSaved(false); setSavedScriptData(null); setScheduledDay(null); setShotList([]); setSessionRestored(false)
+  }
+
+  function copyShot(shot: ShotItem) {
+    const text = `${String(shot.n).padStart(2, '0')} | ${shot.type.toUpperCase()} | ${shot.frame} | ref: ${shot.vibe} | ${shot.sec}`
+    navigator.clipboard.writeText(text)
+    setShotCopied(shot.n)
+    setTimeout(() => setShotCopied(null), 1500)
+  }
+
+  function copyAllShots() {
+    const text = `SHOT LIST\n\n${shotList.map(s =>
+      `${String(s.n).padStart(2, '0')} | ${s.type.toUpperCase()} | ${s.frame} | ref: ${s.vibe} | ${s.sec}`
+    ).join('\n')}`
+    navigator.clipboard.writeText(text)
+    setShotListCopied(true)
+    setTimeout(() => setShotListCopied(false), 1800)
   }
 
   function selectHistory(text: string) {
@@ -402,6 +480,38 @@ function StudioContent() {
             </div>
           )}
 
+          {/* Previous scripts */}
+          {recentScripts.length > 0 && (
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                <FieldLabel>Previous scripts</FieldLabel>
+                <a href="/saved" style={{ fontSize: 11, color: 'var(--accent)', textDecoration: 'none', fontWeight: 500 }}>All →</a>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                {recentScripts.map(s => (
+                  <button
+                    key={s.id}
+                    onClick={() => loadFromSaved(s)}
+                    style={{
+                      textAlign: 'left', display: 'flex', alignItems: 'center', gap: 8,
+                      fontSize: 12, padding: '7px 10px', borderRadius: 7,
+                      background: 'transparent', border: '1px solid var(--border)',
+                      color: 'var(--text-secondary)', cursor: 'pointer',
+                      transition: 'all 120ms ease', fontFamily: 'inherit', width: '100%',
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-card)'; e.currentTarget.style.color = 'var(--text-primary)' }}
+                    onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-secondary)' }}
+                  >
+                    <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--accent)', background: 'var(--accent-subtle)', border: '1px solid var(--accent-border)', borderRadius: 3, padding: '1px 6px', flexShrink: 0, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                      {s.format?.split(' ')[0] ?? '—'}
+                    </span>
+                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{s.hookLine}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Quick inject */}
           <div>
             <FieldLabel>Quick inject</FieldLabel>
@@ -476,6 +586,14 @@ function StudioContent() {
           )}
           {!loading && !error && output && (
             <>
+              {sessionRestored && (
+                <div style={{ marginBottom: 10, display: 'flex', alignItems: 'center', gap: 10, padding: '6px 12px', background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: 7 }}>
+                  <span style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>↩ Last session restored</span>
+                  <button onClick={clearSession} className="btn-ghost" style={{ fontSize: 11, width: 'auto', padding: '2px 8px', marginLeft: 'auto', color: 'var(--text-tertiary)' }}>
+                    Start fresh
+                  </button>
+                </div>
+              )}
               {regenError && (
                 <div style={{ marginBottom: 10, padding: '7px 12px', background: 'var(--red-subtle)', border: '1px solid rgba(196,43,47,0.2)', fontSize: 12, color: 'var(--red)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   {regenError}
@@ -540,13 +658,24 @@ function StudioContent() {
         {shotList.length > 0 && (
           <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 10, padding: '16px 20px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-              <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-tertiary)' }}>Shot List</p>
-              <button onClick={() => setShotList([])} className="btn-ghost" style={{ fontSize: 12, width: 'auto', height: 'auto', padding: '2px 6px' }}>×</button>
+              <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-tertiary)' }}>
+                Shot List — {shotList.length} shots
+              </p>
+              <div style={{ display: 'flex', gap: 6 }}>
+                <button
+                  onClick={copyAllShots}
+                  className="btn-ghost"
+                  style={{ fontSize: 11, width: 'auto', padding: '2px 10px', color: shotListCopied ? 'var(--green)' : 'var(--text-tertiary)' }}
+                >
+                  {shotListCopied ? '✓ Copied' : 'Copy all'}
+                </button>
+                <button onClick={() => setShotList([])} className="btn-ghost" style={{ fontSize: 12, width: 'auto', height: 'auto', padding: '2px 8px' }}>×</button>
+              </div>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {shotList.map(shot => (
-                <div key={shot.n} style={{ display: 'grid', gridTemplateColumns: '24px 1fr', gap: 10, padding: '10px 12px', background: 'var(--bg-elevated)', borderRadius: 7, border: '1px solid var(--border-subtle)' }}>
-                  <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-tertiary)', paddingTop: 1 }}>
+                <div key={shot.n} style={{ display: 'grid', gridTemplateColumns: '24px 1fr auto', gap: 10, padding: '10px 12px', background: 'var(--bg-elevated)', borderRadius: 7, border: '1px solid var(--border-subtle)', alignItems: 'start' }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-tertiary)', paddingTop: 2 }}>
                     {String(shot.n).padStart(2, '0')}
                   </span>
                   <div>
@@ -559,6 +688,14 @@ function StudioContent() {
                     </div>
                     <p style={{ fontSize: 12, color: 'var(--text-primary)', lineHeight: 1.5 }}>{shot.frame}</p>
                   </div>
+                  <button
+                    onClick={() => copyShot(shot)}
+                    className="btn-ghost"
+                    style={{ fontSize: 11, width: 'auto', height: 'auto', padding: '2px 8px', color: shotCopied === shot.n ? 'var(--green)' : 'var(--text-tertiary)', flexShrink: 0, marginTop: 2 }}
+                    title="Copy this shot"
+                  >
+                    {shotCopied === shot.n ? '✓' : '⎘'}
+                  </button>
                 </div>
               ))}
             </div>

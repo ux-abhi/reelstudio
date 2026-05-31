@@ -60,9 +60,18 @@ export default function SavedPage() {
 
   function assignToDay(dayNumber: number) {
     if (!schedulingScript) return
+    // 1. Save script attachment reference
     const next = { ...getAttachedMap(), [dayNumber]: { id: schedulingScript.id, hookLine: schedulingScript.hookLine, output: schedulingScript.output, format: schedulingScript.format } }
     localStorage.setItem(LS_CAL_SCRIPTS, JSON.stringify(next))
     setAttached(next)
+    // 2. Update calendar day content so it shows this script, not the Groq idea
+    try {
+      const hookMatch = schedulingScript.output?.match(/\[HOOK\]([\s\S]*?)(?=\[BODY\]|$)/)
+      const scriptHook = hookMatch?.[1]?.trim().split('\n')[0] || schedulingScript.hookLine
+      const calEdits = JSON.parse(localStorage.getItem('ss:calendar:edits') ?? '{}')
+      calEdits[dayNumber] = { ...(calEdits[dayNumber] ?? {}), title: schedulingScript.hookLine, hook: scriptHook }
+      localStorage.setItem('ss:calendar:edits', JSON.stringify(calEdits))
+    } catch {}
     setScheduledDay(dayNumber)
     setTimeout(() => {
       setSchedulingScript(null)
