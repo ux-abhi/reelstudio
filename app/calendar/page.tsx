@@ -39,6 +39,7 @@ export default function CalendarPage() {
   const [attached, setAttached]     = useState<CalendarScripts>({})
   const [editingDay, setEditingDay] = useState<number | null>(null)
   const [draft, setDraft]           = useState<Partial<CalendarDay>>({})
+  const [savedDay, setSavedDay]     = useState<number | null>(null)
   const [pickerDay, setPickerDay]   = useState<number | null>(null)
   const [scripts, setScripts]       = useState<SavedScript[]>([])
   const [scriptsLoading, setScriptsLoading] = useState(false)
@@ -73,11 +74,24 @@ export default function CalendarPage() {
     setDraft({ title: day.title, hook: day.hook, postType: day.postType, triggerWord: day.triggerWord ?? '', postingTime: day.postingTime })
   }
 
-  function saveEdit(dayNumber: number) {
+  async function saveEdit(dayNumber: number) {
     const next = { ...edits, [dayNumber]: { ...(edits[dayNumber] ?? {}), ...draft } }
     setEdits(next)
     localStorage.setItem(LS_EDITS, JSON.stringify(next))
     setEditingDay(null)
+    setSavedDay(dayNumber)
+    setTimeout(() => setSavedDay(null), 1800)
+
+    // Persist to database so edits survive page reloads and session changes
+    try {
+      await fetch('/api/calendar', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dayNumber, edits: draft }),
+      })
+    } catch {
+      // localStorage already has the edit — silently ignore network errors
+    }
   }
 
   async function openPicker(dayNumber: number) {
@@ -126,13 +140,15 @@ export default function CalendarPage() {
             <div style={{ background: 'var(--bg-card)', borderRadius: 10, border: '1px solid var(--border)', overflow: 'hidden' }}>
               {week.map((day: CalendarDay, di) => {
                 const isEditing = editingDay === day.dayNumber
+                const isSaved   = savedDay === day.dayNumber
                 const script    = attached[day.dayNumber]
                 return (
                   <div
                     key={day.dayNumber}
                     style={{
                       borderBottom: di < week.length - 1 ? '1px solid var(--border-subtle)' : 'none',
-                      transition: 'background 100ms ease',
+                      borderLeft: isSaved ? '3px solid var(--green)' : '3px solid transparent',
+                      transition: 'background 100ms ease, border-left-color 400ms ease',
                     }}
                   >
                     {/* Main row */}
