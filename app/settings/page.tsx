@@ -140,6 +140,7 @@ export default function SettingsPage() {
             </label>
             <input
               className="input"
+              maxLength={50}
               value={name}
               onChange={e => setName(e.target.value)}
               placeholder="Your name"
@@ -152,6 +153,7 @@ export default function SettingsPage() {
             </label>
             <input
               className="input"
+              maxLength={100}
               value={handleInput}
               onChange={e => setHandleInput(e.target.value)}
               placeholder="@yourhandle or instagram.com/yourhandle"
@@ -167,6 +169,7 @@ export default function SettingsPage() {
             </label>
             <input
               className="input"
+              maxLength={80}
               value={niche}
               onChange={e => setNiche(e.target.value)}
               placeholder="e.g. UX design, fitness coaching, personal finance..."

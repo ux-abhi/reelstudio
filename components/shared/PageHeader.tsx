@@ -36,6 +36,10 @@ export function PageHeader({ title, subtitle, label, action }: PageHeaderProps) 
           color: 'var(--text-primary)',
           letterSpacing: '-0.03em',
           lineHeight: 1.15,
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+          maxWidth: '100%',
         }}>
           {title}
         </h1>
@@ -45,6 +49,10 @@ export function PageHeader({ title, subtitle, label, action }: PageHeaderProps) 
             color: 'var(--text-secondary)',
             marginTop: 5,
             lineHeight: 1.5,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            maxWidth: '100%',
           }}>
             {subtitle}
           </p>

@@ -8,26 +8,34 @@ export default function SavedPage() {
   const router = useRouter()
   const [scripts, setScripts] = useState<SavedScript[]>([])
   const [loading, setLoading] = useState(true)
+  const [fetchError, setFetchError] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [filterFormat, setFilterFormat] = useState('All')
   const [expanded, setExpanded] = useState<string | null>(null)
   const [copied, setCopied] = useState<string | null>(null)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   useEffect(() => {
     fetch('/api/scripts')
-      .then(r => r.json())
+      .then(r => { if (!r.ok) throw new Error('Failed to load saved scripts'); return r.json() })
       .then(data => { setScripts(Array.isArray(data) ? data : []); setLoading(false) })
-      .catch(() => setLoading(false))
+      .catch(e => { setFetchError(e instanceof Error ? e.message : 'Failed to load scripts'); setLoading(false) })
   }, [])
 
   async function handleDelete(id: string) {
-    await fetch('/api/scripts', {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id }),
-    })
-    setScripts(s => s.filter(sc => sc.id !== id))
-    if (expanded === id) setExpanded(null)
+    try {
+      const res = await fetch('/api/scripts', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      })
+      if (!res.ok) throw new Error('Delete failed — try again')
+      setScripts(s => s.filter(sc => sc.id !== id))
+      if (expanded === id) setExpanded(null)
+    } catch (e: unknown) {
+      setDeleteError(e instanceof Error ? e.message : 'Delete failed')
+      setTimeout(() => setDeleteError(null), 4000)
+    }
   }
 
   async function handleCopy(script: SavedScript) {
@@ -54,9 +62,24 @@ export default function SavedPage() {
     return matchFormat && matchSearch
   })
 
+  if (fetchError) return (
+    <div className="page-enter" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+      <PageHeader label="Saved" title="Save Board" subtitle="Could not load scripts" />
+      <div style={{ padding: '20px', background: 'var(--red-subtle)', border: '1px solid rgba(196,43,47,0.2)', fontSize: 13, color: 'var(--red)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        {fetchError}
+        <button onClick={() => window.location.reload()} className="btn-secondary" style={{ fontSize: 12 }}>Retry</button>
+      </div>
+    </div>
+  )
+
   return (
     <div className="page-enter" style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
       <PageHeader label="Saved" title="Save Board" subtitle={`${scripts.length} saved script${scripts.length !== 1 ? 's' : ''}`} />
+      {deleteError && (
+        <div style={{ padding: '10px 14px', background: 'var(--red-subtle)', border: '1px solid rgba(196,43,47,0.2)', fontSize: 12, color: 'var(--red)' }}>
+          {deleteError}
+        </div>
+      )}
 
       {/* Filters */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>

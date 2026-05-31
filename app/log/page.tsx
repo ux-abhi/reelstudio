@@ -105,14 +105,16 @@ export default function LogPage() {
     if (saved[id] || saving === id) return
     setSaving(id)
     try {
-      await fetch('/api/scripts', {
+      const res = await fetch('/api/scripts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...payload, input: input.slice(0, 300), pillar: '' }),
       })
+      if (!res.ok) throw new Error('Save failed')
       setSaved(s => ({ ...s, [id]: true }))
     } catch {
-      // silent — user can retry
+      // Mark as save-failed so button re-enables
+      setSaving(null)
     } finally {
       setSaving(null)
     }
@@ -153,11 +155,17 @@ export default function LogPage() {
 
           {/* Textarea */}
           <div>
-            <p className="section-label" style={{ marginBottom: 8 }}>
-              What happened {timeframe === 'day' ? 'today' : 'this week'}?
-            </p>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+              <p className="section-label">
+                What happened {timeframe === 'day' ? 'today' : 'this week'}?
+              </p>
+              <span style={{ fontSize: 11, color: input.length > 900 ? 'var(--red)' : 'var(--text-tertiary)', fontWeight: input.length > 900 ? 600 : 400 }}>
+                {input.length}/1000
+              </span>
+            </div>
             <textarea
               className="input"
+              maxLength={1000}
               value={input}
               onChange={e => setInput(e.target.value)}
               placeholder={`Just dump it — rough notes are fine.\n\nE.g. "Finished the design system sprint, got feedback from the client, realised the component naming was inconsistent..."`}

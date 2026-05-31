@@ -53,6 +53,9 @@ function StudioContent() {
   const [masterDoc, setMasterDoc] = useState<DocSummary | null>(null)
   const [history, setHistory] = useState<string[]>([])
   const [sectionLoading, setSectionLoading] = useState<'hook' | 'body' | 'cta' | null>(null)
+  const [regenError, setRegenError] = useState<string | null>(null)
+  const [variantError, setVariantError] = useState<string | null>(null)
+  const [saveError, setSaveError] = useState<string | null>(null)
   const [variants, setVariants] = useState<string[]>([])
   const [variantsLoading, setVariantsLoading] = useState(false)
 
@@ -136,6 +139,7 @@ function StudioContent() {
 
   async function regenSection(section: 'hook' | 'body' | 'cta') {
     setSectionLoading(section)
+    setRegenError(null)
     const parts = parseScript(output)
     const sectionText = parts[section]
     const regenPrompt = buildInstagramSectionRegenPrompt(
@@ -150,6 +154,7 @@ function StudioContent() {
       const data = await res.json()
       if (data.error) throw new Error(data.error)
       const newText = data.text.trim()
+      if (!newText) throw new Error('Got empty response — try again')
       pushToHistory(output)
       const rebuilt = [
         '[HOOK]', section === 'hook' ? newText : parts.hook,
@@ -157,8 +162,8 @@ function StudioContent() {
         '[CTA]',  section === 'cta'  ? newText : parts.cta,
       ].join('\n')
       setOutput(rebuilt)
-    } catch {
-      // silent — output unchanged
+    } catch (e: unknown) {
+      setRegenError(e instanceof Error ? e.message : `Failed to rewrite ${section}`)
     } finally {
       setSectionLoading(null)
     }
@@ -168,6 +173,7 @@ function StudioContent() {
     if (!idea.trim()) return
     setVariantsLoading(true)
     setVariants([])
+    setVariantError(null)
     try {
       const variantsPrompt = buildInstagramVariantsPrompt(idea, format, tone, who, docContext, trendingKeywords)
       const res = await fetch('/api/groq', {
@@ -178,9 +184,11 @@ function StudioContent() {
       const data = await res.json()
       if (data.error) throw new Error(data.error)
       const lines = (data.text as string).split('\n').filter(l => /^\d+\./.test(l.trim()))
-      setVariants(lines.map(l => l.replace(/^\d+\.\s*/, '').trim()).filter(Boolean))
-    } catch {
-      // silent
+      const parsed = lines.map(l => l.replace(/^\d+\.\s*/, '').trim()).filter(Boolean)
+      if (parsed.length === 0) throw new Error('No hook variants returned — try again')
+      setVariants(parsed)
+    } catch (e: unknown) {
+      setVariantError(e instanceof Error ? e.message : 'Variant generation failed')
     } finally {
       setVariantsLoading(false)
     }
@@ -189,15 +197,20 @@ function StudioContent() {
   async function handleSave() {
     if (!output) return
     setIsSaving(true)
+    setSaveError(null)
+    setSaved(false)
     const hookMatch = output.match(/\[HOOK\]([\s\S]*?)(?=\[BODY\]|$)/)
     const hookLine = hookMatch?.[1]?.trim().split('\n')[0] ?? output.split('\n')[0]
     try {
-      await fetch('/api/scripts', {
+      const res = await fetch('/api/scripts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ format, tone, pillar: '', input: idea, output, hookLine }),
       })
+      if (!res.ok) throw new Error('Failed to save — try again')
       setSaved(true)
+    } catch (e: unknown) {
+      setSaveError(e instanceof Error ? e.message : 'Save failed')
     } finally {
       setIsSaving(false)
     }
@@ -243,10 +256,16 @@ function StudioContent() {
           </div>
 
           <div>
-            <FieldLabel>Your idea</FieldLabel>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+              <FieldLabel>Your idea</FieldLabel>
+              <span style={{ fontSize: 11, color: idea.length > 450 ? 'var(--red)' : 'var(--text-tertiary)', fontWeight: idea.length > 450 ? 600 : 400 }}>
+                {idea.length}/500
+              </span>
+            </div>
             <textarea
               className="input"
               rows={5}
+              maxLength={500}
               value={idea}
               onChange={e => setIdea(e.target.value)}
               placeholder="Drop your raw idea, bullet points, or messy notes here..."
@@ -280,6 +299,11 @@ function StudioContent() {
             >
               {variantsLoading ? 'Generating variants...' : 'A/B Hooks — 3 variants'}
             </button>
+            {variantError && (
+              <p style={{ fontSize: 11, color: 'var(--red)', padding: '6px 10px', background: 'var(--red-subtle)', border: '1px solid rgba(196,43,47,0.2)' }}>
+                {variantError}
+              </p>
+            )}
           </div>
 
           {/* A/B hook variants */}
@@ -389,18 +413,32 @@ function StudioContent() {
             </div>
           )}
           {!loading && !error && output && (
-            <ScriptOutput
-              output={output}
-              format={format}
-              onOutputChange={setOutput}
-              onSave={handleSave}
-              isSaving={isSaving}
-              saved={saved}
-              onRegenerateSection={regenSection}
-              sectionLoading={sectionLoading}
-              history={history}
-              onSelectHistory={selectHistory}
-            />
+            <>
+              {regenError && (
+                <div style={{ marginBottom: 10, padding: '7px 12px', background: 'var(--red-subtle)', border: '1px solid rgba(196,43,47,0.2)', fontSize: 12, color: 'var(--red)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  {regenError}
+                  <button onClick={() => setRegenError(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--red)', fontSize: 14 }}>×</button>
+                </div>
+              )}
+              {saveError && (
+                <div style={{ marginBottom: 10, padding: '7px 12px', background: 'var(--red-subtle)', border: '1px solid rgba(196,43,47,0.2)', fontSize: 12, color: 'var(--red)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  {saveError}
+                  <button onClick={() => setSaveError(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--red)', fontSize: 14 }}>×</button>
+                </div>
+              )}
+              <ScriptOutput
+                output={output}
+                format={format}
+                onOutputChange={setOutput}
+                onSave={handleSave}
+                isSaving={isSaving}
+                saved={saved}
+                onRegenerateSection={regenSection}
+                sectionLoading={sectionLoading}
+                history={history}
+                onSelectHistory={selectHistory}
+              />
+            </>
           )}
         </div>
       </div>

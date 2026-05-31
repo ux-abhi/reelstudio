@@ -127,6 +127,7 @@ export default function OnboardingPage() {
                   </label>
                   <input
                     className="input"
+                    maxLength={50}
                     value={name}
                     onChange={e => setName(e.target.value)}
                     placeholder="Your name"
@@ -204,6 +205,7 @@ export default function OnboardingPage() {
                   </label>
                   <input
                     className="input"
+                    maxLength={100}
                     value={handleInput}
                     onChange={e => setHandleInput(e.target.value)}
                     placeholder="@yourhandle or instagram.com/yourhandle"
@@ -281,6 +283,7 @@ export default function OnboardingPage() {
                   </label>
                   <input
                     className="input"
+                    maxLength={80}
                     value={NICHE_PILLS.includes(niche) ? '' : niche}
                     onChange={e => setNiche(e.target.value)}
                     onFocus={() => { if (NICHE_PILLS.includes(niche)) setNiche('') }}

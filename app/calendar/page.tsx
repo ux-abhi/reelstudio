@@ -216,6 +216,7 @@ export default function CalendarPage() {
                           </select>
                           <input
                             className="input"
+                            maxLength={20}
                             value={draft.triggerWord ?? ''}
                             onChange={e => setDraft(d => ({ ...d, triggerWord: e.target.value }))}
                             placeholder='Trigger word (e.g. "TOOLS")'
@@ -223,14 +224,16 @@ export default function CalendarPage() {
                           />
                           <input
                             className="input"
+                            maxLength={10}
                             value={draft.postingTime ?? ''}
                             onChange={e => setDraft(d => ({ ...d, postingTime: e.target.value }))}
-                            placeholder="Posting time"
-                            style={{ fontSize: 12, width: 110 }}
+                            placeholder="19:00"
+                            style={{ fontSize: 12, width: 90 }}
                           />
                         </div>
                         <input
                           className="input"
+                          maxLength={120}
                           value={draft.title ?? ''}
                           onChange={e => setDraft(d => ({ ...d, title: e.target.value }))}
                           placeholder="Post title"
@@ -238,6 +241,7 @@ export default function CalendarPage() {
                         />
                         <textarea
                           className="input"
+                          maxLength={300}
                           value={draft.hook ?? ''}
                           onChange={e => setDraft(d => ({ ...d, hook: e.target.value }))}
                           placeholder="Hook / opening line"

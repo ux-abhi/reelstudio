@@ -432,6 +432,7 @@ function HooksTab({ niche }: { niche: string }) {
   const [aiType, setAiType]           = useState<UserHook['type']>('curiosity')
   const [aiGenerating, setAiGenerating] = useState(false)
   const [aiResults, setAiResults]     = useState<string[]>([])
+  const [aiError, setAiError]         = useState<string | null>(null)
   const [savedIdxs, setSavedIdxs]     = useState<Set<number>>(new Set())
 
   const visibleTypes = ['curiosity', 'story', 'hot-take', 'hinglish'] as const
@@ -496,12 +497,17 @@ Return ONLY a JSON array of 3 strings:
 ["hook 1", "hook 2", "hook 3"]`
       const res  = await fetch('/api/groq', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt, maxTokens: 200 }) })
       const data = await res.json()
-      if (data.text) {
-        const clean   = data.text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim()
-        const parsed: string[] = JSON.parse(clean)
-        setAiResults(Array.isArray(parsed) ? parsed.filter(Boolean) : [])
-      }
-    } catch { setAiResults([]) }
+      if (data.error) throw new Error(data.error)
+      const clean   = data.text?.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim() ?? ''
+      let parsed: string[] = []
+      try { parsed = JSON.parse(clean) } catch { throw new Error('AI returned unexpected format — try again') }
+      const valid = Array.isArray(parsed) ? parsed.filter(Boolean) : []
+      if (valid.length === 0) throw new Error('No hooks generated — try a different topic')
+      setAiResults(valid)
+    } catch (e: unknown) {
+      setAiError(e instanceof Error ? e.message : 'Generation failed')
+      setAiResults([])
+    }
     finally { setAiGenerating(false) }
   }
 
@@ -705,6 +711,7 @@ function IdeasTab({ niche }: { niche: string }) {
   const [aiPillar, setAiPillar]         = useState('')
   const [aiGenerating, setAiGenerating] = useState(false)
   const [aiResults, setAiResults]       = useState<Omit<UserIdea, 'id'>[]>([])
+  const [aiError, setAiError]           = useState<string | null>(null)
   const [savedIdxs, setSavedIdxs]       = useState<Set<number>>(new Set())
 
   useEffect(() => {
@@ -749,11 +756,13 @@ Trending: ${trending || 'use your knowledge of current trends in this creator\'s
 Return ONLY JSON (no markdown): { "title": "...", "whyNow": "...", "hookSuggestion": "...", "urgency": "post this week|post this month|evergreen", "triggerWord": "..." }`
       const res  = await fetch('/api/groq', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt, maxTokens: 300 }) })
       const data = await res.json()
-      if (data.text) {
-        const parsed = JSON.parse(data.text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim())
-        persist(ideas.map(i => i.id === idea.id ? { ...i, title: parsed.title ?? i.title, whyNow: parsed.whyNow ?? i.whyNow, hookSuggestion: parsed.hookSuggestion ?? i.hookSuggestion, urgency: parsed.urgency ?? i.urgency, triggerWord: parsed.triggerWord ?? i.triggerWord } : i))
-      }
-    } catch { }
+      if (data.error) throw new Error(data.error)
+      const clean = data.text?.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim() ?? ''
+      const parsed = JSON.parse(clean)
+      persist(ideas.map(i => i.id === idea.id ? { ...i, title: parsed.title ?? i.title, whyNow: parsed.whyNow ?? i.whyNow, hookSuggestion: parsed.hookSuggestion ?? i.hookSuggestion, urgency: parsed.urgency ?? i.urgency, triggerWord: parsed.triggerWord ?? i.triggerWord } : i))
+    } catch (e: unknown) {
+      console.error('[refreshIdea]', e instanceof Error ? e.message : e)
+    }
     finally { setRefreshingId(null) }
   }
 
@@ -781,11 +790,16 @@ Return ONLY a JSON array (no markdown):
 ]`
       const res  = await fetch('/api/groq', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt, maxTokens: 800 }) })
       const data = await res.json()
-      if (data.text) {
-        const parsed = JSON.parse(data.text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim())
-        setAiResults(Array.isArray(parsed) ? parsed : [])
-      }
-    } catch { setAiResults([]) }
+      if (data.error) throw new Error(data.error)
+      const clean = data.text?.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim() ?? ''
+      let parsed: Omit<UserIdea, 'id'>[] = []
+      try { parsed = JSON.parse(clean) } catch { throw new Error('AI returned unexpected format — try again') }
+      if (!Array.isArray(parsed) || parsed.length === 0) throw new Error('No ideas generated — try a different topic')
+      setAiResults(parsed)
+    } catch (e: unknown) {
+      setAiError(e instanceof Error ? e.message : 'Generation failed')
+      setAiResults([])
+    }
     finally { setAiGenerating(false) }
   }
 

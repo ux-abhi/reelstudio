@@ -125,7 +125,8 @@ Return ONLY this JSON (no markdown):
       const data = await res.json()
       if (data.error) throw new Error(data.error)
       const clean = data.text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim()
-      const result: CompetitorAnalysis = JSON.parse(clean)
+      let result: CompetitorAnalysis
+      try { result = JSON.parse(clean) } catch { throw new Error('AI returned unexpected format — try again') }
       const updated = [result, ...competitors.filter(c => c.handle !== result.handle)]
       saveCompetitors(updated)
       setSelected(result)
@@ -157,7 +158,9 @@ Return ONLY this JSON (no markdown):
       const data = await res.json()
       if (data.error) throw new Error(data.error)
       const clean = data.text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim()
-      const ideas: CompetitorIdea[] = JSON.parse(clean)
+      let ideas: CompetitorIdea[]
+      try { ideas = JSON.parse(clean) } catch { throw new Error('AI returned unexpected format — try again') }
+      if (!Array.isArray(ideas) || ideas.length === 0) throw new Error('No ideas generated — try again')
       setPipelineIdeas(ideas)
     } catch (e: unknown) {
       setIdeasError(e instanceof Error ? e.message : 'Failed to generate ideas')
