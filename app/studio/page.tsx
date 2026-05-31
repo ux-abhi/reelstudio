@@ -66,6 +66,7 @@ function StudioContent() {
   const [shotListError, setShotListError] = useState<string | null>(null)
   const [shotCopied, setShotCopied] = useState<number | null>(null)
   const [shotListCopied, setShotListCopied] = useState(false)
+  const [shotsSaved, setShotsSaved] = useState(false)
   const [savedScriptData, setSavedScriptData] = useState<{ id: string; hookLine: string } | null>(null)
   const [calPickerOpen, setCalPickerOpen] = useState(false)
   const [calDays, setCalDays] = useState<{ dayNumber: number; date: string; dayName: string; postType: string; title: string; postingTime: string }[]>([])
@@ -92,6 +93,7 @@ function StudioContent() {
       if (d.tone) setTone(d.tone)
       if (d.language && LANGUAGES.includes(d.language as Language)) setLanguage(d.language as Language)
       setOutput(d.output)
+      if (Array.isArray(d.shotList) && d.shotList.length) setShotList(d.shotList)
       setSessionRestored(true)
     } catch {}
   }, [searchParams])
@@ -116,11 +118,11 @@ function StudioContent() {
     if (!idea && !output) return
     const timer = setTimeout(() => {
       try {
-        localStorage.setItem('ss:studio:draft', JSON.stringify({ idea, format, tone, language, output }))
+        localStorage.setItem('ss:studio:draft', JSON.stringify({ idea, format, tone, language, output, shotList: shotList.length > 0 ? shotList : undefined }))
       } catch {}
     }, 800)
     return () => clearTimeout(timer)
-  }, [idea, format, tone, language, output])
+  }, [idea, format, tone, language, output, shotList])
 
   const hooks = scan?.hooks?.slice(0, 6) ?? []
   const displayHooks = hooks.length > 0 ? hooks.map(h => h.text) : FALLBACK_HOOKS
@@ -152,7 +154,7 @@ function StudioContent() {
   async function callGroq(promptType: 'full' | 'hooks' | 'caption') {
     if (!idea.trim()) return
     if (output) pushToHistory(output)
-    setLoading(true); setError(null); setOutput(''); setSaved(false); setShotList([]); setShotListError(null); setSessionRestored(false)
+    setLoading(true); setError(null); setOutput(''); setSaved(false); setShotList([]); setShotListError(null); setSessionRestored(false); setShotsSaved(false)
     const langInstruction = LANG_INSTRUCTION[language]
     try {
       let payload: { prompt: string; systemPrompt: string; maxTokens: number }
@@ -335,8 +337,21 @@ function StudioContent() {
   function loadFromSaved(script: SavedScript) {
     if (output) pushToHistory(output)
     setIdea(script.input)
-    setOutput(script.output)
-    setSaved(false); setSavedScriptData(null); setScheduledDay(null); setShotList([]); setSessionRestored(false)
+    // If the save includes a shot list, split it out and restore both
+    const splitIdx = script.output.indexOf('\n\n[SHOT LIST]')
+    if (splitIdx !== -1) {
+      setOutput(script.output.slice(0, splitIdx))
+      const rawShots = script.output.slice(splitIdx + 13).trim().split('\n').filter(l => l.includes(' | '))
+      const shots: ShotItem[] = rawShots.map((line, idx) => {
+        const p = line.split(' | ')
+        return { n: idx + 1, type: p[1]?.trim() ?? '', frame: p[2]?.trim() ?? '', vibe: p[3]?.replace('ref: ', '').trim() ?? '', sec: p[4]?.trim() ?? '' }
+      }).filter(s => s.type)
+      setShotList(shots)
+    } else {
+      setOutput(script.output)
+      setShotList([])
+    }
+    setSaved(false); setSavedScriptData(null); setScheduledDay(null); setShotsSaved(false); setSessionRestored(false)
   }
 
   function copyShot(shot: ShotItem) {
@@ -353,6 +368,50 @@ function StudioContent() {
     navigator.clipboard.writeText(text)
     setShotListCopied(true)
     setTimeout(() => setShotListCopied(false), 1800)
+  }
+
+  async function handleSaveWithShots() {
+    if (!output || !shotList.length) return
+    setIsSaving(true)
+    setSaveError(null)
+
+    const shotsText = shotList.map(s =>
+      `${String(s.n).padStart(2, '0')} | ${s.type} | ${s.frame} | ref: ${s.vibe} | ${s.sec}`
+    ).join('\n')
+    const combinedOutput = `${output}\n\n[SHOT LIST]\n${shotsText}`
+    const hookMatch = output.match(/\[HOOK\]([\s\S]*?)(?=\[BODY\]|$)/)
+    const hookLine = hookMatch?.[1]?.trim().split('\n')[0] ?? output.split('\n')[0]
+
+    try {
+      if (savedScriptData?.id) {
+        // Script already saved — update it in-place to append the shot list
+        const res = await fetch('/api/scripts', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: savedScriptData.id, output: combinedOutput }),
+        })
+        if (!res.ok) throw new Error('Update failed — try again')
+      } else {
+        // Script not yet saved — create a new save with combined output
+        const res = await fetch('/api/scripts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ format, tone, pillar: '', input: idea, output: combinedOutput, hookLine }),
+        })
+        if (!res.ok) throw new Error('Failed to save — try again')
+        const savedScript = await res.json()
+        if (savedScript?.id) {
+          setSavedScriptData({ id: savedScript.id, hookLine })
+          if (calendarDay) setScheduledDay(parseInt(calendarDay))
+        }
+        setSaved(true)
+      }
+      setShotsSaved(true)
+    } catch (e: unknown) {
+      setSaveError(e instanceof Error ? e.message : 'Save failed')
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   function selectHistory(text: string) {
@@ -661,13 +720,27 @@ function StudioContent() {
               <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-tertiary)' }}>
                 Shot List — {shotList.length} shots
               </p>
-              <div style={{ display: 'flex', gap: 6 }}>
+              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                {/* Save with script */}
+                {shotsSaved ? (
+                  <span style={{ fontSize: 11, color: 'var(--green)' }}>✓ Saved with script</span>
+                ) : (
+                  <button
+                    onClick={handleSaveWithShots}
+                    disabled={isSaving || !output}
+                    className="btn-secondary"
+                    style={{ fontSize: 11, padding: '2px 10px' }}
+                    title={savedScriptData?.id ? 'Add shots to your already-saved script' : 'Save this script and shot list together'}
+                  >
+                    {isSaving ? 'Saving...' : savedScriptData?.id ? 'Add shots to save' : 'Save with script'}
+                  </button>
+                )}
                 <button
                   onClick={copyAllShots}
                   className="btn-ghost"
                   style={{ fontSize: 11, width: 'auto', padding: '2px 10px', color: shotListCopied ? 'var(--green)' : 'var(--text-tertiary)' }}
                 >
-                  {shotListCopied ? '✓ Copied' : 'Copy all'}
+                  {shotListCopied ? '✓' : 'Copy all'}
                 </button>
                 <button onClick={() => setShotList([])} className="btn-ghost" style={{ fontSize: 12, width: 'auto', height: 'auto', padding: '2px 8px' }}>×</button>
               </div>

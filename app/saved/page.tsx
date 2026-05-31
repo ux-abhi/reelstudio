@@ -14,10 +14,24 @@ interface CalendarDayMini {
   pillar: string
 }
 
-const LS_CAL_SCRIPTS = 'ss:calendar:scripts'
+const LS_CAL_SCRIPTS  = 'ss:calendar:scripts'
+const LS_STUDIO_DRAFT = 'ss:studio:draft'
 
 function getAttachedMap(): Record<string, { id: string; hookLine: string }> {
   try { return JSON.parse(localStorage.getItem(LS_CAL_SCRIPTS) ?? '{}') } catch { return {} }
+}
+
+interface ParsedShot { n: number; type: string; frame: string; vibe: string; sec: string }
+
+function parseShotList(output: string): ParsedShot[] | null {
+  const idx = output.indexOf('\n\n[SHOT LIST]')
+  if (idx === -1) return null
+  const raw = output.slice(idx + 13).trim()
+  const shots = raw.split('\n').filter(l => l.includes(' | ')).map((line, i) => {
+    const p = line.split(' | ')
+    return { n: i + 1, type: p[1]?.trim() ?? '', frame: p[2]?.trim() ?? '', vibe: p[3]?.replace('ref: ', '').trim() ?? '', sec: p[4]?.trim() ?? '' }
+  }).filter(s => s.type)
+  return shots.length > 0 ? shots : null
 }
 
 export default function SavedPage() {
@@ -233,9 +247,35 @@ export default function SavedPage() {
 
                 {expanded === script.id && (
                   <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    {/* Script body — strip [SHOT LIST] section so it renders separately */}
                     <pre style={{ fontSize: 13, lineHeight: 1.7, whiteSpace: 'pre-wrap', color: 'var(--text-secondary)', fontFamily: 'inherit', background: 'var(--bg-elevated)', padding: '12px 14px', borderRadius: 7, border: '1px solid var(--border)' }}>
-                      {script.output}
+                      {script.output.includes('\n\n[SHOT LIST]')
+                        ? script.output.slice(0, script.output.indexOf('\n\n[SHOT LIST]'))
+                        : script.output}
                     </pre>
+
+                    {/* Shot list — shown when script was saved with shots */}
+                    {(() => {
+                      const shots = parseShotList(script.output)
+                      if (!shots) return null
+                      return (
+                        <div style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: 7, padding: '12px 14px' }}>
+                          <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-tertiary)', marginBottom: 10 }}>
+                            Shot List — {shots.length} shots
+                          </p>
+                          <div style={{ display: 'flex', flexDirection: 'column' }}>
+                            {shots.map((shot, si) => (
+                              <div key={shot.n} style={{ display: 'grid', gridTemplateColumns: '20px auto 1fr auto', gap: 8, padding: '7px 0', borderBottom: si < shots.length - 1 ? '1px solid var(--border-subtle)' : 'none', alignItems: 'baseline' }}>
+                                <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-tertiary)' }}>{String(shot.n).padStart(2, '0')}</span>
+                                <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--accent)', background: 'var(--accent-subtle)', border: '1px solid var(--accent-border)', borderRadius: 3, padding: '1px 6px', whiteSpace: 'nowrap' }}>{shot.type}</span>
+                                <span style={{ fontSize: 12, color: 'var(--text-primary)', lineHeight: 1.4 }}>{shot.frame}</span>
+                                <span style={{ fontSize: 10, color: 'var(--text-tertiary)', fontStyle: 'italic', whiteSpace: 'nowrap' }}>ref: {shot.vibe} · {shot.sec}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )
+                    })()}
                     <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
                       <button
                         onClick={() => handleCopy(script)}
@@ -245,7 +285,21 @@ export default function SavedPage() {
                         {copied === script.id ? '✓ Copied' : 'Copy'}
                       </button>
                       <button
-                        onClick={() => router.push(`/studio?idea=${encodeURIComponent(script.input)}`)}
+                        onClick={() => {
+                          // Set the full session draft (incl. shot list if present) then navigate
+                          try {
+                            const splitIdx = script.output.indexOf('\n\n[SHOT LIST]')
+                            const cleanOutput = splitIdx !== -1 ? script.output.slice(0, splitIdx) : script.output
+                            const shots = parseShotList(script.output)
+                            localStorage.setItem(LS_STUDIO_DRAFT, JSON.stringify({
+                              idea: script.input, format: script.format,
+                              tone: script.tone || 'Casual', language: 'English',
+                              output: cleanOutput,
+                              shotList: shots ?? undefined,
+                            }))
+                          } catch {}
+                          router.push('/studio')
+                        }}
                         className="btn-secondary"
                         style={{ fontSize: 12 }}
                       >
