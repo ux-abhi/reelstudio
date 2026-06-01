@@ -13,7 +13,6 @@ export async function getScanResult(userId: string): Promise<ScanResult | null> 
     .from('scans')
     .select('*')
     .eq('user_id', userId)
-    .gt('expires_at', new Date().toISOString())
     .order('scanned_at', { ascending: false })
     .limit(1)
     .maybeSingle()
