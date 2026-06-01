@@ -19,6 +19,7 @@ export default function SettingsPage() {
   const [name, setName] = useState('')
   const [handleInput, setHandleInput] = useState('')
   const [niche, setNiche] = useState('')
+  const [gender, setGender] = useState<'neutral' | 'male' | 'female'>('neutral')
   const [userEmail, setUserEmail] = useState('')
   const [saved, setSaved] = useState(false)
   const [scanning, setScanning] = useState(false)
@@ -38,6 +39,8 @@ export default function SettingsPage() {
       setName(localStorage.getItem('ss:name') ?? '')
       setHandleInput(localStorage.getItem('ss:handle') ?? '')
       setNiche(localStorage.getItem('ss:niche') ?? '')
+      const g = localStorage.getItem('ss:gender')
+      if (g === 'male' || g === 'female' || g === 'neutral') setGender(g)
     } catch {}
 
     createClient().auth.getUser().then(({ data }) => {
@@ -64,6 +67,7 @@ export default function SettingsPage() {
       localStorage.setItem('ss:handle', handle)
       if (niche.trim()) localStorage.setItem('ss:niche', niche.trim())
       else localStorage.removeItem('ss:niche')
+      localStorage.setItem('ss:gender', gender)
     } catch {}
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
@@ -175,6 +179,25 @@ export default function SettingsPage() {
               placeholder="e.g. UX design, fitness coaching, personal finance..."
               autoComplete="off"
             />
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: 11, fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'var(--text-tertiary)', marginBottom: 6 }}>
+              Hinglish voice gender
+              <span style={{ marginLeft: 6, fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>— adapts verb forms in Hinglish outputs</span>
+            </label>
+            <div className="segmented" style={{ width: '100%' }}>
+              {(['neutral', 'male', 'female'] as const).map(g => (
+                <button
+                  key={g}
+                  className={`segment${gender === g ? ' active' : ''}`}
+                  style={{ flex: 1, textTransform: 'capitalize' }}
+                  onClick={() => setGender(g)}
+                >
+                  {g === 'neutral' ? 'Neutral' : g === 'male' ? 'Male' : 'Female'}
+                </button>
+              ))}
+            </div>
           </div>
 
           {error && <p style={{ fontSize: 12, color: 'var(--red)' }}>{error}</p>}

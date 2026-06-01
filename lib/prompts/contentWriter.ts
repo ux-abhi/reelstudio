@@ -82,14 +82,13 @@ export function buildInstagramHooksPrompt(ctx: Pick<InstagramScriptContext, 'ide
 ${brandContext ? `Brand: ${brandContext.slice(0, 120)}\n` : ''}${trendingKeywords ? `Trending: ${trendingKeywords}\n` : ''}${topHooks?.length ? `Past hooks: ${topHooks.slice(0, 2).map(h => `"${h}"`).join(', ')}\n` : ''}
 Topic: ${idea}
 
-Write 5 hooks, one per type. None start with "I". Each specific, lands in <3s.
+Write exactly 3 hooks. Pick the 3 most powerful types for this specific topic.
+None start with "I". Each specific, lands in <3s.
 [CURIOSITY GAP] claim without explanation, forces watch
 [PATTERN INTERRUPT] unexpected or counterintuitive opener
-[RELATABLE PAIN] names a precise frustration ("3 hours", not "a long time")
-[HOT TAKE] confident controversial claim
 [RESULT FIRST] specific outcome, implies you'll reveal how
 
-Return only the 5 labelled hooks.`
+Return only the 3 labelled hooks. No extras.`
 }
 
 

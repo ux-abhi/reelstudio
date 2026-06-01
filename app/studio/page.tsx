@@ -21,13 +21,24 @@ import {
 } from '@/lib/prompts/contentWriter'
 
 type Language = 'English' | 'Hinglish' | 'Hindi'
+type Gender   = 'neutral' | 'male' | 'female'
 
 const LANGUAGES: Language[] = ['English', 'Hinglish', 'Hindi']
 
 const LANG_INSTRUCTION: Record<Language, string> = {
-  English:  'Write entirely in English. Casual and direct — never stiff, never a brand voice.',
+  English: 'Write entirely in English. Casual and direct — never stiff, never a brand voice.',
+  Hindi:   'Write primarily in Hindi using Devanagari script. Keep minimal English only for technical terms. Make it feel natural, not translated.',
+  // Hinglish is built dynamically via getHinglishInstruction() below
   Hinglish: 'Write in Hinglish — mix Hindi and English naturally. Use Devanagari words in Roman script. Never force it; let it flow.',
-  Hindi:    'Write primarily in Hindi using Devanagari script. Keep minimal English only for technical terms. Make it feel natural, not translated.',
+}
+
+function getHinglishInstruction(gender: Gender): string {
+  const genderNote: Record<Gender, string> = {
+    male:    'Use masculine verb forms and pronouns (karunga, gaya, karta hoon, mujhe).',
+    female:  'Use feminine verb forms and pronouns (karungi, gayi, karti hoon, mujhe).',
+    neutral: 'Avoid gendered verb conjugations where possible; prefer neutral constructions.',
+  }
+  return `Write in Hinglish — mix Hindi and English naturally. Use Devanagari words in Roman script. Never force it; let it flow. ${genderNote[gender]}`
 }
 
 const FALLBACK_HOOKS = [
@@ -47,6 +58,7 @@ function StudioContent() {
   const [format, setFormat] = useState('Reel 30–45s')
   const [tone, setTone] = useState('Casual')
   const [language, setLanguage] = useState<Language>('English')
+  const [gender, setGender] = useState<Gender>('neutral')
   const [idea, setIdea] = useState('')
   const [output, setOutput] = useState('')
   const [loading, setLoading] = useState(false)
@@ -103,6 +115,10 @@ function StudioContent() {
       .then(r => r.json())
       .then(data => { if (data.masterDocSummary) setMasterDoc(data.masterDocSummary) })
       .catch(() => {})
+    try {
+      const g = localStorage.getItem('ss:gender')
+      if (g === 'male' || g === 'female' || g === 'neutral') setGender(g)
+    } catch {}
   }, [])
 
   // Load recent saved scripts for the "Previous scripts" panel
@@ -155,7 +171,9 @@ function StudioContent() {
     if (!idea.trim()) return
     if (output) pushToHistory(output)
     setLoading(true); setError(null); setOutput(''); setSaved(false); setShotList([]); setShotListError(null); setSessionRestored(false); setShotsSaved(false)
-    const langInstruction = LANG_INSTRUCTION[language]
+    const langInstruction = language === 'Hinglish'
+      ? getHinglishInstruction(gender)
+      : LANG_INSTRUCTION[language]
     try {
       let payload: { prompt: string; systemPrompt: string; maxTokens: number }
       const baseCtx = {

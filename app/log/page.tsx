@@ -14,17 +14,18 @@ const NUDGES = [
   'What challenged or surprised you?',
 ]
 
-const FORMAT_COLOR: Record<string, string> = {
-  Reel:           'var(--accent)',
-  Carousel:       'var(--green)',
-  'Talking Head': 'var(--red)',
-}
+// All content types use the single design-system accent — format is already
+// communicated via the label text, so color should not carry additional meaning.
+const FORMAT_COLOR = 'var(--accent)'
 
 const LI_TYPE_COLOR: Record<string, string> = {
   story:    'var(--accent)',
-  insight:  'var(--green)',
+  insight:  'var(--accent)',
   progress: 'var(--yellow)',
 }
+
+const SESSION_KEY = 'ss:log:session'
+const DRAFT_KEY   = 'ss:log:draft'
 
 // ── Main page ──────────────────────────────────────────────────────────────────
 
@@ -33,24 +34,24 @@ export default function LogPage() {
   const router = useRouter()
 
   const [timeframe, setTimeframe] = useState<LogTimeframe>('week')
-  const [input, setInput] = useState('')
-  const [platform, setPlatform] = useState<'instagram' | 'linkedin'>('instagram')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [result, setResult] = useState<LogResult | null>(null)
-  const [copied, setCopied] = useState<string | null>(null)
-  const [saved, setSaved] = useState<Record<string, boolean>>({})
-  const [saving, setSaving] = useState<string | null>(null)
+  const [input, setInput]         = useState('')
+  const [platform, setPlatform]   = useState<'instagram' | 'linkedin'>('instagram')
+  const [loading, setLoading]     = useState(false)
+  const [error, setError]         = useState<string | null>(null)
+  const [result, setResult]       = useState<LogResult | null>(null)
+  const [copied, setCopied]       = useState<string | null>(null)
+  const [saved, setSaved]         = useState<Record<string, boolean>>({})
+  const [saving, setSaving]       = useState<string | null>(null)
   const [expandedImg, setExpandedImg] = useState<number | null>(null)
 
-  const [who, setWho] = useState('')
-  const [niche, setNiche] = useState('')
+  const [who, setWho]               = useState('')
+  const [niche, setNiche]           = useState('')
   const [brandContext, setBrandContext] = useState('')
 
-  // Restore draft and identity on mount / scan change
+  // Restore identity on mount / scan change
   useEffect(() => {
     try {
-      const n = localStorage.getItem('ss:niche') ?? ''
+      const n    = localStorage.getItem('ss:niche') ?? ''
       const name = localStorage.getItem('ss:name') ?? ''
       const handle = scan?.instagramProfile?.handle ?? scan?.handle ?? ''
       setNiche(n)
@@ -67,24 +68,56 @@ export default function LogPage() {
       .catch(() => {})
   }, [scan])
 
-  // Restore log draft on mount
+  // Restore session on mount: sessionStorage (full result) → localStorage (draft input only)
   useEffect(() => {
     try {
-      const saved = localStorage.getItem('ss:log:draft')
-      if (saved) setInput(saved)
+      const raw = sessionStorage.getItem(SESSION_KEY)
+      if (raw) {
+        const s = JSON.parse(raw)
+        if (s.input)     setInput(s.input)
+        if (s.timeframe) setTimeframe(s.timeframe)
+        if (s.platform)  setPlatform(s.platform)
+        if (s.result)    setResult(s.result)
+        return // session wins, skip draft fallback
+      }
+      const draft = localStorage.getItem(DRAFT_KEY)
+      if (draft) setInput(draft)
     } catch {}
   }, [])
 
-  // Auto-save draft as user types
+  // Persist full session to sessionStorage whenever result or platform changes
   useEffect(() => {
+    if (!result) return
+    try {
+      sessionStorage.setItem(SESSION_KEY, JSON.stringify({ input, timeframe, platform, result }))
+    } catch {}
+  }, [result, platform, input, timeframe])
+
+  // Auto-save input draft to localStorage while user is typing (before generation)
+  useEffect(() => {
+    if (result) return // session storage handles state once results exist
     const timer = setTimeout(() => {
       try {
-        if (input) localStorage.setItem('ss:log:draft', input)
-        else localStorage.removeItem('ss:log:draft')
+        if (input) localStorage.setItem(DRAFT_KEY, input)
+        else localStorage.removeItem(DRAFT_KEY)
       } catch {}
     }, 800)
     return () => clearTimeout(timer)
-  }, [input])
+  }, [input, result])
+
+  function startNewEntry() {
+    setInput('')
+    setResult(null)
+    setSaved({})
+    setSaving(null)
+    setCopied(null)
+    setExpandedImg(null)
+    setError(null)
+    try {
+      sessionStorage.removeItem(SESSION_KEY)
+      localStorage.removeItem(DRAFT_KEY)
+    } catch {}
+  }
 
   async function generate() {
     if (!input.trim()) { setError('Tell me what happened first'); return }
@@ -104,7 +137,8 @@ export default function LogPage() {
       const data = await res.json()
       if (data.error) throw new Error(data.error)
       setResult(data as LogResult)
-      try { localStorage.removeItem('ss:log:draft') } catch {} // Clear saved draft — it's been used
+      // Move to session storage; draft is no longer needed
+      try { localStorage.removeItem(DRAFT_KEY) } catch {}
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Generation failed')
     } finally {
@@ -133,7 +167,6 @@ export default function LogPage() {
       if (!res.ok) throw new Error('Save failed')
       setSaved(s => ({ ...s, [id]: true }))
     } catch {
-      // Mark as save-failed so button re-enables
       setSaving(null)
     } finally {
       setSaving(null)
@@ -145,11 +178,22 @@ export default function LogPage() {
 
   return (
     <div className="page-enter" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-      <PageHeader
-        label="Create"
-        title="Life Log"
-        subtitle="Tell me what happened — get Instagram scripts and LinkedIn posts in your voice"
-      />
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+        <PageHeader
+          label="Create"
+          title="Life Log"
+          subtitle="Tell me what happened — get Instagram scripts and LinkedIn posts in your voice"
+        />
+        {result && (
+          <button
+            onClick={startNewEntry}
+            className="btn-secondary"
+            style={{ fontSize: 12, padding: '6px 14px', alignSelf: 'flex-end', marginBottom: 4, flexShrink: 0 }}
+          >
+            + New Entry
+          </button>
+        )}
+      </div>
 
       <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start', flexWrap: 'wrap' }}>
 
@@ -300,7 +344,7 @@ export default function LogPage() {
                 <InstagramCard
                   key={i}
                   post={post}
-                  onWriteThis={() => router.push(`/studio?idea=${encodeURIComponent(post.hook)}`)}
+                  onEdit={() => router.push(`/studio?idea=${encodeURIComponent(post.hook)}`)}
                   onCopy={() => copyText(`[HOOK]\n${post.hook}\n\n[BODY]\n${post.body}\n\n[CTA]\n${post.cta}`, `ig-${i}`)}
                   onSave={() => saveScript(`ig-${i}`, {
                     format: post.format,
@@ -352,22 +396,21 @@ export default function LogPage() {
 
 // ── Instagram card ─────────────────────────────────────────────────────────────
 
-function InstagramCard({ post, onWriteThis, onCopy, onSave, copied, saved, saving }: {
+function InstagramCard({ post, onEdit, onCopy, onSave, copied, saved, saving }: {
   post: InstagramLogPost
-  onWriteThis: () => void
+  onEdit: () => void
   onCopy: () => void
   onSave: () => void
   copied: boolean
   saved: boolean
   saving: boolean
 }) {
-  const fmtColor = FORMAT_COLOR[post.format] ?? 'var(--text-tertiary)'
   return (
     <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
         <span style={{
           fontSize: 10, fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase',
-          color: fmtColor, background: `${fmtColor}18`, border: `1px solid ${fmtColor}30`,
+          color: FORMAT_COLOR, background: `${FORMAT_COLOR}18`, border: `1px solid ${FORMAT_COLOR}30`,
           borderRadius: 4, padding: '2px 7px',
         }}>
           {post.format}
@@ -394,8 +437,8 @@ function InstagramCard({ post, onWriteThis, onCopy, onSave, copied, saved, savin
       )}
 
       <div style={{ display: 'flex', gap: 8 }}>
-        <button onClick={onWriteThis} className="btn-primary" style={{ fontSize: 12, padding: '6px 14px' }}>
-          Write this →
+        <button onClick={onEdit} className="btn-primary" style={{ fontSize: 12, padding: '6px 14px' }}>
+          Edit →
         </button>
         <button onClick={onCopy} className="btn-secondary" style={{ fontSize: 12, padding: '6px 14px' }}>
           {copied ? 'Copied ✓' : 'Copy script'}
@@ -457,7 +500,7 @@ function LinkedInCard({ post, imgExpanded, onToggleImg, onCopyPost, onCopyImg, o
         )}
       </div>
 
-      {/* Image prompt section — LinkedIn only */}
+      {/* Image prompt section */}
       <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: 12 }}>
         <button
           onClick={onToggleImg}
