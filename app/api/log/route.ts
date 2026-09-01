@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Groq from 'groq-sdk'
 import { getUser } from '@/lib/supabase/server'
-import { GROQ_MODEL } from '@/lib/groq'
+import { GROQ_MODEL, GROQ_REASONING } from '@/lib/groq'
 import {
   buildLifeLogInstagramPrompt,
   buildLinkedInPostPrompt,
@@ -41,6 +41,7 @@ export async function POST(req: NextRequest) {
     // ── Instagram ──────────────────────────────────────────────────────────────
     const igCompletion = await groq.chat.completions.create({
       model: GROQ_MODEL,
+      ...GROQ_REASONING,
       messages: [
         { role: 'system', content: INSTAGRAM_SYSTEM },
         { role: 'user',   content: buildLifeLogInstagramPrompt({ rawInput, timeframe, who: creatorWho, brandContext, niche, trendingKeywords }) },
@@ -62,6 +63,7 @@ export async function POST(req: NextRequest) {
     for (const type of linkedinTypes) {
       const liCompletion = await groq.chat.completions.create({
         model: GROQ_MODEL,
+        ...GROQ_REASONING,
         messages: [
           { role: 'system', content: LINKEDIN_SYSTEM },
           {
@@ -76,6 +78,7 @@ export async function POST(req: NextRequest) {
       // Image prompt — separate call, small
       const imgCompletion = await groq.chat.completions.create({
         model: GROQ_MODEL,
+        ...GROQ_REASONING,
         messages: [
           {
             role: 'user',

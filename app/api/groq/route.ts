@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Groq from 'groq-sdk'
-import { GROQ_MODEL } from '@/lib/groq'
+import { GROQ_MODEL, GROQ_REASONING } from '@/lib/groq'
 import { getUser } from '@/lib/supabase/server'
 
 export const dynamic = 'force-dynamic'
@@ -21,6 +21,7 @@ export async function POST(req: NextRequest) {
 
     const completion = await groq.chat.completions.create({
       model: GROQ_MODEL,
+      ...GROQ_REASONING,
       messages,
       max_tokens: maxTokens,
     })

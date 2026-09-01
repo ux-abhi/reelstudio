@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import Groq from 'groq-sdk'
 import { getUser } from '@/lib/supabase/server'
 import { getUserContext, upsertUserContext, MasterDocSummary } from '@/lib/db'
-import { GROQ_MODEL } from '@/lib/groq'
+import { GROQ_MODEL, GROQ_REASONING } from '@/lib/groq'
 import { parseGroqJson } from '@/lib/scan'
 
 export const dynamic = 'force-dynamic'
@@ -27,6 +27,7 @@ export async function POST(req: NextRequest) {
     const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
     const completion = await groq.chat.completions.create({
       model: GROQ_MODEL,
+      ...GROQ_REASONING,
       messages: [{
         role: 'user',
         content: `Analyse this Instagram creator's brand/strategy document and extract key profile information.

@@ -6,7 +6,7 @@ import { getScanResult, setScanResult, setApifyCache, getTrendsCache, setTrendsC
 import { buildMasterScanPrompt } from '@/lib/prompts/masterScan'
 import { buildScanSchema, parseGroqJson, buildTomorrowDate, validateScanResult } from '@/lib/scan'
 import { ScanResult, InstagramProfile, ProfileInput } from '@/types/scan'
-import { GROQ_MODEL } from '@/lib/groq'
+import { GROQ_MODEL, GROQ_REASONING } from '@/lib/groq'
 import { fetchTrend, TREND_KEYWORDS, TrendResult } from '@/lib/trends'
 
 export const maxDuration = 300
@@ -128,6 +128,7 @@ export async function POST(req: NextRequest) {
 
     const completion = await groq.chat.completions.create({
       model: GROQ_MODEL,
+      ...GROQ_REASONING,
       messages: [{ role: 'user', content: prompt }],
       max_tokens: 5000,
     })

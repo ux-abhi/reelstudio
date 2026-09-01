@@ -6,7 +6,7 @@ import { getApifyCache, setApifyCache, getScanResult } from '@/lib/db'
 import { CompetitorAnalysis } from '@/types/scan'
 import { buildCompetitorPrompt } from '@/lib/prompts/competitorAnalysis'
 import { parseGroqJson } from '@/lib/scan'
-import { GROQ_MODEL } from '@/lib/groq'
+import { GROQ_MODEL, GROQ_REASONING } from '@/lib/groq'
 
 export const maxDuration = 300
 export const dynamic = 'force-dynamic'
@@ -98,6 +98,7 @@ Verified: ${rawProfile.verified ?? false}`
 
     const completion = await groq.chat.completions.create({
       model: GROQ_MODEL,
+      ...GROQ_REASONING,
       messages: [{ role: 'user', content: prompt }],
       max_tokens: 2000,
     })
